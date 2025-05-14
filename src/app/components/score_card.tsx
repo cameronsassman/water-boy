@@ -46,22 +46,37 @@ export default function ScoreCard() {
     }
   };
 
-  const updatePlayerStat = (statType: StatType, value: number) => {
-    if (!selectedPlayer) return;
-
+  const updatePlayerStat = (player: Player, teamKey: TeamKey, statType: StatType, value: number) => {
+    // Don't allow negative values
+    if (value < 0 && player[statType] <= 0) return;
+    
     const updateTeamState = (teamState: Team): Team => {
-      const updatedPlayers = teamState.players.map((player) =>
-        player.capNumber === selectedPlayer.capNumber
-          ? { ...player, [statType]: player[statType] + value }
-          : player
+      const updatedPlayers = teamState.players.map((p) =>
+        p.capNumber === player.capNumber
+          ? { ...p, [statType]: p[statType] + value }
+          : p
       );
       return { ...teamState, players: updatedPlayers };
     };
 
-    if (selectedTeam === "blue") {
+    if (teamKey === "blue") {
       setBlueTeam(updateTeamState(blueTeam));
-    } else if (selectedTeam === "white") {
+      // Update the selected player state to reflect changes
+      if (selectedPlayer && selectedPlayer.capNumber === player.capNumber) {
+        setSelectedPlayer({
+          ...selectedPlayer,
+          [statType]: selectedPlayer[statType] + value
+        });
+      }
+    } else if (teamKey === "white") {
       setWhiteTeam(updateTeamState(whiteTeam));
+      // Update the selected player state to reflect changes
+      if (selectedPlayer && selectedPlayer.capNumber === player.capNumber) {
+        setSelectedPlayer({
+          ...selectedPlayer,
+          [statType]: selectedPlayer[statType] + value
+        });
+      }
     }
   };
 
@@ -101,6 +116,13 @@ export default function ScoreCard() {
           p.capNumber === capNumber ? { ...p, name } : p
         ),
       }));
+      // Update the selected player state to reflect name change
+      if (selectedPlayer && selectedPlayer.capNumber === capNumber) {
+        setSelectedPlayer({
+          ...selectedPlayer,
+          name
+        });
+      }
     } else {
       setWhiteTeam((prev) => ({
         ...prev,
@@ -108,6 +130,13 @@ export default function ScoreCard() {
           p.capNumber === capNumber ? { ...p, name } : p
         ),
       }));
+      // Update the selected player state to reflect name change
+      if (selectedPlayer && selectedPlayer.capNumber === capNumber) {
+        setSelectedPlayer({
+          ...selectedPlayer,
+          name
+        });
+      }
     }
   };
 

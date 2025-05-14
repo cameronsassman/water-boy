@@ -5,7 +5,7 @@ interface PlayerStatsModalProps {
   player: Player;
   teamKey: TeamKey;
   closeModal: () => void;
-  updatePlayerStat: (statType: StatType, value: number) => void;
+  updatePlayerStat: (player: Player, teamKey: TeamKey, statType: StatType, value: number) => void;
   updatePlayerName: (teamKey: TeamKey, capNumber: number, name: string) => void;
 }
 
@@ -53,7 +53,7 @@ export default function PlayerStatsModal({
               <span className="font-medium">Goals</span>
               <div className="flex items-center">
                 <button
-                  onClick={() => updatePlayerStat("goals", -1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "goals", -1)}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-l-md hover:bg-red-200"
                   disabled={player.goals <= 0}
                 >
@@ -63,7 +63,7 @@ export default function PlayerStatsModal({
                   {player.goals}
                 </div>
                 <button
-                  onClick={() => updatePlayerStat("goals", 1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "goals", 1)}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-r-md hover:bg-green-200"
                 >
                   +
@@ -78,7 +78,7 @@ export default function PlayerStatsModal({
               <span className="font-medium">Kick-outs</span>
               <div className="flex items-center">
                 <button
-                  onClick={() => updatePlayerStat("kickouts", -1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "kickouts", -1)}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-l-md hover:bg-red-200"
                   disabled={player.kickouts <= 0}
                 >
@@ -88,7 +88,7 @@ export default function PlayerStatsModal({
                   {player.kickouts}
                 </div>
                 <button
-                  onClick={() => updatePlayerStat("kickouts", 1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "kickouts", 1)}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-r-md hover:bg-green-200"
                 >
                   +
@@ -103,7 +103,7 @@ export default function PlayerStatsModal({
               <span className="font-medium">Yellow Cards</span>
               <div className="flex items-center">
                 <button
-                  onClick={() => updatePlayerStat("yellowCards", -1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "yellowCards", -1)}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-l-md hover:bg-red-200"
                   disabled={player.yellowCards <= 0}
                 >
@@ -113,7 +113,7 @@ export default function PlayerStatsModal({
                   {player.yellowCards}
                 </div>
                 <button
-                  onClick={() => updatePlayerStat("yellowCards", 1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "yellowCards", 1)}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-r-md hover:bg-green-200"
                 >
                   +
@@ -128,7 +128,7 @@ export default function PlayerStatsModal({
               <span className="font-medium">Red Cards</span>
               <div className="flex items-center">
                 <button
-                  onClick={() => updatePlayerStat("redCards", -1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "redCards", -1)}
                   className="px-3 py-1 bg-red-100 text-red-700 rounded-l-md hover:bg-red-200"
                   disabled={player.redCards <= 0}
                 >
@@ -138,7 +138,7 @@ export default function PlayerStatsModal({
                   {player.redCards}
                 </div>
                 <button
-                  onClick={() => updatePlayerStat("redCards", 1)}
+                  onClick={() => updatePlayerStat(player, teamKey, "redCards", 1)}
                   className="px-3 py-1 bg-green-100 text-green-700 rounded-r-md hover:bg-green-200"
                 >
                   +
