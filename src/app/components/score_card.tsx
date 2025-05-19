@@ -56,7 +56,18 @@ export default function ScoreCard() {
           ? { ...p, [statType]: p[statType] + value }
           : p
       );
-      return { ...teamState, players: updatedPlayers };
+      
+      // If we're updating goals, also update the team score
+      let updatedScore = teamState.score;
+      if (statType === "goals") {
+        updatedScore = teamState.score + value;
+      }
+      
+      return { 
+        ...teamState, 
+        players: updatedPlayers,
+        score: updatedScore 
+      };
     };
 
     if (teamKey === "blue") {
@@ -149,7 +160,6 @@ export default function ScoreCard() {
       <ScoreDisplay 
         blueTeam={blueTeam}
         whiteTeam={whiteTeam}
-        updateScore={updateScore}
         handleTeamNameEdit={handleTeamNameEdit}
       />
 
