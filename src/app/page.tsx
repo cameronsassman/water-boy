@@ -1,16 +1,8 @@
+// src/app/page.tsx
 "use client";
 
-import ScoreCard from "./components/score_card";
-import { matches } from "../lib/matches";
-import { calculateStandings } from "../lib/calculations";
-import StandingsTable from "./components/standings_table";
+import TournamentApp from "./components/tournament";
 
-export default function WaterPoloScoreCard() {
-  const standings = calculateStandings(matches);
-  return (
-    <>
-      <ScoreCard />
-      <StandingsTable standings={standings} />
-    </>
-  );
+export default function WaterPoloTournament() {
+  return <TournamentApp />;
 }
