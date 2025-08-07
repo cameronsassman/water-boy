@@ -1,4 +1,4 @@
-import { Team, Pool, Tournament } from '@/types/team';
+import { Team, Pool, Tournament, Match } from '@/types/team';
 import { storageUtils } from './storage';
 
 export const tournamentUtils = {
@@ -75,9 +75,81 @@ export const tournamentUtils = {
       team.poolId = undefined;
     });
     tournament.pools = [];
+    tournament.matches = tournament.matches.filter(match => match.stage !== 'pool');
     storageUtils.saveTournament(tournament);
+  },
+
+  // Generate all pool stage matches
+  generatePoolMatches: (): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Clear existing pool matches
+    tournament.matches = tournament.matches.filter(match => match.stage !== 'pool');
+    
+    // Generate matches for each pool
+    tournament.pools.forEach(pool => {
+      const poolTeams = pool.teams;
+      const poolMatches = generateRoundRobinMatches(poolTeams, pool.id);
+      tournament.matches.push(...poolMatches);
+    });
+
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Get matches for a specific pool
+  getPoolMatches: (poolId: string): Match[] => {
+    const tournament = storageUtils.getTournament();
+    return tournament.matches.filter(match => 
+      match.poolId === poolId && match.stage === 'pool'
+    );
+  },
+
+  // Get all pool matches
+  getAllPoolMatches: (): Match[] => {
+    const tournament = storageUtils.getTournament();
+    return tournament.matches.filter(match => match.stage === 'pool');
+  },
+
+  // Check if pool matches have been generated
+  arePoolMatchesGenerated: (): boolean => {
+    const poolMatches = tournamentUtils.getAllPoolMatches();
+    return poolMatches.length > 0;
+  },
+
+  // Get match with team details
+  getMatchWithTeams: (match: Match): MatchWithTeams => {
+    const teams = storageUtils.getTeams();
+    const homeTeam = teams.find(t => t.id === match.homeTeamId);
+    const awayTeam = teams.find(t => t.id === match.awayTeamId);
+    
+    return {
+      ...match,
+      homeTeam: homeTeam!,
+      awayTeam: awayTeam!
+    };
   }
 };
+
+// Helper function to generate round-robin matches for a pool
+function generateRoundRobinMatches(teamIds: string[], poolId: string): Match[] {
+  const matches: Match[] = [];
+  
+  for (let i = 0; i < teamIds.length; i++) {
+    for (let j = i + 1; j < teamIds.length; j++) {
+      const match: Match = {
+        id: `${poolId}-${i}-${j}-${Date.now()}`,
+        homeTeamId: teamIds[i],
+        awayTeamId: teamIds[j],
+        poolId: poolId,
+        stage: 'pool',
+        completed: false
+      };
+      matches.push(match);
+    }
+  }
+  
+  return matches;
+}
 
 export interface TeamStanding {
   team: Team;
@@ -89,4 +161,9 @@ export interface TeamStanding {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+}
+
+export interface MatchWithTeams extends Match {
+  homeTeam: Team;
+  awayTeam: Team;
 }
