@@ -1,5 +1,5 @@
-// src/utils/storage.ts
 import { Team, Tournament } from '@/types/team';
+import { MatchResult } from '@/types/match';
 
 const STORAGE_KEY = 'water-polo-tournament';
 
@@ -49,9 +49,65 @@ export const storageUtils = {
     );
   },
 
+  // Save match result
+  saveMatchResult: (result: MatchResult): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Find and update the match
+    const matchIndex = tournament.matches.findIndex(m => m.id === result.matchId);
+    if (matchIndex !== -1) {
+      tournament.matches[matchIndex] = {
+        ...tournament.matches[matchIndex],
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+        completed: result.completed
+      };
+    }
+    
+    // Store match results separately for detailed stats
+    const resultsKey = `${STORAGE_KEY}-results`;
+    const existingResults = storageUtils.getMatchResults();
+    const resultIndex = existingResults.findIndex(r => r.matchId === result.matchId);
+    
+    if (resultIndex !== -1) {
+      existingResults[resultIndex] = result;
+    } else {
+      existingResults.push(result);
+    }
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(resultsKey, JSON.stringify(existingResults));
+    }
+    
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Get match results with player stats
+  getMatchResults: (): MatchResult[] => {
+    if (typeof window === 'undefined') return [];
+    
+    const resultsKey = `${STORAGE_KEY}-results`;
+    const data = localStorage.getItem(resultsKey);
+    
+    if (!data) return [];
+    
+    try {
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  },
+
+  // Get specific match result
+  getMatchResult: (matchId: string): MatchResult | null => {
+    const results = storageUtils.getMatchResults();
+    return results.find(r => r.matchId === matchId) || null;
+  },
+
   // Clear all data (for testing)
   clearAll: (): void => {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(`${STORAGE_KEY}-results`);
   }
 };
