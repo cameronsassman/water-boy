@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award } from 'lucide-react';
 
 export default function MatchDisplay() {
   const [isAllocated, setIsAllocated] = useState(false);
@@ -15,6 +15,7 @@ export default function MatchDisplay() {
   const [poolMatches, setPoolMatches] = useState<{[key: string]: MatchWithTeams[]}>({});
   const [totalTeams, setTotalTeams] = useState(0);
   const [allMatches, setAllMatches] = useState<MatchWithTeams[]>([]);
+  const [tournamentStats, setTournamentStats] = useState<any>(null);
 
   useEffect(() => {
     loadMatchData();
@@ -42,6 +43,10 @@ export default function MatchDisplay() {
         // Combine all matches for "All" tab
         const combined = Object.values(matches).flat();
         setAllMatches(combined);
+
+        // Get tournament statistics
+        const stats = tournamentUtils.getTournamentStats();
+        setTournamentStats(stats);
       }
     } catch (error) {
       console.error('Error loading match data:', error);
@@ -184,6 +189,43 @@ export default function MatchDisplay() {
         </div>
       </div>
 
+      {/* Tournament Progress Stats */}
+      {matchesGenerated && tournamentStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <div className="text-2xl font-bold text-green-600">{tournamentStats.completedMatches}</div>
+              <div className="text-sm text-gray-600">Completed</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <div className="text-2xl font-bold text-orange-600">{tournamentStats.pendingMatches}</div>
+              <div className="text-sm text-gray-600">Pending</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <div className="text-2xl font-bold text-blue-600">{tournamentStats.totalGoals}</div>
+              <div className="text-sm text-gray-600">Total Goals</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 text-center">
+              <Award className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <div className="text-2xl font-bold text-purple-600">{tournamentStats.averageGoalsPerMatch}</div>
+              <div className="text-sm text-gray-600">Avg/Match</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Matches Not Generated */}
       {!matchesGenerated && (
         <Card>
@@ -218,6 +260,7 @@ export default function MatchDisplay() {
             {['A', 'B', 'C', 'D'].map(poolId => {
               const matches = poolMatches[poolId] || [];
               const stats = getMatchStats(matches);
+              const completion = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
               
               return (
                 <Card key={poolId}>
@@ -226,10 +269,19 @@ export default function MatchDisplay() {
                       {poolId}
                     </div>
                     <div className="font-semibold mb-1">Pool {poolId}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 mb-2">
                       {stats.total} matches
                     </div>
-                    <div className="flex justify-center gap-4 mt-2 text-xs">
+                    
+                    {/* Progress bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-500 ${getPoolProgressColor(poolId)}`}
+                        style={{ width: `${completion}%` }}
+                      ></div>
+                    </div>
+                    
+                    <div className="flex justify-center gap-3 text-xs">
                       <div className="flex items-center gap-1 text-green-600">
                         <CheckCircle className="w-3 h-3" />
                         {stats.completed}
@@ -263,7 +315,14 @@ export default function MatchDisplay() {
                       <Trophy className="w-5 h-5" />
                       All Pool Matches
                     </span>
-                    <Badge variant="outline">{allMatches.length} matches</Badge>
+                    <div className="flex items-center gap-4">
+                      <Badge variant="outline">{allMatches.length} matches</Badge>
+                      {tournamentStats && (
+                        <Badge variant="secondary">
+                          {Math.round((tournamentStats.completedMatches / tournamentStats.totalMatches) * 100)}% complete
+                        </Badge>
+                      )}
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -298,7 +357,14 @@ export default function MatchDisplay() {
                         </div>
                         Pool {poolId} Fixtures
                       </span>
-                      <Badge variant="outline">{(poolMatches[poolId] || []).length} matches</Badge>
+                      <div className="flex items-center gap-4">
+                        <Badge variant="outline">{(poolMatches[poolId] || []).length} matches</Badge>
+                        {(poolMatches[poolId] || []).length > 0 && (
+                          <Badge variant="secondary">
+                            {getMatchStats(poolMatches[poolId] || []).completed} completed
+                          </Badge>
+                        )}
+                      </div>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -337,4 +403,14 @@ function getPoolColor(poolId: string): string {
     'D': 'bg-purple-600'
   };
   return colors[poolId as keyof typeof colors] || 'bg-gray-600';
+}
+
+function getPoolProgressColor(poolId: string): string {
+  const colors = {
+    'A': 'bg-blue-500',
+    'B': 'bg-green-500', 
+    'C': 'bg-orange-500',
+    'D': 'bg-purple-500'
+  };
+  return colors[poolId as keyof typeof colors] || 'bg-gray-500';
 }

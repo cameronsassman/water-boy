@@ -1,4 +1,5 @@
 import { Team, Pool, Tournament, Match } from '@/types/team';
+import { MatchResult } from '@/types/match';
 import { storageUtils } from './storage';
 
 export const tournamentUtils = {
@@ -51,21 +52,128 @@ export const tournamentUtils = {
            tournament.teams.some(team => team.poolId);
   },
 
-  // Get pool standings (initial - all teams with 0 points)
+  // Get pool standings with real calculations based on match results
   getPoolStandings: (poolId: string): TeamStanding[] => {
     const teams = tournamentUtils.getTeamsByPool(poolId);
+    const poolMatches = tournamentUtils.getPoolMatches(poolId);
+    const matchResults = storageUtils.getMatchResults();
     
-    return teams.map(team => ({
-      team,
-      played: 0,
-      won: 0,
-      drawn: 0,
-      lost: 0,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      goalDifference: 0,
-      points: 0
-    })).sort((a, b) => a.team.schoolName.localeCompare(b.team.schoolName));
+    // Calculate standings for each team
+    const standings: TeamStanding[] = teams.map(team => {
+      const teamMatches = poolMatches.filter(match => 
+        match.homeTeamId === team.id || match.awayTeamId === team.id
+      );
+      
+      let played = 0;
+      let won = 0;
+      let drawn = 0;
+      let lost = 0;
+      let goalsFor = 0;
+      let goalsAgainst = 0;
+      
+      teamMatches.forEach(match => {
+        const result = matchResults.find(r => r.matchId === match.id);
+        
+        if (result && result.completed) {
+          played++;
+          
+          const isHome = match.homeTeamId === team.id;
+          const teamScore = isHome ? result.homeScore : result.awayScore;
+          const opponentScore = isHome ? result.awayScore : result.homeScore;
+          
+          goalsFor += teamScore;
+          goalsAgainst += opponentScore;
+          
+          if (teamScore > opponentScore) {
+            won++;
+          } else if (teamScore < opponentScore) {
+            lost++;
+          } else {
+            drawn++;
+          }
+        }
+      });
+      
+      const goalDifference = goalsFor - goalsAgainst;
+      const points = (won * 3) + (drawn * 1); // 3 points for win, 1 for draw
+      
+      return {
+        team,
+        played,
+        won,
+        drawn,
+        lost,
+        goalsFor,
+        goalsAgainst,
+        goalDifference,
+        points
+      };
+    });
+    
+    // Sort standings: Points desc, Goal difference desc, Goals for desc, Team name asc
+    return standings.sort((a, b) => {
+      if (a.points !== b.points) return b.points - a.points;
+      if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference;
+      if (a.goalsFor !== b.goalsFor) return b.goalsFor - a.goalsFor;
+      return a.team.schoolName.localeCompare(b.team.schoolName);
+    });
+  },
+
+  // Get top 4 teams from a pool (for Cup qualification)
+  getPoolQualifiers: (poolId: string): Team[] => {
+    const standings = tournamentUtils.getPoolStandings(poolId);
+    return standings.slice(0, 4).map(standing => standing.team);
+  },
+
+  // Get bottom 3 teams from a pool (for Festival)
+  getPoolNonQualifiers: (poolId: string): Team[] => {
+    const standings = tournamentUtils.getPoolStandings(poolId);
+    return standings.slice(4).map(standing => standing.team);
+  },
+
+  // Check if pool stage is complete (all matches played)
+  isPoolStageComplete: (poolId?: string): boolean => {
+    if (poolId) {
+      const poolMatches = tournamentUtils.getPoolMatches(poolId);
+      return poolMatches.every(match => match.completed);
+    }
+    
+    // Check all pools
+    const pools = ['A', 'B', 'C', 'D'];
+    return pools.every(pool => tournamentUtils.isPoolStageComplete(pool));
+  },
+
+  // Get overall tournament statistics
+  getTournamentStats: () => {
+    const allMatches = tournamentUtils.getAllPoolMatches();
+    const completedMatches = allMatches.filter(match => match.completed);
+    const matchResults = storageUtils.getMatchResults();
+    
+    const totalGoals = matchResults.reduce((total, result) => {
+      return total + result.homeScore + result.awayScore;
+    }, 0);
+    
+    const averageGoalsPerMatch = completedMatches.length > 0 
+      ? (totalGoals / completedMatches.length).toFixed(1)
+      : '0.0';
+    
+    return {
+      totalMatches: allMatches.length,
+      completedMatches: completedMatches.length,
+      pendingMatches: allMatches.length - completedMatches.length,
+      totalGoals,
+      averageGoalsPerMatch: parseFloat(averageGoalsPerMatch)
+    };
+  },
+
+  // Get all pool standings
+  getAllPoolStandings: (): { [poolId: string]: TeamStanding[] } => {
+    return {
+      A: tournamentUtils.getPoolStandings('A'),
+      B: tournamentUtils.getPoolStandings('B'),
+      C: tournamentUtils.getPoolStandings('C'),
+      D: tournamentUtils.getPoolStandings('D')
+    };
   },
 
   // Reset pool allocation (for testing)
@@ -121,11 +229,16 @@ export const tournamentUtils = {
     const teams = storageUtils.getTeams();
     const homeTeam = teams.find(t => t.id === match.homeTeamId);
     const awayTeam = teams.find(t => t.id === match.awayTeamId);
+    const matchResults = storageUtils.getMatchResults();
+    const result = matchResults.find(r => r.matchId === match.id);
     
     return {
       ...match,
       homeTeam: homeTeam!,
-      awayTeam: awayTeam!
+      awayTeam: awayTeam!,
+      homeScore: result?.homeScore,
+      awayScore: result?.awayScore,
+      completed: result?.completed || false
     };
   }
 };
@@ -137,7 +250,7 @@ function generateRoundRobinMatches(teamIds: string[], poolId: string): Match[] {
   for (let i = 0; i < teamIds.length; i++) {
     for (let j = i + 1; j < teamIds.length; j++) {
       const match: Match = {
-        id: `${poolId}-${i}-${j}-${Date.now()}`,
+        id: `${poolId}-${i}-${j}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         homeTeamId: teamIds[i],
         awayTeamId: teamIds[j],
         poolId: poolId,
