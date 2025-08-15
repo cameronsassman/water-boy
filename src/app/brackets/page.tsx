@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { tournamentUtils, KnockoutBracketWithTeams } from '@/utils/tournament-logic';
+import { tournamentUtils, KnockoutBracketWithTeams, PlateBracketWithTeams, ShieldBracketWithTeams, MatchWithTeams } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
 import MatchCard from '@/components/guests/match-card';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Trophy, Users, Target, Award, Calendar, CheckCircle, 
-  Clock, RefreshCw, AlertCircle, Play, Crown, Medal
+  Clock, RefreshCw, AlertCircle, Play, Crown, Medal, Shield, Zap
 } from 'lucide-react';
+import BracketDisplay from '@/components/guests/bracket'; // Import the new BracketDisplay component
 
 export default function BracketsPage() {
   const [poolStageComplete, setPoolStageComplete] = useState(false);
   const [knockoutGenerated, setKnockoutGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [cupBracket, setCupBracket] = useState<KnockoutBracketWithTeams | null>(null);
+  const [plateBracket, setPlateBracket] = useState<PlateBracketWithTeams | null>(null);
+  const [shieldBracket, setShieldBracket] = useState<ShieldBracketWithTeams | null>(null);
+  const [festivalMatches, setFestivalMatches] = useState<MatchWithTeams[]>([]);
   const [totalTeams, setTotalTeams] = useState(0);
 
   useEffect(() => {
@@ -35,8 +39,17 @@ export default function BracketsPage() {
       setKnockoutGenerated(knockoutExists);
       
       if (knockoutExists) {
-        const bracket = tournamentUtils.getCupBracketWithTeams();
-        setCupBracket(bracket);
+        const bracketStatus = tournamentUtils.getBracketStatus();
+        setCupBracket(bracketStatus.cupBracket);
+        setPlateBracket(bracketStatus.plateBracket);
+        setShieldBracket(bracketStatus.shieldBracket);
+        setFestivalMatches(bracketStatus.festivalMatches);
+      } else {
+        // Clear brackets if they don't exist
+        setCupBracket(null);
+        setPlateBracket(null);
+        setShieldBracket(null);
+        setFestivalMatches([]);
       }
     } catch (error) {
       console.error('Error loading bracket data:', error);
@@ -50,7 +63,9 @@ export default function BracketsPage() {
       // Simulate generation delay for better UX
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      tournamentUtils.generateCupBracket();
+      // Clear existing knockout/festival matches before regenerating
+      tournamentUtils.clearKnockoutAndFestivalMatches();
+      tournamentUtils.generateCupBracket(); // This now generates all brackets
       loadBracketData();
     } catch (error) {
       console.error('Error generating knockout bracket:', error);
@@ -112,13 +127,34 @@ export default function BracketsPage() {
               </Button>
             )}
 
+            {knockoutGenerated && (
+              <Button
+                onClick={handleGenerateKnockout} // Re-generate button
+                disabled={isGenerating}
+                variant="outline"
+                size="sm"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Re-generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Re-generate
+                  </>
+                )}
+              </Button>
+            )}
+
             <Button
               onClick={loadBracketData}
               variant="outline"
               size="sm"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+              Refresh View
             </Button>
           </div>
         </div>
@@ -186,7 +222,7 @@ export default function BracketsPage() {
             </div>
 
             <div className="text-sm text-gray-500 space-y-2">
-              <p>Expected bracket format: A vs D pools, B vs C pools</p>
+              <p>Expected Cup bracket format: A vs D pools, B vs C pools</p>
               <p>A1 vs D4, A2 vs D3, A3 vs D2, A4 vs D1</p>
               <p>B1 vs C4, B2 vs C3, B3 vs C2, B4 vs C1</p>
             </div>
@@ -250,153 +286,261 @@ export default function BracketsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-8">
-              
-              {/* Round of 16 */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">16</div>
-                  Round of 16
-                  <Badge variant="secondary" className="ml-2">
-                    {cupBracket.roundOf16.filter(m => m.completed).length}/8 complete
-                  </Badge>
-                </h3>
-                
-                <div className="grid lg:grid-cols-2 gap-6">
-                  {/* A vs D Side */}
-                  <div>
-                    <h4 className="text-md font-medium mb-3 text-center">Pool A vs Pool D</h4>
-                    <div className="grid gap-3">
-                      {cupBracket.roundOf16.slice(0, 4).map(match => (
-                        <MatchCard 
-                          key={match.id} 
-                          match={match}
-                          showPool={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* B vs C Side */}
-                  <div>
-                    <h4 className="text-md font-medium mb-3 text-center">Pool B vs Pool C</h4>
-                    <div className="grid gap-3">
-                      {cupBracket.roundOf16.slice(4, 8).map(match => (
-                        <MatchCard 
-                          key={match.id} 
-                          match={match}
-                          showPool={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quarter Finals */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">8</div>
-                  Quarter Finals
-                  <Badge variant="secondary" className="ml-2">
-                    {cupBracket.quarterFinals.filter(m => m.completed).length}/4 matches
-                  </Badge>
-                </h3>
-                
-                {cupBracket.quarterFinals.length > 0 ? (
-                  <div className="grid lg:grid-cols-2 gap-4">
-                    {cupBracket.quarterFinals.map(match => (
-                      <MatchCard 
-                        key={match.id} 
-                        match={match}
-                        showPool={false}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                    <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>Quarter Finals will be generated after Round of 16 completion</p>
-                    <p className="text-sm">Complete all Round of 16 matches to progress</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Semi Finals */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <div className="w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                  Semi Finals
-                  <Badge variant="secondary" className="ml-2">
-                    {cupBracket.semiFinals.filter(m => m.completed).length}/2 matches
-                  </Badge>
-                </h3>
-                
-                {cupBracket.semiFinals.length > 0 ? (
-                  <div className="grid lg:grid-cols-2 gap-4">
-                    {cupBracket.semiFinals.map(match => (
-                      <MatchCard 
-                        key={match.id} 
-                        match={match}
-                        showPool={false}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                    <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>Semi Finals will be generated after Quarter Finals completion</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Finals */}
-              <div className="border-t pt-6">
-                <div className="grid lg:grid-cols-2 gap-6">
-                  {/* Cup Final */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Crown className="w-6 h-6 text-yellow-500" />
-                      Cup Final
-                    </h3>
-                    
-                    {cupBracket.final ? (
-                      <MatchCard 
-                        match={cupBracket.final}
-                        showPool={false}
-                      />
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <Crown className="w-12 h-12 mx-auto mb-3 opacity-50 text-yellow-600" />
-                        <p className="font-medium text-yellow-800">Cup Final</p>
-                        <p className="text-sm">Winner of Semi Final 1 vs Winner of Semi Final 2</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Third Place */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Medal className="w-6 h-6 text-orange-500" />
-                      Third Place
-                    </h3>
-                    
-                    {cupBracket.thirdPlace ? (
-                      <MatchCard 
-                        match={cupBracket.thirdPlace}
-                        showPool={false}
-                      />
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 bg-orange-50 rounded-lg border border-orange-200">
-                        <Medal className="w-12 h-12 mx-auto mb-3 opacity-50 text-orange-600" />
-                        <p className="font-medium text-orange-800">Third Place</p>
-                        <p className="text-sm">Loser of Semi Final 1 vs Loser of Semi Final 2</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <BracketDisplay 
+                roundOf16={cupBracket.roundOf16}
+                quarterFinals={cupBracket.quarterFinals}
+                semiFinals={cupBracket.semiFinals}
+                final={cupBracket.final}
+                thirdPlace={cupBracket.thirdPlace}
+              />
             </CardContent>
           </Card>
+
+          {/* Plate Bracket */}
+          {plateBracket && plateBracket.round1.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-blue-500" />
+                    Plate Bracket
+                  </span>
+                  <Badge variant="outline">For Round of 16 losers</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Plate Round 1 */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">R1</div>
+                    Plate Round 1
+                    <Badge variant="secondary" className="ml-2">
+                      {plateBracket.round1.filter(m => m.completed).length}/{plateBracket.round1.length} complete
+                    </Badge>
+                  </h3>
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    {plateBracket.round1.map(match => (
+                      <MatchCard 
+                        key={match.id} 
+                        match={match}
+                        showPool={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Plate Quarter Finals */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">QF</div>
+                    Plate Quarter Finals
+                    <Badge variant="secondary" className="ml-2">
+                      {plateBracket.quarterFinals.filter(m => m.completed).length}/{plateBracket.quarterFinals.length} matches
+                    </Badge>
+                  </h3>
+                  {plateBracket.quarterFinals.length > 0 ? (
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      {plateBracket.quarterFinals.map(match => (
+                        <MatchCard 
+                          key={match.id} 
+                          match={match}
+                          showPool={false}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                      <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Plate Quarter Finals will be generated after Plate Round 1 completion</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Plate Semi Finals */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">SF</div>
+                    Plate Semi Finals
+                    <Badge variant="secondary" className="ml-2">
+                      {plateBracket.semiFinals.filter(m => m.completed).length}/{plateBracket.semiFinals.length} matches
+                    </Badge>
+                  </h3>
+                  {plateBracket.semiFinals.length > 0 ? (
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      {plateBracket.semiFinals.map(match => (
+                        <MatchCard 
+                          key={match.id} 
+                          match={match}
+                          showPool={false}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                      <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Plate Semi Finals will be generated after Plate Quarter Finals completion</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Plate Finals */}
+                <div className="border-t pt-6">
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    {/* Plate Final */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Crown className="w-6 h-6 text-blue-500" />
+                        Plate Final
+                      </h3>
+                      {plateBracket.final ? (
+                        <MatchCard 
+                          match={plateBracket.final}
+                          showPool={false}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 bg-blue-50 rounded-lg border border-blue-200">
+                          <Crown className="w-12 h-12 mx-auto mb-3 opacity-50 text-blue-600" />
+                          <p className="font-medium text-blue-800">Plate Final</p>
+                          <p className="text-sm">Winner of Plate Semi Final 1 vs Winner of Plate Semi Final 2</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Plate Third Place */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Medal className="w-6 h-6 text-cyan-500" />
+                        Plate Third Place
+                      </h3>
+                      {plateBracket.thirdPlace ? (
+                        <MatchCard 
+                          match={plateBracket.thirdPlace}
+                          showPool={false}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 bg-cyan-50 rounded-lg border border-cyan-200">
+                          <Medal className="w-12 h-12 mx-auto mb-3 opacity-50 text-cyan-600" />
+                          <p className="font-medium text-cyan-800">Plate Third Place</p>
+                          <p className="text-sm">Loser of Plate Semi Final 1 vs Loser of Plate Semi Final 2</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Shield Bracket */}
+          {shieldBracket && shieldBracket.semiFinals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-purple-500" />
+                    Shield Bracket
+                  </span>
+                  <Badge variant="outline">For Plate Quarter Final losers</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Shield Semi Finals */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">SF</div>
+                    Shield Semi Finals
+                    <Badge variant="secondary" className="ml-2">
+                      {shieldBracket.semiFinals.filter(m => m.completed).length}/{shieldBracket.semiFinals.length} matches
+                    </Badge>
+                  </h3>
+                  {shieldBracket.semiFinals.length > 0 ? (
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      {shieldBracket.semiFinals.map(match => (
+                        <MatchCard 
+                          key={match.id} 
+                          match={match}
+                          showPool={false}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                      <Shield className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Shield Semi Finals will be generated after Plate Quarter Finals completion</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Shield Finals */}
+                <div className="border-t pt-6">
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    {/* Shield Final */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Crown className="w-6 h-6 text-purple-500" />
+                        Shield Final
+                      </h3>
+                      {shieldBracket.final ? (
+                        <MatchCard 
+                          match={shieldBracket.final}
+                          showPool={false}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 bg-purple-50 rounded-lg border border-purple-200">
+                          <Crown className="w-12 h-12 mx-auto mb-3 opacity-50 text-purple-600" />
+                          <p className="font-medium text-purple-800">Shield Final</p>
+                          <p className="text-sm">Winner of Shield Semi Final 1 vs Winner of Shield Semi Final 2</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Shield Third Place */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <Medal className="w-6 h-6 text-pink-500" />
+                        Shield Third Place
+                      </h3>
+                      {shieldBracket.thirdPlace ? (
+                        <MatchCard 
+                          match={shieldBracket.thirdPlace}
+                          showPool={false}
+                        />
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 bg-pink-50 rounded-lg border border-pink-200">
+                          <Medal className="w-12 h-12 mx-auto mb-3 opacity-50 text-pink-600" />
+                          <p className="font-medium text-pink-800">Shield Third Place</p>
+                          <p className="text-sm">Loser of Shield Semi Final 1 vs Loser of Shield Semi Final 2</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Festival Matches */}
+          {festivalMatches.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-orange-500" />
+                  Festival Matches
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid lg:grid-cols-2 gap-4">
+                  {festivalMatches.map(match => (
+                    <MatchCard 
+                      key={match.id} 
+                      match={match}
+                      showPool={false}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Tournament Path Explanation */}
           <Card>
@@ -440,15 +584,15 @@ export default function BracketsPage() {
                   </h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                      <span>Plate: For Round of 16 losers</span>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>Plate: For Cup Round of 16 losers</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-pink-600 rounded-full"></div>
-                      <span>Shield: For Plate losers</span>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span>Shield: For Plate Quarter Final losers</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-cyan-600 rounded-full"></div>
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                       <span>Festival: Bottom 3 per pool + early exits</span>
                     </div>
                   </div>

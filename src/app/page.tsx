@@ -10,11 +10,11 @@ import MatchDisplay from './scores/page';
 const WaterPoloTournament = () => {
   return (
     <>
-      {/* <TeamRegistration />
+      <TeamRegistration />
       <PoolsView />
       <MatchDisplay />
       <ScoreInput />
-      <TournamentDashboard /> */}
+      <TournamentDashboard />
       <BracketsPage />
     </>
   )

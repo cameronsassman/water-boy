@@ -29,11 +29,12 @@ export default function BracketDisplay({
     size?: 'small' | 'normal' | 'large';
     highlight?: boolean;
   }) => {
-    if (!match) {
+    if (!match || (match.homeTeam.id === 'TBD' && match.awayTeam.id === 'TBD')) {
       return (
         <div className={`
           bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-3 text-center
           ${size === 'small' ? 'min-h-16' : size === 'large' ? 'min-h-24' : 'min-h-20'}
+          flex items-center justify-center
         `}>
           <div className="text-xs text-gray-400">TBD</div>
         </div>
@@ -132,7 +133,7 @@ export default function BracketDisplay({
           <div className="flex flex-col justify-center">
             <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
             <div className="space-y-8">
-              {semiFinals.map(match => (
+              {semiFinals.slice(0,1).map(match => ( // Only first semi-final for left side
                 <BracketMatch key={match.id} match={match} />
               ))}
             </div>
@@ -163,13 +164,10 @@ export default function BracketDisplay({
           <div className="flex flex-col justify-center">
             <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
             <div className="space-y-8">
-              {/* Empty placeholders to maintain symmetry */}
-              <div className="opacity-30">
-                <BracketMatch match={null} />
-              </div>
-              <div className="opacity-30">
-                <BracketMatch match={null} />
-              </div>
+              {/* Display the second semi-final for the right side */}
+              {semiFinals.slice(1,2).map(match => (
+                <BracketMatch key={match.id} match={match} />
+              ))}
             </div>
           </div>
 

@@ -24,9 +24,13 @@ export default function ScoreInput() {
 
   const loadMatches = () => {
     try {
-      const allMatches = tournamentUtils.getAllPoolMatches();
+      // Load all matches (pool, cup, plate, shield, festival)
+      const tournament = storageUtils.getTournament();
+      const allMatches = tournament.matches;
       const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
-      setAvailableMatches(matchesWithTeams);
+      
+      // Filter out matches that are already completed if desired, or show all
+      setAvailableMatches(matchesWithTeams.filter(m => !m.completed)); // Show only pending matches for input
     } catch (error) {
       console.error('Error loading matches:', error);
     }
@@ -127,6 +131,11 @@ export default function ScoreInput() {
       
       storageUtils.saveMatchResult(result);
       
+      // NEW: Update knockout progression if this is a knockout match
+      if (['cup', 'plate', 'shield'].includes(selectedMatch.stage)) {
+        tournamentUtils.updateKnockoutProgression(selectedMatch.id);
+      }
+
       // Reload matches to show updated status
       loadMatches();
       
@@ -298,9 +307,9 @@ export default function ScoreInput() {
           <Card>
             <CardContent className="text-center py-12">
               <Target className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-semibold mb-2">No Matches Available</h3>
+              <h3 className="text-xl font-semibold mb-2">No Pending Matches Available</h3>
               <p className="text-gray-600">
-                Pool fixtures need to be generated before scorecards can be entered.
+                Either all matches are completed, or pool fixtures/knockout brackets need to be generated.
               </p>
             </CardContent>
           </Card>
@@ -311,7 +320,7 @@ export default function ScoreInput() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <Badge variant="outline" className="text-xs">
-                      Pool {match.poolId}
+                      {match.stage === 'pool' ? `Pool ${match.poolId}` : match.round ? `${match.stage.charAt(0).toUpperCase() + match.stage.slice(1)} ${match.round}` : match.stage.charAt(0).toUpperCase() + match.stage.slice(1)}
                     </Badge>
                     {match.completed ? (
                       <Badge className="text-xs bg-green-100 text-green-800">
@@ -358,7 +367,7 @@ export default function ScoreInput() {
               Match Scorecard
             </h1>
             <p className="text-gray-600 mt-2">
-              Pool {selectedMatch.poolId} • {selectedMatch.homeTeam.schoolName} vs {selectedMatch.awayTeam.schoolName}
+              {selectedMatch.stage === 'pool' ? `Pool ${selectedMatch.poolId}` : selectedMatch.round ? `${selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} ${selectedMatch.round}` : selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} • {selectedMatch.homeTeam.schoolName} vs {selectedMatch.awayTeam.schoolName}
             </p>
           </div>
           
@@ -406,7 +415,9 @@ export default function ScoreInput() {
             
             <div className="text-center">
               <div className="text-gray-400 text-xl mb-4">vs</div>
-              <Badge variant="outline">Pool {selectedMatch.poolId}</Badge>
+              <Badge variant="outline">
+                {selectedMatch.stage === 'pool' ? `Pool ${selectedMatch.poolId}` : selectedMatch.round ? `${selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} ${selectedMatch.round}` : selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)}
+              </Badge>
             </div>
             
             <div className="text-center">
