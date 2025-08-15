@@ -240,6 +240,143 @@ export const tournamentUtils = {
       awayScore: result?.awayScore,
       completed: result?.completed || false
     };
+  },
+
+  // NEW: Generate Cup Round of 16 bracket
+  generateCupBracket: (): KnockoutBracket => {
+    if (!tournamentUtils.isPoolStageComplete()) {
+      throw new Error('Pool stage must be completed before generating knockout bracket');
+    }
+
+    const tournament = storageUtils.getTournament();
+    
+    // Get qualifiers from each pool (top 4)
+    const poolAQualifiers = tournamentUtils.getPoolQualifiers('A');
+    const poolBQualifiers = tournamentUtils.getPoolQualifiers('B');
+    const poolCQualifiers = tournamentUtils.getPoolQualifiers('C');
+    const poolDQualifiers = tournamentUtils.getPoolQualifiers('D');
+
+    // Clear existing knockout matches
+    tournament.matches = tournament.matches.filter(match => 
+      !['cup', 'plate', 'shield'].includes(match.stage)
+    );
+
+    // Generate Round of 16 matches with A vs D, B vs C alternating format
+    const roundOf16Matches: Match[] = [];
+    
+    // A1 vs D4, A2 vs D3, A3 vs D2, A4 vs D1
+    for (let i = 0; i < 4; i++) {
+      const matchId = `cup-r16-${i + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      roundOf16Matches.push({
+        id: matchId,
+        homeTeamId: poolAQualifiers[i].id,
+        awayTeamId: poolDQualifiers[3 - i].id,
+        stage: 'cup',
+        completed: false,
+        round: 'round-of-16',
+        bracketPosition: i + 1
+      });
+    }
+
+    // B1 vs C4, B2 vs C3, B3 vs C2, B4 vs C1
+    for (let i = 0; i < 4; i++) {
+      const matchId = `cup-r16-${i + 5}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      roundOf16Matches.push({
+        id: matchId,
+        homeTeamId: poolBQualifiers[i].id,
+        awayTeamId: poolCQualifiers[3 - i].id,
+        stage: 'cup',
+        completed: false,
+        round: 'round-of-16',
+        bracketPosition: i + 5
+      });
+    }
+
+    // Add matches to tournament
+    tournament.matches.push(...roundOf16Matches);
+    
+    // Generate placeholder matches for subsequent rounds
+    const quarterFinalMatches = generatePlaceholderMatches('cup', 'quarter-final', 4);
+    const semiFinalMatches = generatePlaceholderMatches('cup', 'semi-final', 2);
+    const cupFinal = generatePlaceholderMatches('cup', 'final', 1);
+    const cupThirdPlace = generatePlaceholderMatches('cup', 'third-place', 1);
+
+    tournament.matches.push(...quarterFinalMatches, ...semiFinalMatches, ...cupFinal, ...cupThirdPlace);
+
+    storageUtils.saveTournament(tournament);
+
+    return {
+      roundOf16: roundOf16Matches,
+      quarterFinals: quarterFinalMatches,
+      semiFinals: semiFinalMatches,
+      final: cupFinal[0],
+      thirdPlace: cupThirdPlace[0]
+    };
+  },
+
+  // Check if knockout brackets have been generated
+  areKnockoutBracketsGenerated: (): boolean => {
+    const tournament = storageUtils.getTournament();
+    return tournament.matches.some(match => match.stage === 'cup');
+  },
+
+  // Get Cup bracket matches
+  getCupBracket: (): KnockoutBracket => {
+    const tournament = storageUtils.getTournament();
+    const cupMatches = tournament.matches.filter(match => match.stage === 'cup');
+
+    return {
+      roundOf16: cupMatches.filter(m => m.round === 'round-of-16').sort((a, b) => (a.bracketPosition || 0) - (b.bracketPosition || 0)),
+      quarterFinals: cupMatches.filter(m => m.round === 'quarter-final').sort((a, b) => (a.bracketPosition || 0) - (b.bracketPosition || 0)),
+      semiFinals: cupMatches.filter(m => m.round === 'semi-final').sort((a, b) => (a.bracketPosition || 0) - (b.bracketPosition || 0)),
+      final: cupMatches.find(m => m.round === 'final')!,
+      thirdPlace: cupMatches.find(m => m.round === 'third-place')!
+    };
+  },
+
+  // Get Cup bracket with team details
+  getCupBracketWithTeams: (): KnockoutBracketWithTeams => {
+    const bracket = tournamentUtils.getCupBracket();
+    const teams = storageUtils.getTeams();
+    const matchResults = storageUtils.getMatchResults();
+
+    const getMatchWithDetails = (match: Match): MatchWithTeams | null => {
+      if (!match) return null;
+      
+      const homeTeam = teams.find(t => t.id === match.homeTeamId);
+      const awayTeam = teams.find(t => t.id === match.awayTeamId);
+      
+      // If no teams assigned yet (placeholder match), return null
+      if (!homeTeam || !awayTeam) return null;
+      
+      const result = matchResults.find(r => r.matchId === match.id);
+      
+      return {
+        ...match,
+        homeTeam,
+        awayTeam,
+        homeScore: result?.homeScore,
+        awayScore: result?.awayScore,
+        completed: result?.completed || false
+      };
+    };
+
+    return {
+      roundOf16: bracket.roundOf16.map(match => getMatchWithDetails(match)).filter(Boolean) as MatchWithTeams[],
+      quarterFinals: bracket.quarterFinals.map(match => getMatchWithDetails(match)).filter(Boolean) as MatchWithTeams[],
+      semiFinals: bracket.semiFinals.map(match => getMatchWithDetails(match)).filter(Boolean) as MatchWithTeams[],
+      final: getMatchWithDetails(bracket.final),
+      thirdPlace: getMatchWithDetails(bracket.thirdPlace)
+    };
+  },
+
+  // Get tournament bracket status
+  getBracketStatus: (): BracketStatus => {
+    return {
+      poolStageComplete: tournamentUtils.isPoolStageComplete(),
+      knockoutGenerated: tournamentUtils.areKnockoutBracketsGenerated(),
+      cupBracket: tournamentUtils.areKnockoutBracketsGenerated() ? tournamentUtils.getCupBracketWithTeams() : null
+    };
   }
 };
 
@@ -264,6 +401,25 @@ function generateRoundRobinMatches(teamIds: string[], poolId: string): Match[] {
   return matches;
 }
 
+// Helper function to generate placeholder matches for knockout rounds
+function generatePlaceholderMatches(stage: string, round: string, count: number): Match[] {
+  const matches: Match[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    matches.push({
+      id: `${stage}-${round}-${i + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      homeTeamId: 'TBD', // To Be Determined
+      awayTeamId: 'TBD',
+      stage: stage as any,
+      round,
+      completed: false,
+      bracketPosition: i + 1
+    });
+  }
+  
+  return matches;
+}
+
 export interface TeamStanding {
   team: Team;
   played: number;
@@ -279,4 +435,26 @@ export interface TeamStanding {
 export interface MatchWithTeams extends Match {
   homeTeam: Team;
   awayTeam: Team;
+}
+
+export interface KnockoutBracket {
+  roundOf16: Match[];
+  quarterFinals: Match[];
+  semiFinals: Match[];
+  final: Match;
+  thirdPlace: Match;
+}
+
+export interface KnockoutBracketWithTeams {
+  roundOf16: MatchWithTeams[];
+  quarterFinals: MatchWithTeams[];
+  semiFinals: MatchWithTeams[];
+  final: MatchWithTeams | null;
+  thirdPlace: MatchWithTeams | null;
+}
+
+export interface BracketStatus {
+  poolStageComplete: boolean;
+  knockoutGenerated: boolean;
+  cupBracket: KnockoutBracketWithTeams | null;
 }

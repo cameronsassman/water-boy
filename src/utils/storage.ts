@@ -104,6 +104,31 @@ export const storageUtils = {
     return results.find(r => r.matchId === matchId) || null;
   },
 
+  // Clear all match results
+  clearMatchResults: (): void => {
+    if (typeof window === 'undefined') return;
+    const resultsKey = `${STORAGE_KEY}-results`;
+    localStorage.removeItem(resultsKey);
+  },
+
+  // Clear only pool match results
+  clearPoolMatchResults: (): void => {
+    if (typeof window === 'undefined') return;
+    
+    const tournament = storageUtils.getTournament();
+    const poolMatchIds = tournament.matches
+      .filter(match => match.stage === 'pool')
+      .map(match => match.id);
+    
+    const resultsKey = `${STORAGE_KEY}-results`;
+    const existingResults = storageUtils.getMatchResults();
+    const filteredResults = existingResults.filter(result => 
+      !poolMatchIds.includes(result.matchId)
+    );
+    
+    localStorage.setItem(resultsKey, JSON.stringify(filteredResults));
+  },
+
   // Clear all data (for testing)
   clearAll: (): void => {
     if (typeof window === 'undefined') return;

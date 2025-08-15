@@ -1,0 +1,223 @@
+import React from 'react';
+import { MatchWithTeams } from '@/utils/tournament-logic';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Crown, Medal, Clock, CheckCircle } from 'lucide-react';
+
+interface BracketDisplayProps {
+  roundOf16: MatchWithTeams[];
+  quarterFinals: MatchWithTeams[];
+  semiFinals: MatchWithTeams[];
+  final: MatchWithTeams | null;
+  thirdPlace: MatchWithTeams | null;
+}
+
+export default function BracketDisplay({ 
+  roundOf16, 
+  quarterFinals, 
+  semiFinals, 
+  final, 
+  thirdPlace 
+}: BracketDisplayProps) {
+  
+  const BracketMatch = ({ 
+    match, 
+    size = 'normal',
+    highlight = false 
+  }: { 
+    match: MatchWithTeams | null; 
+    size?: 'small' | 'normal' | 'large';
+    highlight?: boolean;
+  }) => {
+    if (!match) {
+      return (
+        <div className={`
+          bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-3 text-center
+          ${size === 'small' ? 'min-h-16' : size === 'large' ? 'min-h-24' : 'min-h-20'}
+        `}>
+          <div className="text-xs text-gray-400">TBD</div>
+        </div>
+      );
+    }
+
+    const isCompleted = match.completed;
+    const homeWon = match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore > match.awayScore;
+    const awayWon = match.homeScore !== undefined && match.awayScore !== undefined && match.awayScore > match.homeScore;
+    
+    return (
+      <Card className={`
+        ${highlight ? 'ring-2 ring-yellow-400' : ''} 
+        ${isCompleted ? 'bg-gray-50' : 'bg-white'} 
+        hover:shadow-md transition-shadow
+        ${size === 'small' ? 'text-xs' : size === 'large' ? 'text-base' : 'text-sm'}
+      `}>
+        <CardContent className={`
+          ${size === 'small' ? 'p-2' : size === 'large' ? 'p-4' : 'p-3'}
+        `}>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              {isCompleted ? (
+                <>
+                  <CheckCircle className="w-3 h-3" />
+                  <span>Complete</span>
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3 h-3" />
+                  <span>Pending</span>
+                </>
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-1">
+            {/* Home Team */}
+            <div className={`
+              flex items-center justify-between p-1 rounded
+              ${homeWon ? 'bg-green-100 font-semibold' : ''}
+            `}>
+              <span className={`truncate ${size === 'small' ? 'max-w-20' : 'max-w-32'}`} title={match.homeTeam.schoolName}>
+                {match.homeTeam.schoolName}
+              </span>
+              <span className={`font-bold ${homeWon ? 'text-green-600' : ''}`}>
+                {match.homeScore ?? '-'}
+              </span>
+            </div>
+            
+            {/* Away Team */}
+            <div className={`
+              flex items-center justify-between p-1 rounded
+              ${awayWon ? 'bg-green-100 font-semibold' : ''}
+            `}>
+              <span className={`truncate ${size === 'small' ? 'max-w-20' : 'max-w-32'}`} title={match.awayTeam.schoolName}>
+                {match.awayTeam.schoolName}
+              </span>
+              <span className={`font-bold ${awayWon ? 'text-green-600' : ''}`}>
+                {match.awayScore ?? '-'}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-8 overflow-x-auto">
+      {/* Tournament Bracket Layout */}
+      <div className="min-w-4xl">
+        <div className="grid grid-cols-7 gap-4 items-center">
+          
+          {/* Round of 16 - Left Side (A vs D) */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-center mb-2">Round of 16</h4>
+            <div className="space-y-2">
+              {roundOf16.slice(0, 4).map(match => (
+                <BracketMatch key={match.id} match={match} size="small" />
+              ))}
+            </div>
+          </div>
+
+          {/* Quarter Finals - Left Side */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-semibold text-center mb-2">Quarter Finals</h4>
+            <div className="space-y-4">
+              {quarterFinals.slice(0, 2).map(match => (
+                <BracketMatch key={match.id} match={match} />
+              ))}
+            </div>
+          </div>
+
+          {/* Semi Finals - Left Side */}
+          <div className="flex flex-col justify-center">
+            <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
+            <div className="space-y-8">
+              {semiFinals.map(match => (
+                <BracketMatch key={match.id} match={match} />
+              ))}
+            </div>
+          </div>
+
+          {/* Finals Column */}
+          <div className="flex flex-col justify-center space-y-6">
+            {/* Cup Final */}
+            <div>
+              <h4 className="text-sm font-semibold text-center mb-2 flex items-center justify-center gap-1">
+                <Crown className="w-4 h-4 text-yellow-500" />
+                Final
+              </h4>
+              <BracketMatch match={final} size="large" highlight={true} />
+            </div>
+            
+            {/* Third Place */}
+            <div>
+              <h4 className="text-sm font-semibold text-center mb-2 flex items-center justify-center gap-1">
+                <Medal className="w-4 h-4 text-orange-500" />
+                3rd Place
+              </h4>
+              <BracketMatch match={thirdPlace} />
+            </div>
+          </div>
+
+          {/* Semi Finals - Right Side (Mirror) */}
+          <div className="flex flex-col justify-center">
+            <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
+            <div className="space-y-8">
+              {/* Empty placeholders to maintain symmetry */}
+              <div className="opacity-30">
+                <BracketMatch match={null} />
+              </div>
+              <div className="opacity-30">
+                <BracketMatch match={null} />
+              </div>
+            </div>
+          </div>
+
+          {/* Quarter Finals - Right Side */}
+          <div className="space-y-6">
+            <h4 className="text-sm font-semibold text-center mb-2">Quarter Finals</h4>
+            <div className="space-y-4">
+              {quarterFinals.slice(2, 4).map(match => (
+                <BracketMatch key={match.id} match={match} />
+              ))}
+            </div>
+          </div>
+
+          {/* Round of 16 - Right Side (B vs C) */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-center mb-2">Round of 16</h4>
+            <div className="space-y-2">
+              {roundOf16.slice(4, 8).map(match => (
+                <BracketMatch key={match.id} match={match} size="small" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bracket Legend */}
+      <div className="flex justify-center">
+        <Card className="p-4">
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-100 rounded border"></div>
+              <span>Winner</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gray-50 rounded border"></div>
+              <span>Completed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-white rounded border"></div>
+              <span>Pending</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gray-50 border-2 border-dashed border-gray-200 rounded"></div>
+              <span>TBD</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award } from 'lucide-react';
+import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award, Trash2 } from 'lucide-react';
 
 export default function MatchDisplay() {
   const [isAllocated, setIsAllocated] = useState(false);
@@ -79,6 +79,57 @@ export default function MatchDisplay() {
     }
   };
 
+  const handleClearMatches = async () => {
+    if (!confirm('Are you sure you want to clear all matches and results? This action cannot be undone.')) {
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      tournamentUtils.clearPoolMatches();
+      loadMatchData();
+    } catch (error) {
+      console.error('Error clearing matches:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleClearResults = async () => {
+    if (!confirm('Are you sure you want to clear all saved match results and scorecards? Matches will remain but all scores will be reset. This action cannot be undone.')) {
+      return;
+    }
+    
+    setIsGenerating(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Clear all match results but keep the matches
+      storageUtils.clearPoolMatchResults();
+      
+      // Reset match completion status
+      const tournament = storageUtils.getTournament();
+      tournament.matches.forEach(match => {
+        if (match.stage === 'pool') {
+          match.completed = false;
+          match.homeScore = undefined;
+          match.awayScore = undefined;
+        }
+      });
+      storageUtils.saveTournament(tournament);
+      
+      loadMatchData();
+    } catch (error) {
+      console.error('Error clearing results:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const getMatchStats = (matches: MatchWithTeams[]) => {
     const completed = matches.filter(m => m.completed).length;
     const pending = matches.length - completed;
@@ -89,8 +140,9 @@ export default function MatchDisplay() {
   if (totalTeams === 0 && !isAllocated) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Loading tournament data...</h2>
+        <div className="text-center py-12">
+          <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-600" />
+          <p>Loading tournament data...</p>
         </div>
       </div>
     );
@@ -166,24 +218,48 @@ export default function MatchDisplay() {
             )}
 
             {matchesGenerated && (
-              <Button
-                onClick={handleGenerateMatches}
-                disabled={isGenerating}
-                variant="outline"
-                className="min-w-40"
-              >
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Re-generating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Re-generate
-                  </>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleGenerateMatches}
+                  disabled={isGenerating}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isGenerating ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Re-generating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Re-generate
+                    </>
+                  )}
+                </Button>
+                
+                {tournamentStats && tournamentStats.completedMatches > 0 && (
+                  <Button
+                    onClick={handleClearResults}
+                    disabled={isGenerating}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear Results
+                  </Button>
                 )}
-              </Button>
+                
+                <Button
+                  onClick={handleClearMatches}
+                  disabled={isGenerating}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -255,7 +331,7 @@ export default function MatchDisplay() {
       {/* Generated Fixtures */}
       {matchesGenerated && (
         <>
-          {/* Overview Stats */}
+          {/* Pool Status Cards */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">
             {['A', 'B', 'C', 'D'].map(poolId => {
               const matches = poolMatches[poolId] || [];
@@ -276,20 +352,14 @@ export default function MatchDisplay() {
                     {/* Progress bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                       <div 
-                        className={`h-2 rounded-full transition-all duration-500 ${getPoolProgressColor(poolId)}`}
+                        className={`h-2 rounded-full ${completion === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
                         style={{ width: `${completion}%` }}
                       ></div>
                     </div>
                     
-                    <div className="flex justify-center gap-3 text-xs">
-                      <div className="flex items-center gap-1 text-green-600">
-                        <CheckCircle className="w-3 h-3" />
-                        {stats.completed}
-                      </div>
-                      <div className="flex items-center gap-1 text-orange-600">
-                        <Clock className="w-3 h-3" />
-                        {stats.pending}
-                      </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{stats.completed} complete</span>
+                      <span>{stats.pending} pending</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -297,98 +367,120 @@ export default function MatchDisplay() {
             })}
           </div>
 
-          {/* Fixtures Tabs */}
+          {/* Pool Matches Tabs */}
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All Matches ({allMatches.length})</TabsTrigger>
-              <TabsTrigger value="A">Pool A ({(poolMatches.A || []).length})</TabsTrigger>
-              <TabsTrigger value="B">Pool B ({(poolMatches.B || []).length})</TabsTrigger>
-              <TabsTrigger value="C">Pool C ({(poolMatches.C || []).length})</TabsTrigger>
-              <TabsTrigger value="D">Pool D ({(poolMatches.D || []).length})</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="A">Pool A</TabsTrigger>
+              <TabsTrigger value="B">Pool B</TabsTrigger>
+              <TabsTrigger value="C">Pool C</TabsTrigger>
+              <TabsTrigger value="D">Pool D</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="all" className="mt-6">
+            
+            <TabsContent value="all">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Trophy className="w-5 h-5" />
-                      All Pool Matches
-                    </span>
-                    <div className="flex items-center gap-4">
-                      <Badge variant="outline">{allMatches.length} matches</Badge>
-                      {tournamentStats && (
-                        <Badge variant="secondary">
-                          {Math.round((tournamentStats.completedMatches / tournamentStats.totalMatches) * 100)}% complete
-                        </Badge>
-                      )}
-                    </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-blue-500" />
+                    All Pool Matches
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {allMatches.length > 0 ? (
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {allMatches.map(match => (
+                  <div className="space-y-4">
+                    {allMatches.length > 0 ? (
+                      allMatches.map(match => (
                         <MatchCard 
                           key={match.id} 
-                          match={match} 
+                          match={match}
                           showPool={true}
                         />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No matches generated yet</p>
-                    </div>
-                  )}
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No matches found</p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
-
+            
             {['A', 'B', 'C', 'D'].map(poolId => (
-              <TabsContent key={poolId} value={poolId} className="mt-6">
+              <TabsContent key={poolId} value={poolId}>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
-                          {poolId}
-                        </div>
-                        Pool {poolId} Fixtures
-                      </span>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="outline">{(poolMatches[poolId] || []).length} matches</Badge>
-                        {(poolMatches[poolId] || []).length > 0 && (
-                          <Badge variant="secondary">
-                            {getMatchStats(poolMatches[poolId] || []).completed} completed
-                          </Badge>
-                        )}
-                      </div>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className={`w-5 h-5 rounded-full ${getPoolColor(poolId)}`}></div>
+                      Pool {poolId} Matches
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {(poolMatches[poolId] || []).length > 0 ? (
-                      <div className="grid md:grid-cols-2 gap-4">
-                        {(poolMatches[poolId] || []).map(match => (
+                    <div className="space-y-4">
+                      {poolMatches[poolId]?.length > 0 ? (
+                        poolMatches[poolId].map(match => (
                           <MatchCard 
                             key={match.id} 
                             match={match}
+                            showPool={false}
                           />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p>No matches in this pool</p>
-                        <p className="text-sm">Generate fixtures to see matches</p>
-                      </div>
-                    )}
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-500">
+                          <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p>No matches found for Pool {poolId}</p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
             ))}
           </Tabs>
+
+          {/* Completion Status */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-blue-500" />
+                Pool Stage Completion
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-4 gap-6">
+                {['A', 'B', 'C', 'D'].map(poolId => {
+                  const matches = poolMatches[poolId] || [];
+                  const stats = getMatchStats(matches);
+                  const completion = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                  
+                  return (
+                    <div key={poolId}>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${getPoolColor(poolId)}`}></div>
+                        Pool {poolId}
+                      </h4>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span>Matches:</span>
+                          <span>{stats.completed}/{stats.total} ({completion}%)</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Teams:</span>
+                          <span>{tournamentUtils.getTeamsByPool(poolId).length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Status:</span>
+                          <span className={completion === 100 ? 'text-green-600 font-medium' : 'text-orange-600'}>
+                            {completion === 100 ? 'Complete' : 'In Progress'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
@@ -403,14 +495,4 @@ function getPoolColor(poolId: string): string {
     'D': 'bg-purple-600'
   };
   return colors[poolId as keyof typeof colors] || 'bg-gray-600';
-}
-
-function getPoolProgressColor(poolId: string): string {
-  const colors = {
-    'A': 'bg-blue-500',
-    'B': 'bg-green-500', 
-    'C': 'bg-orange-500',
-    'D': 'bg-purple-500'
-  };
-  return colors[poolId as keyof typeof colors] || 'bg-gray-500';
 }
