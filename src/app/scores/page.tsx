@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { tournamentUtils, MatchWithTeams } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
@@ -8,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award, Trash2 } from 'lucide-react';
 
-export default function MatchDisplay() {
+export default function ScoresPage() {
   const [isAllocated, setIsAllocated] = useState(false);
   const [matchesGenerated, setMatchesGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -110,18 +112,6 @@ export default function MatchDisplay() {
       
       // Clear all match results but keep the matches
       storageUtils.clearPoolMatchResults();
-      
-      // Reset match completion status
-      const tournament = storageUtils.getTournament();
-      tournament.matches.forEach(match => {
-        if (match.stage === 'pool') {
-          match.completed = false;
-          match.homeScore = undefined;
-          match.awayScore = undefined;
-        }
-      });
-      storageUtils.saveTournament(tournament);
-      
       loadMatchData();
     } catch (error) {
       console.error('Error clearing results:', error);
@@ -134,6 +124,15 @@ export default function MatchDisplay() {
     const completed = matches.filter(m => m.completed).length;
     const pending = matches.length - completed;
     return { completed, pending, total: matches.length };
+  };
+
+  // Filter matches by completion status
+  const getCompletedMatches = (matches: MatchWithTeams[]) => {
+    return matches.filter(m => m.completed);
+  };
+
+  const getPendingMatches = (matches: MatchWithTeams[]) => {
+    return matches.filter(m => !m.completed);
   };
 
   // Show loading state initially
@@ -367,10 +366,12 @@ export default function MatchDisplay() {
             })}
           </div>
 
-          {/* Pool Matches Tabs */}
+          {/* Pool Matches Tabs with Enhanced Filtering */}
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="A">Pool A</TabsTrigger>
               <TabsTrigger value="B">Pool B</TabsTrigger>
               <TabsTrigger value="C">Pool C</TabsTrigger>
@@ -399,6 +400,66 @@ export default function MatchDisplay() {
                       <div className="text-center py-12 text-gray-500">
                         <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No matches found</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="completed">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Completed Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getCompletedMatches(allMatches).length > 0 ? (
+                      getCompletedMatches(allMatches).map(match => (
+                        <MatchCard 
+                          key={match.id} 
+                          match={match}
+                          showPool={true}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>No completed matches yet</p>
+                        <p className="text-sm">Matches will appear here once scores are entered by administrators</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="pending">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-orange-500" />
+                    Pending Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getPendingMatches(allMatches).length > 0 ? (
+                      getPendingMatches(allMatches).map(match => (
+                        <MatchCard 
+                          key={match.id} 
+                          match={match}
+                          showPool={true}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50 text-green-600" />
+                        <p className="text-green-700 font-medium">All pool matches completed!</p>
+                        <p className="text-sm">Ready to proceed to knockout stage</p>
                       </div>
                     )}
                   </div>
@@ -438,12 +499,12 @@ export default function MatchDisplay() {
             ))}
           </Tabs>
 
-          {/* Completion Status */}
+          {/* Pool Completion Status */}
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-blue-500" />
-                Pool Stage Completion
+                Pool Stage Completion Status
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -452,12 +513,16 @@ export default function MatchDisplay() {
                   const matches = poolMatches[poolId] || [];
                   const stats = getMatchStats(matches);
                   const completion = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                  const isComplete = tournamentUtils.isPoolStageComplete(poolId);
                   
                   return (
                     <div key={poolId}>
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${getPoolColor(poolId)}`}></div>
                         Pool {poolId}
+                        {isComplete && (
+                          <CheckCircle className="w-4 h-4 text-green-600 ml-1" />
+                        )}
                       </h4>
                       <div className="space-y-2 text-sm text-gray-600">
                         <div className="flex justify-between">
@@ -470,14 +535,66 @@ export default function MatchDisplay() {
                         </div>
                         <div className="flex justify-between">
                           <span>Status:</span>
-                          <span className={completion === 100 ? 'text-green-600 font-medium' : 'text-orange-600'}>
-                            {completion === 100 ? 'Complete' : 'In Progress'}
+                          <span className={isComplete ? 'text-green-600 font-medium' : 'text-orange-600'}>
+                            {isComplete ? 'Complete' : 'In Progress'}
                           </span>
                         </div>
+                        
+                        {/* Qualification Preview */}
+                        {isComplete && (
+                          <div className="pt-2 border-t">
+                            <div className="text-xs text-gray-500 mb-1">Qualification:</div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <Trophy className="w-3 h-3 text-yellow-500" />
+                              <span>4 → Cup</span>
+                              <span className="mx-1">|</span>
+                              <Award className="w-3 h-3 text-blue-500" />
+                              <span>3 → Festival</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+              
+              {/* Overall Tournament Status */}
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-blue-600" />
+                      Tournament Progress
+                    </h4>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Complete all pool matches to unlock knockout stage
+                    </p>
+                  </div>
+                  
+                  <div className="text-right">
+                    {tournamentUtils.isPoolStageComplete() ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle className="w-5 h-5" />
+                        <div>
+                          <div className="font-semibold">Pool Stage Complete</div>
+                          <div className="text-sm">Ready for Knockout Generation</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-orange-600">
+                        <Clock className="w-5 h-5" />
+                        <div>
+                          <div className="font-semibold">Pool Stage In Progress</div>
+                          <div className="text-sm">
+                            {Object.values(poolMatches).flat().filter(m => m.completed).length}/
+                            {Object.values(poolMatches).flat().length} matches completed
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

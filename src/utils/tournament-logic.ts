@@ -20,17 +20,13 @@ export const tournamentUtils = {
     const pools: Pool[] = [
       { id: 'A', name: 'Pool A', teams: [] },
       { id: 'B', name: 'Pool B', teams: [] },
-      { id: 'C', name: 'Pool C', teams: [] }
+      { id: 'C', name: 'Pool C', teams: [] },
+      { id: 'D', name: 'Pool D', teams: [] }
     ];
-    // Dynamically add Pool D if there are enough teams for it
-    if (shuffledTeams.length > 21) { // If more than 3 pools of 7 teams
-      pools.push({ id: 'D', name: 'Pool D', teams: [] });
-    }
-
 
     // Allocate teams to pools (distribute evenly)
     shuffledTeams.forEach((team, index) => {
-      const poolIndex = index % pools.length; // Use pools.length for dynamic allocation
+      const poolIndex = index % pools.length;
       const poolId = pools[poolIndex].id;
       
       team.poolId = poolId;
@@ -139,14 +135,12 @@ export const tournamentUtils = {
   isPoolStageComplete: (poolId?: string): boolean => {
     if (poolId) {
       const poolMatches = tournamentUtils.getPoolMatches(poolId);
-      // If no matches generated for a pool, it's not complete
       if (poolMatches.length === 0) return false; 
       return poolMatches.every(match => match.completed);
     }
     
     // Check all pools
     const pools = storageUtils.getTournament().pools.map(p => p.id);
-    // If no pools allocated, pool stage is not complete
     if (pools.length === 0) return false;
     return pools.every(pool => tournamentUtils.isPoolStageComplete(pool));
   },
@@ -191,10 +185,17 @@ export const tournamentUtils = {
       team.poolId = undefined;
     });
     tournament.pools = [];
-    // Keep only non-pool matches if any, though typically all would be cleared
     tournament.matches = tournament.matches.filter(match => match.stage !== 'pool');
     storageUtils.saveTournament(tournament);
-    storageUtils.clearPoolMatchResults(); // Clear results for pool matches too
+    storageUtils.clearPoolMatchResults();
+  },
+
+  // Clear pool matches only
+  clearPoolMatches: (): void => {
+    const tournament = storageUtils.getTournament();
+    tournament.matches = tournament.matches.filter(match => match.stage !== 'pool');
+    storageUtils.saveTournament(tournament);
+    storageUtils.clearPoolMatchResults();
   },
 
   // Generate all pool stage matches
@@ -244,22 +245,18 @@ export const tournamentUtils = {
     
     return {
       ...match,
-      homeTeam: homeTeam!, // Assert non-null as these should always exist for valid matches
-      awayTeam: awayTeam!, // Assert non-null
+      homeTeam: homeTeam!, 
+      awayTeam: awayTeam!,
       homeScore: result?.homeScore,
       awayScore: result?.awayScore,
       completed: result?.completed || false
     };
   },
 
-  // NEW: Generate Cup Round of 16 bracket
+  // PHASE 2: Generate Cup Round of 16 bracket and all subsequent brackets
   generateCupBracket: (): KnockoutBracket => {
     if (!tournamentUtils.isPoolStageComplete()) {
       throw new Error('Pool stage must be completed before generating knockout bracket');
-    }
-    if (tournamentUtils.areKnockoutBracketsGenerated()) {
-      // If already generated, just return the existing bracket
-      return tournamentUtils.getCupBracket();
     }
 
     const tournament = storageUtils.getTournament();
@@ -270,12 +267,12 @@ export const tournamentUtils = {
     const poolCQualifiers = tournamentUtils.getPoolQualifiers('C');
     const poolDQualifiers = tournamentUtils.getPoolQualifiers('D');
 
-    // Clear existing knockout matches (if any, though check above should prevent re-gen)
+    // Clear existing knockout matches
     tournament.matches = tournament.matches.filter(match => 
       !['cup', 'plate', 'shield', 'festival'].includes(match.stage)
     );
 
-    // Generate Round of 16 matches with A vs D, B vs C alternating format
+    // PHASE 2.1: Generate Cup Round of 16 (A vs D, B vs C format)
     const roundOf16Matches: Match[] = [];
     
     // A1 vs D4, A2 vs D3, A3 vs D2, A4 vs D1
@@ -306,42 +303,50 @@ export const tournamentUtils = {
       });
     }
 
-    // Add matches to tournament
-    tournament.matches.push(...roundOf16Matches);
-    
-    // Generate placeholder matches for subsequent Cup rounds
+    // PHASE 2.2: Generate Cup bracket structure (QF, SF, Final, 3rd Place)
     const quarterFinalMatches = generatePlaceholderMatches('cup', 'quarter-final', 4, roundOf16Matches);
     const semiFinalMatches = generatePlaceholderMatches('cup', 'semi-final', 2, quarterFinalMatches);
     const cupFinal = generatePlaceholderMatches('cup', 'final', 1, semiFinalMatches);
-    const cupThirdPlace = generatePlaceholderMatches('cup', 'third-place', 1, semiFinalMatches);
+    const cupThirdPlace = generatePlaceholderMatches('cup', 'third-place', 1, semiFinalMatches, 'loser');
 
-    tournament.matches.push(...quarterFinalMatches, ...semiFinalMatches, ...cupFinal, ...cupThirdPlace);
-
-    // Generate Plate Bracket (for Round of 16 losers)
+    // PHASE 2.3: Generate Plate Bracket (for Cup R16 losers)
     const plateRound1Matches = generatePlaceholderMatches('plate', 'plate-round-1', 8, roundOf16Matches, 'loser');
     const plateQuarterFinals = generatePlaceholderMatches('plate', 'plate-quarter-final', 4, plateRound1Matches);
     const plateSemiFinals = generatePlaceholderMatches('plate', 'plate-semi-final', 2, plateQuarterFinals);
     const plateFinal = generatePlaceholderMatches('plate', 'plate-final', 1, plateSemiFinals);
-    const plateThirdPlace = generatePlaceholderMatches('plate', 'plate-third-place', 1, plateSemiFinals);
+    const plateThirdPlace = generatePlaceholderMatches('plate', 'plate-third-place', 1, plateSemiFinals, 'loser');
 
-    tournament.matches.push(...plateRound1Matches, ...plateQuarterFinals, ...plateSemiFinals, ...plateFinal, ...plateThirdPlace);
-
-    // Generate Shield Bracket (for Plate Quarter Final losers)
+    // PHASE 2.4: Generate Shield Bracket (for Plate QF losers)
     const shieldSemiFinals = generatePlaceholderMatches('shield', 'shield-semi-final', 2, plateQuarterFinals, 'loser');
     const shieldFinal = generatePlaceholderMatches('shield', 'shield-final', 1, shieldSemiFinals);
-    const shieldThirdPlace = generatePlaceholderMatches('shield', 'shield-third-place', 1, shieldSemiFinals);
+    const shieldThirdPlace = generatePlaceholderMatches('shield', 'shield-third-place', 1, shieldSemiFinals, 'loser');
 
-    tournament.matches.push(...shieldSemiFinals, ...shieldFinal, ...shieldThirdPlace);
-
-    // Generate Festival Matches (for bottom 3 from pools + Plate Round 1 losers)
+    // PHASE 2.5: Generate Festival Matches (bottom 3 from each pool + early exits)
     const festivalTeams: string[] = [];
     tournament.pools.forEach(pool => {
       tournamentUtils.getPoolNonQualifiers(pool.id).forEach(team => festivalTeams.push(team.id));
     });
-    // Plate Round 1 losers will be added to festival dynamically as matches complete
-    // For initial generation, we just need the pool non-qualifiers
-    const festivalMatches = generateRoundRobinMatches(festivalTeams, 'festival'); // Simple round-robin for now
-    tournament.matches.push(...festivalMatches);
+    
+    // Generate round-robin festival matches for pool non-qualifiers
+    const festivalMatches = generateRoundRobinMatches(festivalTeams, undefined, 'festival');
+
+    // Add all matches to tournament
+    tournament.matches.push(
+      ...roundOf16Matches,
+      ...quarterFinalMatches, 
+      ...semiFinalMatches, 
+      ...cupFinal, 
+      ...cupThirdPlace,
+      ...plateRound1Matches, 
+      ...plateQuarterFinals, 
+      ...plateSemiFinals, 
+      ...plateFinal, 
+      ...plateThirdPlace,
+      ...shieldSemiFinals, 
+      ...shieldFinal, 
+      ...shieldThirdPlace,
+      ...festivalMatches
+    );
 
     storageUtils.saveTournament(tournament);
 
@@ -354,63 +359,295 @@ export const tournamentUtils = {
     };
   },
 
-  // NEW: Update knockout matches based on parent match results
+  // PHASE 2.6: Auto-advance teams based on match results
   updateKnockoutProgression: (completedMatchId: string): void => {
     const tournament = storageUtils.getTournament();
     const completedMatch = tournament.matches.find(m => m.id === completedMatchId);
     const result = storageUtils.getMatchResult(completedMatchId);
 
     if (!completedMatch || !result || !result.completed) {
-      console.warn(`Attempted to update progression for incomplete or non-existent match: ${completedMatchId}`);
       return;
     }
 
+    // Determine winner and loser
     const winnerId = result.homeScore > result.awayScore ? completedMatch.homeTeamId : completedMatch.awayTeamId;
     const loserId = result.homeScore < result.awayScore ? completedMatch.homeTeamId : completedMatch.awayTeamId;
 
-    // Find all matches that depend on this completed match
+    // Find matches that depend on this completed match
     const dependentMatches = tournament.matches.filter(m => 
       m.parentMatch1 === completedMatchId || m.parentMatch2 === completedMatchId
     );
 
     dependentMatches.forEach(dependentMatch => {
-      let updated = false;
-      // Determine if the dependent match is for winners or losers
-      // This logic assumes a standard bracket progression (winner to next round, loser to consolation)
-      // For Plate/Shield, the 'loser' of a Cup match becomes a 'winner' in the Plate/Shield path.
-
-      // Update winner progression
+      // Advance winner to next Cup round
       if (dependentMatch.stage === 'cup' && dependentMatch.round !== 'third-place') {
         if (dependentMatch.parentMatch1 === completedMatchId) {
           dependentMatch.homeTeamId = winnerId;
-          updated = true;
         } else if (dependentMatch.parentMatch2 === completedMatchId) {
           dependentMatch.awayTeamId = winnerId;
-          updated = true;
-        }
-      } 
-      // Update loser progression (e.g., to Plate or Third Place)
-      else if (dependentMatch.stage === 'plate' || dependentMatch.round === 'third-place' || dependentMatch.stage === 'shield') {
-        // For Plate/Shield, the 'loser' of the parent match becomes a participant
-        // For 3rd place, the 'loser' of the semi-final becomes a participant
-        if (dependentMatch.parentMatch1 === completedMatchId) {
-          dependentMatch.homeTeamId = loserId;
-          updated = true;
-        } else if (dependentMatch.parentMatch2 === completedMatchId) {
-          dependentMatch.awayTeamId = loserId;
-          updated = true;
         }
       }
+      // Advance loser to consolation brackets or third place
+      else if (dependentMatch.stage === 'plate' || dependentMatch.stage === 'shield' || dependentMatch.round === 'third-place') {
+        if (dependentMatch.parentMatch1 === completedMatchId) {
+          dependentMatch.homeTeamId = loserId;
+        } else if (dependentMatch.parentMatch2 === completedMatchId) {
+          dependentMatch.awayTeamId = loserId;
+        }
+      }
+    });
 
-      if (updated) {
-        // If both parent matches are determined, set teams to actual IDs
-        if (dependentMatch.homeTeamId !== 'TBD' && dependentMatch.awayTeamId !== 'TBD') {
-          // No need to set completed to false, it's already false for new matches
+    // Auto-generate subsequent rounds for Plate and Shield when ready
+    tournamentUtils.autoGenerateSubsequentRounds();
+
+    storageUtils.saveTournament(tournament);
+  },
+
+  // PHASE 2: Auto-generate subsequent rounds when parent rounds are complete
+  autoGenerateSubsequentRounds: (): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Check if Cup Quarter Finals can be generated
+    const r16Matches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'round-of-16');
+    if (r16Matches.length > 0 && r16Matches.every(m => m.completed)) {
+      tournamentUtils.generateCupQuarterFinals();
+    }
+
+    // Check if Cup Semi Finals can be generated
+    const qfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'quarter-final');
+    if (qfMatches.length > 0 && qfMatches.every(m => m.completed)) {
+      tournamentUtils.generateCupSemiFinals();
+    }
+
+    // Check if Cup Final can be generated
+    const sfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'semi-final');
+    if (sfMatches.length > 0 && sfMatches.every(m => m.completed)) {
+      tournamentUtils.generateCupFinals();
+    }
+
+    // Similar logic for Plate and Shield brackets
+    tournamentUtils.autoGeneratePlateRounds();
+    tournamentUtils.autoGenerateShieldRounds();
+  },
+
+  // Generate Cup Quarter Finals from R16 winners
+  generateCupQuarterFinals: (): void => {
+    const tournament = storageUtils.getTournament();
+    const r16Matches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'round-of-16');
+    const qfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'quarter-final');
+
+    qfMatches.forEach((qfMatch, index) => {
+      const parentMatch1 = r16Matches[index * 2];
+      const parentMatch2 = r16Matches[index * 2 + 1];
+      
+      if (parentMatch1 && parentMatch2 && parentMatch1.completed && parentMatch2.completed) {
+        const winner1 = tournamentUtils.getMatchWinner(parentMatch1.id);
+        const winner2 = tournamentUtils.getMatchWinner(parentMatch2.id);
+        
+        if (winner1 && winner2) {
+          qfMatch.homeTeamId = winner1;
+          qfMatch.awayTeamId = winner2;
         }
       }
     });
 
     storageUtils.saveTournament(tournament);
+  },
+
+  // Generate Cup Semi Finals from QF winners
+  generateCupSemiFinals: (): void => {
+    const tournament = storageUtils.getTournament();
+    const qfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'quarter-final');
+    const sfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'semi-final');
+
+    sfMatches.forEach((sfMatch, index) => {
+      const parentMatch1 = qfMatches[index * 2];
+      const parentMatch2 = qfMatches[index * 2 + 1];
+      
+      if (parentMatch1 && parentMatch2 && parentMatch1.completed && parentMatch2.completed) {
+        const winner1 = tournamentUtils.getMatchWinner(parentMatch1.id);
+        const winner2 = tournamentUtils.getMatchWinner(parentMatch2.id);
+        
+        if (winner1 && winner2) {
+          sfMatch.homeTeamId = winner1;
+          sfMatch.awayTeamId = winner2;
+        }
+      }
+    });
+
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Generate Cup Final and 3rd Place from SF results
+  generateCupFinals: (): void => {
+    const tournament = storageUtils.getTournament();
+    const sfMatches = tournament.matches.filter(m => m.stage === 'cup' && m.round === 'semi-final');
+    const finalMatch = tournament.matches.find(m => m.stage === 'cup' && m.round === 'final');
+    const thirdPlaceMatch = tournament.matches.find(m => m.stage === 'cup' && m.round === 'third-place');
+
+    if (sfMatches.length === 2 && sfMatches.every(m => m.completed)) {
+      const winner1 = tournamentUtils.getMatchWinner(sfMatches[0].id);
+      const winner2 = tournamentUtils.getMatchWinner(sfMatches[1].id);
+      const loser1 = tournamentUtils.getMatchLoser(sfMatches[0].id);
+      const loser2 = tournamentUtils.getMatchLoser(sfMatches[1].id);
+
+      if (finalMatch && winner1 && winner2) {
+        finalMatch.homeTeamId = winner1;
+        finalMatch.awayTeamId = winner2;
+      }
+
+      if (thirdPlaceMatch && loser1 && loser2) {
+        thirdPlaceMatch.homeTeamId = loser1;
+        thirdPlaceMatch.awayTeamId = loser2;
+      }
+
+      storageUtils.saveTournament(tournament);
+    }
+  },
+
+  // Auto-generate Plate rounds
+  autoGeneratePlateRounds: (): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Generate Plate QF when Plate R1 is complete
+    const plateR1 = tournament.matches.filter(m => m.stage === 'plate' && m.round === 'plate-round-1');
+    const plateQF = tournament.matches.filter(m => m.stage === 'plate' && m.round === 'plate-quarter-final');
+    
+    if (plateR1.length > 0 && plateR1.every(m => m.completed) && plateQF.length > 0) {
+      plateQF.forEach((qfMatch, index) => {
+        const parentMatch1 = plateR1[index * 2];
+        const parentMatch2 = plateR1[index * 2 + 1];
+        
+        if (parentMatch1 && parentMatch2) {
+          const winner1 = tournamentUtils.getMatchWinner(parentMatch1.id);
+          const winner2 = tournamentUtils.getMatchWinner(parentMatch2.id);
+          
+          if (winner1 && winner2) {
+            qfMatch.homeTeamId = winner1;
+            qfMatch.awayTeamId = winner2;
+          }
+        }
+      });
+    }
+
+    // Similar logic for Plate SF and Finals
+    const plateSF = tournament.matches.filter(m => m.stage === 'plate' && m.round === 'plate-semi-final');
+    if (plateQF.length > 0 && plateQF.every(m => m.completed) && plateSF.length > 0) {
+      plateSF.forEach((sfMatch, index) => {
+        const parentMatch1 = plateQF[index * 2];
+        const parentMatch2 = plateQF[index * 2 + 1];
+        
+        if (parentMatch1 && parentMatch2) {
+          const winner1 = tournamentUtils.getMatchWinner(parentMatch1.id);
+          const winner2 = tournamentUtils.getMatchWinner(parentMatch2.id);
+          
+          if (winner1 && winner2) {
+            sfMatch.homeTeamId = winner1;
+            sfMatch.awayTeamId = winner2;
+          }
+        }
+      });
+    }
+
+    // Generate Plate Finals
+    if (plateSF.length === 2 && plateSF.every(m => m.completed)) {
+      const plateFinalMatch = tournament.matches.find(m => m.stage === 'plate' && m.round === 'plate-final');
+      const plateThirdMatch = tournament.matches.find(m => m.stage === 'plate' && m.round === 'plate-third-place');
+
+      if (plateFinalMatch) {
+        const winner1 = tournamentUtils.getMatchWinner(plateSF[0].id);
+        const winner2 = tournamentUtils.getMatchWinner(plateSF[1].id);
+        if (winner1 && winner2) {
+          plateFinalMatch.homeTeamId = winner1;
+          plateFinalMatch.awayTeamId = winner2;
+        }
+      }
+
+      if (plateThirdMatch) {
+        const loser1 = tournamentUtils.getMatchLoser(plateSF[0].id);
+        const loser2 = tournamentUtils.getMatchLoser(plateSF[1].id);
+        if (loser1 && loser2) {
+          plateThirdMatch.homeTeamId = loser1;
+          plateThirdMatch.awayTeamId = loser2;
+        }
+      }
+    }
+
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Auto-generate Shield rounds  
+  autoGenerateShieldRounds: (): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Generate Shield SF when Plate QF is complete
+    const plateQF = tournament.matches.filter(m => m.stage === 'plate' && m.round === 'plate-quarter-final');
+    const shieldSF = tournament.matches.filter(m => m.stage === 'shield' && m.round === 'shield-semi-final');
+    
+    if (plateQF.length > 0 && plateQF.every(m => m.completed) && shieldSF.length > 0) {
+      shieldSF.forEach((sfMatch, index) => {
+        const parentMatch1 = plateQF[index * 2];
+        const parentMatch2 = plateQF[index * 2 + 1];
+        
+        if (parentMatch1 && parentMatch2) {
+          const loser1 = tournamentUtils.getMatchLoser(parentMatch1.id);
+          const loser2 = tournamentUtils.getMatchLoser(parentMatch2.id);
+          
+          if (loser1 && loser2) {
+            sfMatch.homeTeamId = loser1;
+            sfMatch.awayTeamId = loser2;
+          }
+        }
+      });
+    }
+
+    // Generate Shield Finals
+    if (shieldSF.length === 2 && shieldSF.every(m => m.completed)) {
+      const shieldFinalMatch = tournament.matches.find(m => m.stage === 'shield' && m.round === 'shield-final');
+      const shieldThirdMatch = tournament.matches.find(m => m.stage === 'shield' && m.round === 'shield-third-place');
+
+      if (shieldFinalMatch) {
+        const winner1 = tournamentUtils.getMatchWinner(shieldSF[0].id);
+        const winner2 = tournamentUtils.getMatchWinner(shieldSF[1].id);
+        if (winner1 && winner2) {
+          shieldFinalMatch.homeTeamId = winner1;
+          shieldFinalMatch.awayTeamId = winner2;
+        }
+      }
+
+      if (shieldThirdMatch) {
+        const loser1 = tournamentUtils.getMatchLoser(shieldSF[0].id);
+        const loser2 = tournamentUtils.getMatchLoser(shieldSF[1].id);
+        if (loser1 && loser2) {
+          shieldThirdMatch.homeTeamId = loser1;
+          shieldThirdMatch.awayTeamId = loser2;
+        }
+      }
+    }
+
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Helper: Get match winner
+  getMatchWinner: (matchId: string): string | null => {
+    const result = storageUtils.getMatchResult(matchId);
+    if (!result || !result.completed) return null;
+    
+    const match = storageUtils.getTournament().matches.find(m => m.id === matchId);
+    if (!match) return null;
+
+    return result.homeScore > result.awayScore ? match.homeTeamId : match.awayTeamId;
+  },
+
+  // Helper: Get match loser
+  getMatchLoser: (matchId: string): string | null => {
+    const result = storageUtils.getMatchResult(matchId);
+    if (!result || !result.completed) return null;
+    
+    const match = storageUtils.getTournament().matches.find(m => m.id === matchId);
+    if (!match) return null;
+
+    return result.homeScore < result.awayScore ? match.homeTeamId : match.awayTeamId;
   },
 
   // Check if knockout brackets have been generated
@@ -501,38 +738,112 @@ export const tournamentUtils = {
     };
   },
 
+  // PHASE 2.7: Lock brackets once knockout stage starts
+  areBracketsLocked: (): boolean => {
+    const tournament = storageUtils.getTournament();
+    const knockoutMatches = tournament.matches.filter(match => 
+      ['cup', 'plate', 'shield'].includes(match.stage)
+    );
+    
+    // Brackets are locked if any knockout match has been completed
+    return knockoutMatches.some(match => match.completed);
+  },
+
   // Clear all knockout and festival matches (for re-generation)
   clearKnockoutAndFestivalMatches: (): void => {
     const tournament = storageUtils.getTournament();
+    const knockoutMatchIds = tournament.matches
+      .filter(match => ['cup', 'plate', 'shield', 'festival'].includes(match.stage))
+      .map(match => match.id);
+    
+    // Remove knockout matches
     tournament.matches = tournament.matches.filter(match => 
       !['cup', 'plate', 'shield', 'festival'].includes(match.stage)
     );
+    
     storageUtils.saveTournament(tournament);
-    // Also clear results for these stages
-    const resultsKey = `${STORAGE_KEY}-results`; // Assuming STORAGE_KEY is accessible or passed
+    
+    // Clear results for knockout matches
     const existingResults = storageUtils.getMatchResults();
-    const filteredResults = existingResults.filter(result => {
-      const match = tournament.matches.find(m => m.id === result.matchId);
-      return match && match.stage === 'pool'; // Keep only pool results
-    });
+    const filteredResults = existingResults.filter(result => 
+      !knockoutMatchIds.includes(result.matchId)
+    );
+    
     if (typeof window !== 'undefined') {
+      const resultsKey = 'water-polo-tournament-results';
       localStorage.setItem(resultsKey, JSON.stringify(filteredResults));
+    }
+  },
+
+  // PHASE 2: Enhanced Festival Match Generation
+  generateAdditionalFestivalMatches: (): void => {
+    const tournament = storageUtils.getTournament();
+    
+    // Get all teams that should be in festival
+    const festivalTeamIds: string[] = [];
+    
+    // Add bottom 3 from each pool
+    tournament.pools.forEach(pool => {
+      const nonQualifiers = tournamentUtils.getPoolNonQualifiers(pool.id);
+      nonQualifiers.forEach(team => festivalTeamIds.push(team.id));
+    });
+    
+    // Add Plate Round 1 losers to festival
+    const plateR1Matches = tournament.matches.filter(m => m.stage === 'plate' && m.round === 'plate-round-1');
+    plateR1Matches.forEach(match => {
+      if (match.completed) {
+        const loserId = tournamentUtils.getMatchLoser(match.id);
+        if (loserId && !festivalTeamIds.includes(loserId)) {
+          festivalTeamIds.push(loserId);
+        }
+      }
+    });
+
+    // Clear existing festival matches
+    tournament.matches = tournament.matches.filter(match => match.stage !== 'festival');
+    
+    // Generate new festival matches (round-robin style with limited games per team)
+    const festivalMatches = generateLimitedFestivalMatches(festivalTeamIds);
+    tournament.matches.push(...festivalMatches);
+    
+    storageUtils.saveTournament(tournament);
+  },
+
+  // Save completed match and auto-update progressions
+  saveMatchResultWithProgression: (result: MatchResult): void => {
+    // Save the match result first
+    storageUtils.saveMatchResult(result);
+    
+    // Update the match completion status in tournament data
+    const tournament = storageUtils.getTournament();
+    const matchIndex = tournament.matches.findIndex(m => m.id === result.matchId);
+    if (matchIndex !== -1) {
+      tournament.matches[matchIndex].completed = result.completed;
+      tournament.matches[matchIndex].homeScore = result.homeScore;
+      tournament.matches[matchIndex].awayScore = result.awayScore;
+    }
+    
+    storageUtils.saveTournament(tournament);
+
+    // Auto-update knockout progressions if this was a knockout match
+    if (result.completed) {
+      tournamentUtils.updateKnockoutProgression(result.matchId);
     }
   }
 };
 
 // Helper function to generate round-robin matches for a pool
-function generateRoundRobinMatches(teamIds: string[], stageId: string): Match[] {
+function generateRoundRobinMatches(teamIds: string[], poolId?: string, stage: 'pool' | 'festival' = 'pool'): Match[] {
   const matches: Match[] = [];
   
   for (let i = 0; i < teamIds.length; i++) {
     for (let j = i + 1; j < teamIds.length; j++) {
       const match: Match = {
-        id: `${stageId}-${teamIds[i]}-${teamIds[j]}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id: `${stage}-${teamIds[i]}-${teamIds[j]}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         homeTeamId: teamIds[i],
         awayTeamId: teamIds[j],
-        poolId: stageId === 'pool' ? stageId : undefined, // Only set poolId for pool stage matches
-        stage: stageId === 'pool' ? 'pool' : 'festival', // Assume 'festival' for non-pool round-robin
+        poolId: poolId,
+        stage: stage,
         completed: false
       };
       matches.push(match);
@@ -542,9 +853,48 @@ function generateRoundRobinMatches(teamIds: string[], stageId: string): Match[] 
   return matches;
 }
 
+// Helper function to generate limited festival matches (4-5 games per team max)
+function generateLimitedFestivalMatches(teamIds: string[]): Match[] {
+  const matches: Match[] = [];
+  const teamMatchCounts: { [teamId: string]: number } = {};
+  
+  // Initialize match counts
+  teamIds.forEach(teamId => {
+    teamMatchCounts[teamId] = 0;
+  });
+  
+  const maxMatchesPerTeam = 5;
+  const shuffledPairs: string[][] = [];
+  
+  // Generate all possible pairs
+  for (let i = 0; i < teamIds.length; i++) {
+    for (let j = i + 1; j < teamIds.length; j++) {
+      shuffledPairs.push([teamIds[i], teamIds[j]]);
+    }
+  }
+  
+  // Shuffle pairs and select up to max matches per team
+  shuffledPairs.sort(() => Math.random() - 0.5);
+  
+  for (const [team1, team2] of shuffledPairs) {
+    if (teamMatchCounts[team1] < maxMatchesPerTeam && teamMatchCounts[team2] < maxMatchesPerTeam) {
+      matches.push({
+        id: `festival-${team1}-${team2}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        homeTeamId: team1,
+        awayTeamId: team2,
+        stage: 'festival',
+        completed: false
+      });
+      
+      teamMatchCounts[team1]++;
+      teamMatchCounts[team2]++;
+    }
+  }
+  
+  return matches;
+}
+
 // Helper function to generate placeholder matches for knockout rounds
-// parentMatches: array of matches from the previous round
-// winnerOrLoser: 'winner' or 'loser' to determine which team progresses
 function generatePlaceholderMatches(
   stage: 'cup' | 'plate' | 'shield', 
   round: string, 
@@ -560,7 +910,7 @@ function generatePlaceholderMatches(
 
     matches.push({
       id: `${stage}-${round}-${i + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      homeTeamId: 'TBD', // To Be Determined
+      homeTeamId: 'TBD',
       awayTeamId: 'TBD',
       stage: stage,
       round,
@@ -587,8 +937,7 @@ function mapBracketMatchesToTeams<T extends KnockoutBracket | PlateBracket | Shi
     const homeTeam = teams.find(t => t.id === match.homeTeamId);
     const awayTeam = teams.find(t => t.id === match.awayTeamId);
     
-    // If no teams assigned yet (placeholder match), return null unless we want to show TBD
-    // For now, we'll return a partial MatchWithTeams if teams are TBD
+    // Handle TBD teams for placeholder matches
     if (!homeTeam || !awayTeam) {
       return {
         ...match,
@@ -623,7 +972,7 @@ function mapBracketMatchesToTeams<T extends KnockoutBracket | PlateBracket | Shi
   return mappedBracket as any;
 }
 
-
+// Type definitions
 export interface TeamStanding {
   team: Team;
   played: number;
@@ -650,7 +999,7 @@ export interface KnockoutBracket {
 }
 
 export interface PlateBracket {
-  round1: Match[]; // 8 matches for R16 losers
+  round1: Match[];
   quarterFinals: Match[];
   semiFinals: Match[];
   final: Match;
@@ -658,7 +1007,7 @@ export interface PlateBracket {
 }
 
 export interface ShieldBracket {
-  semiFinals: Match[]; // 2 matches for Plate QF losers
+  semiFinals: Match[];
   final: Match;
   thirdPlace: Match;
 }
@@ -693,6 +1042,3 @@ export interface BracketStatus {
   shieldBracket: ShieldBracketWithTeams | null;
   festivalMatches: MatchWithTeams[];
 }
-
-// Assuming STORAGE_KEY is defined elsewhere or passed. For this context, let's define it here.
-const STORAGE_KEY = 'water-polo-tournament'; // This should ideally come from storage.ts
