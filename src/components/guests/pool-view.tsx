@@ -12,15 +12,39 @@ export default function PoolsView() {
   const [totalTeams, setTotalTeams] = useState(0);
   const [isAllocating, setIsAllocating] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [poolStandings, setPoolStandings] = useState<{[key: string]: any[]}>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tournamentStats, setTournamentStats] = useState<any>(null);
 
   useEffect(() => {
+      const loadPoolData = async () => {
+    const teams = await storageUtils.getTeams();
+    const allocated = tournamentUtils.arePoolsAllocated();
+    
+    setTotalTeams(teams.length);
+    setIsAllocated(allocated);
+
+    if (allocated) {
+      const standings = {
+        A: tournamentUtils.getPoolStandings('A'),
+        B: tournamentUtils.getPoolStandings('B'),
+        C: tournamentUtils.getPoolStandings('C'),
+        D: tournamentUtils.getPoolStandings('D')
+      };
+      setPoolStandings(standings);
+      
+      // Get tournament statistics
+      const stats = tournamentUtils.getTournamentStats();
+      setTournamentStats(stats);
+    }
+  };
+  
     loadPoolData();
   }, []);
 
-  const loadPoolData = () => {
-    const teams = storageUtils.getTeams();
+  const loadPoolData = async () => {
+    const teams = await storageUtils.getTeams();
     const allocated = tournamentUtils.arePoolsAllocated();
     
     setTotalTeams(teams.length);

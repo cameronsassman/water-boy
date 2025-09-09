@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")       // connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // direct connection
+}
+
+// Teams
+model Team {
+  id         String   @id
+  schoolName String
+  coachName  String
+  managerName String
+  poolId     String?  // optional
+  players    Player[]
+  matchesHome Match[] @relation("HomeMatches")
+  matchesAway Match[] @relation("AwayMatches")
+  poolTeams  PoolTeam[]
+}
+
+// Players
+model Player {
+  id        String @id
+  teamId    String
+  name      String
+  capNumber Int
+  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  stats     PlayerStat[]
+}
+
+// Pools
+model Pool {
+  id    String @id
+  name  String
+  poolTeams PoolTeam[]
+  matches Match[]
+}
+
+// Pool-Team relation table
+model PoolTeam {
+  poolId String
+  teamId String
+  pool   Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([poolId, teamId])
+}
+
+// Matches
+model Match {
+  id              String @id
+  homeTeamId      String?
+  awayTeamId      String?
+  poolId          String?
+  stage           String
+  homeScore       Int?
+  awayScore       Int?
+  completed       Boolean  @default(false)
+  round           String?
+  bracketPosition Int?
+  parentMatch1    String?
+  parentMatch2    String?
+
+  homeTeam Team? @relation("HomeMatches", fields: [homeTeamId], references: [id])
+  awayTeam Team? @relation("AwayMatches", fields: [awayTeamId], references: [id])
+  pool     Pool? @relation(fields: [poolId], references: [id])
+  result   MatchResult?
+  playerStats PlayerStat[]
+}
+
+// Match results
+model MatchResult {
+  id          Int    @id @default(autoincrement())
+  matchId     String @unique
+  homeScore   Int
+  awayScore   Int
+  completed   Boolean @default(false)
+  completedAt DateTime @default(now())
+  match       Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
+// Player stats per match
+model PlayerStat {
+  id         Int     @id @default(autoincrement())
+  matchId    String
+  playerId   String
+  capNumber  Int
+  goals      Int @default(0)
+  kickOuts   Int @default(0)
+  yellowCards Int @default(0)
+  redCards   Int @default(0)
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id])
+}

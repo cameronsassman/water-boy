@@ -62,7 +62,7 @@ export default function TeamRegistration() {
     return 1;
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
 
     // Validate school name
@@ -70,7 +70,7 @@ export default function TeamRegistration() {
     if (schoolError) newErrors.schoolName = schoolError;
 
     // Check if school name is already taken
-    if (!schoolError && storageUtils.isSchoolNameTaken(schoolName)) {
+    if (!schoolError && await storageUtils.isSchoolNameTaken(schoolName)) {
       newErrors.schoolName = 'This school name is already registered';
     }
 
@@ -175,7 +175,7 @@ export default function TeamRegistration() {
                 onChange={(e) => {
                   setSchoolName(e.target.value);
                   if (errors.schoolName) {
-                    const { schoolName, ...rest } = errors;
+                    const { ...rest } = errors;
                     setErrors(rest);
                   }
                 }}
@@ -195,7 +195,7 @@ export default function TeamRegistration() {
                   onChange={(e) => {
                     setCoachName(e.target.value);
                     if (errors.coachName) {
-                      const { coachName, ...rest } = errors;
+                      const { ...rest } = errors;
                       setErrors(rest);
                     }
                   }}
@@ -214,7 +214,7 @@ export default function TeamRegistration() {
                   onChange={(e) => {
                     setManagerName(e.target.value);
                     if (errors.managerName) {
-                      const { managerName, ...rest } = errors;
+                      const { ...rest } = errors;
                       setErrors(rest);
                     }
                   }}

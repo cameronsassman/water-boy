@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { storageUtils } from '@/utils/storage';
 import { tournamentUtils, MatchWithTeams, TeamStanding } from '@/utils/tournament-logic';
 import { Team } from '@/types/team';
-import { PlayerStats } from '@/types/player';
-import { MatchResult } from '@/types/match';
+// import { PlayerStats } from '@/types/player';
+// import { MatchResult } from '@/types/match';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,8 @@ import {
   Target, 
   AlertTriangle, 
   TrendingUp, 
-  TrendingDown, 
-  Minus,
+  // TrendingDown, 
+  // Minus,
   Search,
   ArrowLeft,
   Calendar,
@@ -65,8 +65,8 @@ export default function TeamsPage() {
     loadTeams();
   }, []);
 
-  const loadTeams = () => {
-    const allTeams = storageUtils.getTeams();
+  const loadTeams = async () => {
+    const allTeams = await storageUtils.getTeams();
     setTeams(allTeams);
   };
 
@@ -78,7 +78,7 @@ export default function TeamsPage() {
       const standing = team.poolId ? tournamentUtils.getPoolStandings(team.poolId).find(s => s.team.id === team.id) : null;
       
       // Get all matches for this team
-      const allMatches = storageUtils.getTournament().matches;
+      const allMatches = (await storageUtils.getTournament()).matches;
       const teamMatches = allMatches
         .filter(match => match.homeTeamId === team.id || match.awayTeamId === team.id)
         .map(match => tournamentUtils.getMatchWithTeams(match));
@@ -102,9 +102,9 @@ export default function TeamsPage() {
       });
 
       // Aggregate stats from all completed matches
-      teamMatches.forEach(match => {
+      teamMatches.forEach( async match => {
         if (match.completed) {
-          const matchResult = storageUtils.getMatchResult(match.id);
+          const matchResult = await storageUtils.getMatchResult(match.id);
           if (matchResult) {
             const isHome = match.homeTeam.id === team.id;
             const teamMatchStats = isHome ? matchResult.homeTeamStats : matchResult.awayTeamStats;
@@ -372,7 +372,7 @@ export default function TeamsPage() {
                       const opponent = isHome ? match.awayTeam : match.homeTeam;
                       const won = teamScore !== undefined && opponentScore !== undefined && teamScore > opponentScore;
                       const lost = teamScore !== undefined && opponentScore !== undefined && teamScore < opponentScore;
-                      const drawn = teamScore !== undefined && opponentScore !== undefined && teamScore === opponentScore;
+                      // const drawn = teamScore !== undefined && opponentScore !== undefined && teamScore === opponentScore;
                       
                       return (
                         <div key={match.id} className={`
@@ -1046,6 +1046,7 @@ export default function TeamsPage() {
               <span className="text-sm text-gray-500">Sort:</span>
               <select 
                 value={sortBy}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >

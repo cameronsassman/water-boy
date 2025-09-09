@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Users, Target, AlertTriangle, Save, X, Plus, Minus, CheckCircle } from 'lucide-react';
+import { Trophy, Users, Target, Save, X, Plus, Minus, CheckCircle } from 'lucide-react';
+import { Player } from '@/types/team';
 
 export default function ScoreInput() {
   const [availableMatches, setAvailableMatches] = useState<MatchWithTeams[]>([]);
@@ -19,13 +20,10 @@ export default function ScoreInput() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    loadMatches();
-  }, []);
-
-  const loadMatches = () => {
+      const loadMatches = async () => {
     try {
       // Load all matches (pool, cup, plate, shield, festival)
-      const tournament = storageUtils.getTournament();
+      const tournament = await storageUtils.getTournament();
       const allMatches = tournament.matches;
       const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
       
@@ -36,11 +34,16 @@ export default function ScoreInput() {
     }
   };
 
-  const selectMatch = (match: MatchWithTeams) => {
+    loadMatches();
+  }, []);
+
+
+
+  const selectMatch = async (match: MatchWithTeams) => {
     setSelectedMatch(match);
     
     // Load existing result if available
-    const existingResult = storageUtils.getMatchResult(match.id);
+    const existingResult = await storageUtils.getMatchResult(match.id);
     
     if (existingResult) {
       setHomeTeamStats(existingResult.homeTeamStats);
@@ -136,6 +139,21 @@ export default function ScoreInput() {
         tournamentUtils.updateKnockoutProgression(selectedMatch.id);
       }
 
+            const loadMatches = async () => {
+    try {
+      // Load all matches (pool, cup, plate, shield, festival)
+      const tournament = await storageUtils.getTournament();
+      const allMatches = tournament.matches;
+      const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
+      
+      // Filter out matches that are already completed if desired, or show all
+      setAvailableMatches(matchesWithTeams.filter(m => !m.completed)); // Show only pending matches for input
+    } catch (error) {
+      console.error('Error loading matches:', error);
+    }
+  };
+  
+
       // Reload matches to show updated status
       loadMatches();
       
@@ -156,7 +174,7 @@ export default function ScoreInput() {
   };
 
   const renderPlayerStatsRow = (
-    player: any,
+    player: Player,
     stats: PlayerStats,
     teamType: 'home' | 'away'
   ) => {

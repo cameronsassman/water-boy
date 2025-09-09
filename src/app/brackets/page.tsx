@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Trophy, Users, Target, Award, Calendar, CheckCircle, 
+  Trophy, Users, Target, Calendar, 
   Clock, RefreshCw, AlertCircle, Play, Crown, Medal, Shield, Zap
 } from 'lucide-react';
 import BracketDisplay from '@/components/guests/bracket'; // Import the new BracketDisplay component

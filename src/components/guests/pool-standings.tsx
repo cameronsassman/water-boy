@@ -38,8 +38,8 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
   const hasMatchResults = standings.some(standing => standing.played > 0);
   
   // Determine qualification positions
-  const qualifyingTeams = standings.slice(0, 4);
-  const festivalTeams = standings.slice(4);
+  // const qualifyingTeams = standings.slice(0, 4);
+  // const festivalTeams = standings.slice(4);
 
   return (
     <Card>

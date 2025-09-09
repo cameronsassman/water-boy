@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { teamStatsUtils, TeamStatsSummary, PlayerStatsSummary, TeamPerformanceTrend } from '@/utils/team-stats';
+import { useParams } from 'next/navigation';
+import { teamStatsUtils, TeamStatsSummary, TeamPerformanceTrend } from '@/utils/team-stats';
 import { tournamentUtils } from '@/utils/tournament-logic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,14 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, Trophy, Target, Award, ArrowLeft, TrendingUp, TrendingDown, 
-  Minus, Star, Activity, Calendar, BarChart3, Zap, Shield, Flame,
-  Clock, Eye, ChevronRight, Medal, AlertTriangle
+ Star, Activity, Calendar, BarChart3, Zap, Shield, Flame,
+  Clock, ChevronRight, Medal, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TeamDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  // const router = useRouter();
   const teamId = params?.id as string;
 
   console.log(teamId)
@@ -26,13 +26,11 @@ export default function TeamDetailPage() {
   const [performanceTrend, setPerformanceTrend] = useState<TeamPerformanceTrend | null>(null);
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
     if (teamId) {
-      loadTeamData();
-    }
-  }, [teamId]);
-
-  const loadTeamData = () => {
+          const loadTeamData = () => {
     setLoading(true);
     try {
       const stats = teamStatsUtils.getTeamStats(teamId);
@@ -46,6 +44,12 @@ export default function TeamDetailPage() {
       setLoading(false);
     }
   };
+  
+      loadTeamData();
+    }
+  }, [teamId]);
+
+
 
   if (loading) {
     return (

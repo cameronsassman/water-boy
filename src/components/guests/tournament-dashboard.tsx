@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { tournamentUtils, TeamStanding } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
@@ -6,23 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Trophy, Users, Target, Award, Calendar, CheckCircle, 
-  Clock, BarChart3, RefreshCw, AlertCircle, TrendingUp 
+   BarChart3, RefreshCw, TrendingUp 
 } from 'lucide-react';
 
 export default function TournamentDashboard() {
   const [allStandings, setAllStandings] = useState<{[key: string]: TeamStanding[]}>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tournamentStats, setTournamentStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
-    loadTournamentData();
-  }, []);
-
-  const loadTournamentData = () => {
+      const loadTournamentData = async () => {
     setIsLoading(true);
     try {
-      if (tournamentUtils.arePoolsAllocated()) {
+      if (await tournamentUtils.arePoolsAllocated()) {
         const standings = tournamentUtils.getAllPoolStandings();
         setAllStandings(standings);
         
@@ -38,11 +37,33 @@ export default function TournamentDashboard() {
     }
   };
 
-  const getTopScorers = (limit: number = 5) => {
-    const allResults = storageUtils.getMatchResults();
+    loadTournamentData();
+  }, []);
+
+  const loadTournamentData = async () => {
+    setIsLoading(true);
+    try {
+      if (await tournamentUtils.arePoolsAllocated()) {
+        const standings = tournamentUtils.getAllPoolStandings();
+        setAllStandings(standings);
+        
+        const stats = tournamentUtils.getTournamentStats();
+        setTournamentStats(stats);
+        
+        setLastUpdated(new Date().toLocaleTimeString());
+      }
+    } catch (error) {
+      console.error('Error loading tournament data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getTopScorers = async (limit: number = 5) => {
+    const allResults = await storageUtils.getMatchResults();
     const playerGoals: {[key: string]: {name: string, team: string, goals: number, capNumber: number}} = {};
     
-    const teams = storageUtils.getTeams();
+    const teams = await storageUtils.getTeams();
     
     allResults.forEach(result => {
       if (result.completed) {
@@ -199,7 +220,7 @@ export default function TournamentDashboard() {
           <CardContent>
             {poolLeaders.length > 0 ? (
               <div className="grid grid-cols-2 gap-4">
-                {poolLeaders.map((leader, index) => (
+                {poolLeaders.map((leader: any, index) => (
                   <div key={leader.poolId} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(leader.poolId)}`}>
@@ -243,7 +264,7 @@ export default function TournamentDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {topScorers.length > 0 ? (
+            {topScorers && topScorers.length > 0 ? (
               <div className="space-y-3">
                 {topScorers.map((scorer, index) => (
                   <div key={`${scorer.name}-${scorer.team}`} className="flex items-center gap-3">

@@ -1,8 +1,8 @@
 import React from 'react';
 import { MatchWithTeams } from '@/utils/tournament-logic';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Crown, Medal, Clock, CheckCircle } from 'lucide-react';
+// import { Badge } from '@/components/ui/badge';
+import { Crown, Medal, Clock, CheckCircle } from 'lucide-react';
 
 interface BracketDisplayProps {
   roundOf16: MatchWithTeams[];
