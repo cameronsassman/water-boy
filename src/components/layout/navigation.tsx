@@ -1,9 +1,7 @@
-// src/components/common/Navigation.tsx
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 const navigationItems = [
   { name: 'Home', href: '/', icon: '🏠' },
@@ -17,12 +15,30 @@ const navigationItems = [
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Don't show navigation on admin routes
   if (pathname.startsWith('/admin')) {
     return null;
   }
+
+  // Close mobile menu when pathname changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsNavigating(false);
+  }, [pathname]);
+
+  // Handle navigation with loading state
+  const handleNavigation = (href: string) => {
+    if (pathname !== href) {
+      setIsNavigating(true);
+      setIsMobileMenuOpen(false);
+      // Use router.push instead of Link for better control
+      router.push(href);
+    }
+  };
 
   return (
     <nav className="bg-blue-900 shadow-lg sticky top-0 z-50">
@@ -30,7 +46,10 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <button
+              onClick={() => handleNavigation('/')}
+              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
               <span className="text-2xl">🏊‍♂️</span>
               <span className="text-white font-bold text-lg hidden sm:block">
                 U14 Water Polo Tournament
@@ -38,7 +57,7 @@ export default function Navigation() {
               <span className="text-white font-bold text-lg sm:hidden">
                 U14 Tournament
               </span>
-            </Link>
+            </button>
           </div>
 
           {/* Desktop Navigation */}
@@ -46,10 +65,11 @@ export default function Navigation() {
             {navigationItems.map((item) => {
               const isActive = pathname === item.href;
               return (
-                <Link
+                <button
                   key={item.name}
-                  href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  onClick={() => handleNavigation(item.href)}
+                  disabled={isNavigating}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 ${
                     isActive
                       ? 'bg-blue-700 text-white'
                       : 'text-blue-100 hover:bg-blue-800 hover:text-white'
@@ -57,7 +77,7 @@ export default function Navigation() {
                 >
                   <span className="mr-1">{item.icon}</span>
                   {item.name}
-                </Link>
+                </button>
               );
             })}
           </div>
@@ -102,19 +122,19 @@ export default function Navigation() {
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <Link
+                  <button
                     key={item.name}
-                    href={item.href}
-                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
+                    onClick={() => handleNavigation(item.href)}
+                    disabled={isNavigating}
+                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 disabled:opacity-50 ${
                       isActive
                         ? 'bg-blue-700 text-white'
                         : 'text-blue-100 hover:bg-blue-700 hover:text-white'
                     }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <span className="mr-2">{item.icon}</span>
                     {item.name}
-                  </Link>
+                  </button>
                 );
               })}
             </div>
