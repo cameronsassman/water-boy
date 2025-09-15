@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { tournamentUtils, MatchWithTeams } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
-import MatchCard from '../src/components/guests/match-card';
+import MatchCard from '../../components/guests/match-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
