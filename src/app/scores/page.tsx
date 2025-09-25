@@ -17,10 +17,15 @@ interface ScheduledMatch extends MatchWithTeams {
   arena: 1 | 2;
 }
 
+// Storage keys for persistent scheduling
+const SCHEDULED_MATCHES_KEY = 'water-polo-tournament-scheduled-matches';
+const SCHEDULE_GENERATED_KEY = 'water-polo-tournament-schedule-generated';
+
 export default function ScoresPage() {
   const [isAllocated, setIsAllocated] = useState(false);
   const [matchesGenerated, setMatchesGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [poolMatches, setPoolMatches] = useState<{[key: string]: ScheduledMatch[]}>({});
   const [totalTeams, setTotalTeams] = useState(0);
   const [allMatches, setAllMatches] = useState<ScheduledMatch[]>([]);
@@ -32,37 +37,90 @@ export default function ScoresPage() {
     loadMatchData();
   }, []);
 
+  // Load scheduled matches from localStorage
+  const loadScheduledMatchesFromStorage = (): ScheduledMatch[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(SCHEDULED_MATCHES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error loading scheduled matches from storage:', error);
+      return [];
+    }
+  };
+
+  // Save scheduled matches to localStorage
+  const saveScheduledMatchesToStorage = (matches: ScheduledMatch[]): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(SCHEDULED_MATCHES_KEY, JSON.stringify(matches));
+      localStorage.setItem(SCHEDULE_GENERATED_KEY, 'true');
+    } catch (error) {
+      console.error('Error saving scheduled matches to storage:', error);
+    }
+  };
+
+  // Check if schedule exists in storage
+  const isScheduleGeneratedInStorage = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(SCHEDULE_GENERATED_KEY) === 'true';
+  };
+
+  // Clear scheduled matches from storage
+  const clearScheduledMatchesFromStorage = (): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(SCHEDULED_MATCHES_KEY);
+    localStorage.removeItem(SCHEDULE_GENERATED_KEY);
+  };
+
   const loadMatchData = () => {
     try {
       const allocated = tournamentUtils.arePoolsAllocated();
-      const generated = tournamentUtils.arePoolMatchesGenerated();
+      const poolMatchesGenerated = tournamentUtils.arePoolMatchesGenerated();
+      const scheduleGenerated = isScheduleGeneratedInStorage();
       const teams = storageUtils.getTeams();
       
       setIsAllocated(allocated);
-      setMatchesGenerated(generated);
+      setMatchesGenerated(poolMatchesGenerated && scheduleGenerated);
       setTotalTeams(teams.length);
 
-      if (generated) {
-        const scheduledMatchesData = scheduleAllMatches();
+      if (poolMatchesGenerated && scheduleGenerated) {
+        // Load existing schedule from storage
+        const scheduledMatchesData = loadScheduledMatchesFromStorage();
+        
+        // Update match completion status from current results
+        const updatedScheduledMatches = scheduledMatchesData.map(match => {
+          const currentMatch = storageUtils.getTournament().matches.find(m => m.id === match.id);
+          const result = storageUtils.getMatchResult(match.id);
+          
+          return {
+            ...match,
+            completed: result?.completed || false,
+            homeScore: result?.homeScore,
+            awayScore: result?.awayScore
+          };
+        });
+
         const pools = {
-          A: scheduledMatchesData.filter(m => m.poolId === 'A'),
-          B: scheduledMatchesData.filter(m => m.poolId === 'B'),
-          C: scheduledMatchesData.filter(m => m.poolId === 'C'),
-          D: scheduledMatchesData.filter(m => m.poolId === 'D')
+          A: updatedScheduledMatches.filter(m => m.poolId === 'A'),
+          B: updatedScheduledMatches.filter(m => m.poolId === 'B'),
+          C: updatedScheduledMatches.filter(m => m.poolId === 'C'),
+          D: updatedScheduledMatches.filter(m => m.poolId === 'D')
         };
+        
         setPoolMatches(pools);
-        setAllMatches(scheduledMatchesData);
+        setAllMatches(updatedScheduledMatches);
         
         // Separate pool matches from knockout/festival
-        const poolOnly = scheduledMatchesData.filter(m => m.stage === 'pool');
-        const knockout = scheduledMatchesData.filter(m => ['cup', 'plate', 'shield'].includes(m.stage));
-        const festival = scheduledMatchesData.filter(m => m.stage === 'festival');
+        const poolOnly = updatedScheduledMatches.filter(m => m.stage === 'pool');
+        const knockout = updatedScheduledMatches.filter(m => ['cup', 'plate', 'shield'].includes(m.stage));
+        const festival = updatedScheduledMatches.filter(m => m.stage === 'festival');
         
         setKnockoutMatches(knockout);
         setFestivalMatches(festival);
         
         // Group by day for schedule view
-        const byDay = scheduledMatchesData.reduce((acc, match) => {
+        const byDay = updatedScheduledMatches.reduce((acc, match) => {
           if (!acc[match.day]) acc[match.day] = [];
           acc[match.day].push(match);
           return acc;
@@ -74,6 +132,12 @@ export default function ScoresPage() {
         });
         
         setScheduledMatches(byDay);
+      } else if (poolMatchesGenerated && !scheduleGenerated) {
+        // Generate new schedule if pool matches exist but no schedule
+        const scheduledMatchesData = scheduleAllMatches();
+        saveScheduledMatchesToStorage(scheduledMatchesData);
+        setMatchesGenerated(true);
+        loadMatchData(); // Reload with new schedule
       }
     } catch (error) {
       console.error('Error loading match data:', error);
@@ -87,8 +151,8 @@ export default function ScoresPage() {
     const poolScheduled = schedulePoolMatches();
     allScheduledMatches.push(...poolScheduled);
     
-    // 2. Generate and schedule knockout and festival matches (Days 3-4)
-    const knockoutAndFestival = scheduleKnockoutAndFestivalMatches();
+    // 2. Schedule existing knockout and festival matches (Days 3-4)
+    const knockoutAndFestival = scheduleExistingKnockoutAndFestivalMatches();
     allScheduledMatches.push(...knockoutAndFestival);
     
     return allScheduledMatches;
@@ -103,377 +167,112 @@ export default function ScoresPage() {
       allPoolMatches.push(...matches);
     });
 
-    // Generate time slots for each day with breaks
-    const generateTimeSlotsWithBreaks = (startHour: number, endHour: number, startMinute: number = 0, breaks: {start: string, end: string}[] = []): string[] => {
-      const slots: string[] = [];
-      let currentHour = startHour;
-      let currentMinute = startMinute;
-      
-      while (currentHour < endHour || (currentHour === endHour && currentMinute === 0)) {
-        if (currentHour < endHour) {
-          const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-          
-          // Check if this time slot falls within any break period
-          const isInBreak = breaks.some(breakPeriod => {
-            const breakStart = timeToMinutes(breakPeriod.start);
-            const breakEnd = timeToMinutes(breakPeriod.end);
-            const currentTimeMinutes = timeToMinutes(timeStr);
-            return currentTimeMinutes >= breakStart && currentTimeMinutes < breakEnd;
-          });
-          
-          if (!isInBreak) {
-            slots.push(timeStr);
-          }
-        }
-        
-        currentMinute += 20;
-        if (currentMinute >= 60) {
-          currentMinute = 0;
-          currentHour++;
-        }
-      }
-      return slots;
-    };
-
-    const timeToMinutes = (time: string): number => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    // Day 1: 16:20 - 19:00 = 8 slots, need 16 matches (2 per slot)
-    const day1TimeSlots = generateTimeSlotsWithBreaks(16, 19, 20); // No breaks
-    
-    // Day 2: 08:00 - 19:00 with lunch break 12:30 - 13:30
-    const day2TimeSlots = generateTimeSlotsWithBreaks(8, 19, 0, [
-      { start: '12:30', end: '13:30' }
-    ]);
-    
-    // Day 3: 08:00 - 09:40 (no break here since break is after pool matches)
-    const day3PoolTimeSlots = generateTimeSlotsWithBreaks(8, 10); // 08:00 to 09:40
-
-    const timeSlotsByDay = [day1TimeSlots, day2TimeSlots, day3PoolTimeSlots];
-    const distribution = [16, 56, 12]; // Day 1, 2, 3
-
-    return schedulePoolMatchesWithConstraints(allPoolMatches, timeSlotsByDay, distribution);
+    // Use deterministic scheduling based on match IDs to ensure consistency
+    return schedulePoolMatchesDeterministic(allPoolMatches);
   };
 
-  const schedulePoolMatchesWithConstraints = (
-    matches: MatchWithTeams[], 
-    timeSlotsByDay: string[][],
-    distribution: number[]
-  ): ScheduledMatch[] => {
+  const schedulePoolMatchesDeterministic = (matches: MatchWithTeams[]): ScheduledMatch[] => {
     const scheduled: ScheduledMatch[] = [];
-    const teamSchedules: {[teamId: string]: {day: number, timeMinutes: number}[]} = {};
     
-    // Initialize team schedules
-    matches.forEach(match => {
-      if (!teamSchedules[match.homeTeam.id]) teamSchedules[match.homeTeam.id] = [];
-      if (!teamSchedules[match.awayTeam.id]) teamSchedules[match.awayTeam.id] = [];
-    });
-
-    const timeToMinutes = (time: string): number => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    const canTeamPlay = (teamId: string, day: number, timeSlot: string): boolean => {
-      const teamMatches = teamSchedules[teamId];
-      const currentTime = timeToMinutes(timeSlot);
-      
-      return !teamMatches.some(scheduled => {
-        if (scheduled.day !== day) return false;
-        const timeDiff = Math.abs(currentTime - scheduled.timeMinutes);
-        return timeDiff < 80; // 1 hour rest + 20 min match
-      });
-    };
-
-    // Create a pool of unscheduled matches
-    let unscheduledMatches = [...matches].sort(() => Math.random() - 0.5);
+    // Sort matches by ID to ensure consistent ordering
+    const sortedMatches = [...matches].sort((a, b) => a.id.localeCompare(b.id));
     
-    // Schedule matches day by day, slot by slot
+    // Pre-defined time slots for each day (deterministic)
+    const day1TimeSlots = generateTimeSlotsWithBreaks(16, 19, 20);
+    const day2TimeSlots = generateTimeSlotsWithBreaks(8, 19, 0, [{ start: '12:30', end: '13:30' }]);
+    const day3PoolTimeSlots = generateTimeSlotsWithBreaks(8, 10);
+    
+    const timeSlotsByDay = [day1TimeSlots, day2TimeSlots, day3PoolTimeSlots];
+    const distribution = [16, 56, 12];
+
+    let matchIndex = 0;
+    
     for (let day = 1; day <= 3; day++) {
       const timeSlots = timeSlotsByDay[day - 1];
       const targetMatches = distribution[day - 1];
-      let dayMatchCount = 0;
+      let matchesScheduledThisDay = 0;
       
-      // Special handling for Day 2 - ensure last 4 matches are 2 per arena
-      if (day === 2) {
-        // Schedule all but the last 4 matches normally
-        const normalSlots = timeSlots.slice(0, -2); // All but last 2 time slots
-        const lastTwoSlots = timeSlots.slice(-2); // Last 2 time slots
+      for (let slotIndex = 0; slotIndex < timeSlots.length && matchesScheduledThisDay < targetMatches; slotIndex++) {
+        const timeSlot = timeSlots[slotIndex];
+        const maxMatchesThisSlot = Math.min(2, targetMatches - matchesScheduledThisDay);
         
-        // Schedule normal matches first
-        normalSlots.forEach((timeSlot, slotIndex) => {
-          const remainingMatches = targetMatches - dayMatchCount;
-          const remainingSlotsIncludingLast = timeSlots.length - slotIndex;
-          const avgMatchesPerSlot = remainingMatches / remainingSlotsIncludingLast;
-          
-          // Reserve 4 matches for the last 2 slots
-          const maxForThisSlot = slotIndex < normalSlots.length - 1 ? 
-            Math.min(Math.ceil(avgMatchesPerSlot), 2) : 
-            Math.min(targetMatches - dayMatchCount - 4, 2);
-          
-          for (let arenaNum = 1; arenaNum <= 2 && dayMatchCount < targetMatches - 4; arenaNum++) {
-            if (scheduled.filter(m => m.day === day && m.timeSlot === timeSlot).length >= maxForThisSlot) {
-              break;
-            }
+        for (let arena = 1; arena <= 2 && matchesScheduledThisDay < targetMatches && arena <= maxMatchesThisSlot; arena++) {
+          if (matchIndex < sortedMatches.length) {
+            const match = sortedMatches[matchIndex];
+            scheduled.push({
+              ...match,
+              day: day,
+              timeSlot: timeSlot,
+              arena: arena as 1 | 2
+            });
             
-            const arena = arenaNum as 1 | 2;
-            
-            // Find and schedule match
-            const matchIndex = findBestMatch(unscheduledMatches, day, timeSlot, arena, scheduled, canTeamPlay);
-            if (matchIndex !== -1) {
-              scheduleMatch(unscheduledMatches[matchIndex], day, timeSlot, arena, scheduled, teamSchedules, timeToMinutes);
-              unscheduledMatches.splice(matchIndex, 1);
-              dayMatchCount++;
-            }
+            matchIndex++;
+            matchesScheduledThisDay++;
           }
-        });
-        
-        // Schedule exactly 2 matches in each arena for the last 2 time slots
-        lastTwoSlots.forEach(timeSlot => {
-          // Arena 1 match
-          const arena1MatchIndex = findBestMatch(unscheduledMatches, day, timeSlot, 1, scheduled, canTeamPlay);
-          if (arena1MatchIndex !== -1) {
-            scheduleMatch(unscheduledMatches[arena1MatchIndex], day, timeSlot, 1, scheduled, teamSchedules, timeToMinutes);
-            unscheduledMatches.splice(arena1MatchIndex, 1);
-            dayMatchCount++;
-          }
-          
-          // Arena 2 match
-          const arena2MatchIndex = findBestMatch(unscheduledMatches, day, timeSlot, 2, scheduled, canTeamPlay);
-          if (arena2MatchIndex !== -1) {
-            scheduleMatch(unscheduledMatches[arena2MatchIndex], day, timeSlot, 2, scheduled, teamSchedules, timeToMinutes);
-            unscheduledMatches.splice(arena2MatchIndex, 1);
-            dayMatchCount++;
-          }
-        });
-      } else {
-        // Normal scheduling for Days 1 and 3
-        const avgMatchesPerSlot = targetMatches / timeSlots.length;
-        
-        timeSlots.forEach((timeSlot, slotIndex) => {
-          const baseMatches = Math.floor(avgMatchesPerSlot);
-          const extraMatch = (slotIndex < (targetMatches % timeSlots.length)) ? 1 : 0;
-          const matchesToSchedule = Math.min(baseMatches + extraMatch, 2);
-          
-          for (let arenaNum = 1; arenaNum <= 2 && dayMatchCount < targetMatches; arenaNum++) {
-            if (scheduled.filter(m => m.day === day && m.timeSlot === timeSlot).length >= matchesToSchedule) {
-              break;
-            }
-            
-            const arena = arenaNum as 1 | 2;
-            const matchIndex = findBestMatch(unscheduledMatches, day, timeSlot, arena, scheduled, canTeamPlay);
-            
-            if (matchIndex !== -1) {
-              scheduleMatch(unscheduledMatches[matchIndex], day, timeSlot, arena, scheduled, teamSchedules, timeToMinutes);
-              unscheduledMatches.splice(matchIndex, 1);
-              dayMatchCount++;
-            }
-          }
-        });
+        }
       }
     }
     
     return scheduled;
-    
-    // Helper functions
-    function findBestMatch(
-      availableMatches: MatchWithTeams[], 
-      day: number, 
-      timeSlot: string, 
-      arena: 1 | 2, 
-      currentScheduled: ScheduledMatch[],
-      canTeamPlayFn: (teamId: string, day: number, timeSlot: string) => boolean
-    ): number {
-      let bestMatchIndex = -1;
-      
-      for (let i = 0; i < availableMatches.length; i++) {
-        const match = availableMatches[i];
-        
-        // Check if arena is free
-        const arenaUsed = currentScheduled.some(m => 
-          m.day === day && m.timeSlot === timeSlot && m.arena === arena
-        );
-        if (arenaUsed) continue;
-        
-        // Prefer not to have same pool in same time slot
-        const samePoolAtTime = currentScheduled.some(m => 
-          m.day === day && m.timeSlot === timeSlot && m.poolId === match.poolId
-        );
-        
-        // Check if both teams can play
-        const teamsCanPlay = canTeamPlayFn(match.homeTeam.id, day, timeSlot) && 
-                           canTeamPlayFn(match.awayTeam.id, day, timeSlot);
-        
-        if (teamsCanPlay && !samePoolAtTime) {
-          bestMatchIndex = i;
-          break;
-        } else if (teamsCanPlay && bestMatchIndex === -1) {
-          bestMatchIndex = i;
-        }
-      }
-      
-      // If no ideal match, find any available match
-      if (bestMatchIndex === -1) {
-        for (let i = 0; i < availableMatches.length; i++) {
-          const arenaUsed = currentScheduled.some(m => 
-            m.day === day && m.timeSlot === timeSlot && m.arena === arena
-          );
-          if (!arenaUsed) {
-            bestMatchIndex = i;
-            break;
-          }
-        }
-      }
-      
-      return bestMatchIndex;
-    }
-    
-    function scheduleMatch(
-      match: MatchWithTeams,
-      day: number,
-      timeSlot: string,
-      arena: 1 | 2,
-      scheduledList: ScheduledMatch[],
-      teamSchedulesList: {[teamId: string]: {day: number, timeMinutes: number}[]},
-      timeToMinutesFn: (time: string) => number
-    ): void {
-      const timeMinutes = timeToMinutesFn(timeSlot);
-      
-      const scheduledMatch: ScheduledMatch = {
-        ...match,
-        day: day,
-        timeSlot: timeSlot,
-        arena: arena
-      };
-      
-      scheduledList.push(scheduledMatch);
-      
-      // Update team schedules
-      teamSchedulesList[match.homeTeam.id].push({day, timeMinutes});
-      teamSchedulesList[match.awayTeam.id].push({day, timeMinutes});
-    }
   };
 
-  const scheduleKnockoutAndFestivalMatches = (): ScheduledMatch[] => {
+  const scheduleExistingKnockoutAndFestivalMatches = (): ScheduledMatch[] => {
     const scheduledKnockout: ScheduledMatch[] = [];
     
-    // Generate knockout structure if pool stage is complete
-    if (tournamentUtils.isPoolStageComplete()) {
-      try {
-        // Generate the bracket structure
-        const bracket = tournamentUtils.generateCupBracket();
-        
-        // Get all knockout matches
-        const cupMatches = Object.values(bracket).flat().filter(Boolean);
-        const plateMatches = tournamentUtils.getPlateBracket();
-        const shieldMatches = tournamentUtils.getShieldBracket();
-        const festivalMatchesRaw = tournamentUtils.getFestivalMatches();
-        
-        // Generate festival matches (30 total) if not exists
-        let actualFestivalMatches: Match[] = festivalMatchesRaw;
-        if (festivalMatchesRaw.length === 0 || festivalMatchesRaw.length !== 30) {
-          actualFestivalMatches = generateLimitedFestivalMatches();
-        }
-        
-        // Schedule knockout matches on days 3-4
-        const day3KnockoutSlots = generateTimeSlotsWithBreaks(10, 19, 30); // 10:30 - 19:00 (after break)
-        const day4Slots = generateTimeSlotsWithBreaks(7, 15); // 07:00 - 15:00
-        
-        // Schedule Round of 16 on Day 3 (Arena 1)
-        const roundOf16Matches = cupMatches.filter(m => m.round === 'round-of-16');
-        roundOf16Matches.forEach((match, index) => {
-          if (index < day3KnockoutSlots.length) {
-            const matchWithTeams = tournamentUtils.getMatchWithTeams(match);
-            scheduledKnockout.push({
-              ...matchWithTeams,
-              day: 3,
-              timeSlot: day3KnockoutSlots[index],
-              arena: 1
-            });
-          }
-        });
-        
-        // Schedule Festival matches on Days 3-4 (Arena 2)
-        let festivalIndex = 0;
-        // Day 3 festival matches (Arena 2)
-        day3KnockoutSlots.forEach(timeSlot => {
-          if (festivalIndex < actualFestivalMatches.length) {
-            const match = actualFestivalMatches[festivalIndex];
-            const matchWithTeams = tournamentUtils.getMatchWithTeams(match);
-            scheduledKnockout.push({
-              ...matchWithTeams,
-              day: 3,
-              timeSlot: timeSlot,
-              arena: 2
-            });
-            festivalIndex++;
-          }
-        });
-        
-        // Day 4 matches - mix of knockout progression and remaining festival
-        let knockoutIndex = 0;
-        const day4KnockoutMatches = [
-          ...cupMatches.filter(m => m.round !== 'round-of-16'),
-          ...Object.values(plateMatches).flat().filter(Boolean),
-          ...Object.values(shieldMatches).flat().filter(Boolean)
-        ];
-        
-        day4Slots.forEach(timeSlot => {
-          // Arena 1 - Knockout matches
-          if (knockoutIndex < day4KnockoutMatches.length) {
-            const match = day4KnockoutMatches[knockoutIndex];
-            const matchWithTeams = tournamentUtils.getMatchWithTeams(match);
-            scheduledKnockout.push({
-              ...matchWithTeams,
-              day: 4,
-              timeSlot: timeSlot,
-              arena: 1
-            });
-            knockoutIndex++;
-          }
-          
-          // Arena 2 - Festival matches
-          if (festivalIndex < actualFestivalMatches.length) {
-            const match = actualFestivalMatches[festivalIndex];
-            const matchWithTeams = tournamentUtils.getMatchWithTeams(match);
-            scheduledKnockout.push({
-              ...matchWithTeams,
-              day: 4,
-              timeSlot: timeSlot,
-              arena: 2
-            });
-            festivalIndex++;
-          }
-        });
-        
-      } catch (error) {
-        console.error('Error generating knockout structure:', error);
+    try {
+      // Get existing knockout matches instead of generating new ones
+      const tournament = storageUtils.getTournament();
+      const allKnockoutMatches = tournament.matches.filter(match => 
+        ['cup', 'plate', 'shield', 'festival'].includes(match.stage)
+      );
+      
+      if (allKnockoutMatches.length === 0) {
+        return scheduledKnockout;
       }
+      
+      // Get matches with team details
+      const knockoutMatchesWithTeams = allKnockoutMatches.map(match => 
+        tournamentUtils.getMatchWithTeams(match)
+      );
+      
+      // Sort by match ID for deterministic scheduling
+      const sortedKnockoutMatches = knockoutMatchesWithTeams.sort((a, b) => a.id.localeCompare(b.id));
+      
+      // Schedule knockout matches on days 3-4
+      const day3KnockoutSlots = generateTimeSlotsWithBreaks(10, 19, 30);
+      const day4Slots = generateTimeSlotsWithBreaks(7, 15);
+      
+      let matchIndex = 0;
+      
+      // Schedule Day 3 matches
+      for (let i = 0; i < day3KnockoutSlots.length && matchIndex < sortedKnockoutMatches.length; i++) {
+        const match = sortedKnockoutMatches[matchIndex];
+        scheduledKnockout.push({
+          ...match,
+          day: 3,
+          timeSlot: day3KnockoutSlots[i],
+          arena: 1
+        });
+        matchIndex++;
+      }
+      
+      // Schedule Day 4 matches
+      for (let i = 0; i < day4Slots.length && matchIndex < sortedKnockoutMatches.length; i++) {
+        const match = sortedKnockoutMatches[matchIndex];
+        scheduledKnockout.push({
+          ...match,
+          day: 4,
+          timeSlot: day4Slots[i],
+          arena: 1
+        });
+        matchIndex++;
+      }
+      
+    } catch (error) {
+      console.error('Error scheduling knockout matches:', error);
     }
     
     return scheduledKnockout;
-  };
-
-  const generateTimeSlotsForDay = (startHour: number, endHour: number, startMinute: number = 0): string[] => {
-    const slots: string[] = [];
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-    
-    while (currentHour < endHour || (currentHour === endHour && currentMinute === 0)) {
-      if (currentHour < endHour) {
-        const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-        slots.push(timeStr);
-      }
-      
-      currentMinute += 20;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour++;
-      }
-    }
-    return slots;
   };
 
   const generateTimeSlotsWithBreaks = (startHour: number, endHour: number, startMinute: number = 0, breaks: {start: string, end: string}[] = []): string[] => {
@@ -490,7 +289,6 @@ export default function ScoresPage() {
       if (currentHour < endHour) {
         const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
-        // Check if this time slot falls within any break period
         const isInBreak = breaks.some(breakPeriod => {
           const breakStart = timeToMinutes(breakPeriod.start);
           const breakEnd = timeToMinutes(breakPeriod.end);
@@ -512,57 +310,6 @@ export default function ScoresPage() {
     return slots;
   };
 
-  const generateLimitedFestivalMatches = (): Match[] => {
-    // Generate 30 festival matches from non-qualifiers
-    const festivalTeams: string[] = [];
-    ['A', 'B', 'C', 'D'].forEach(poolId => {
-      const nonQualifiers = tournamentUtils.getPoolNonQualifiers(poolId);
-      nonQualifiers.forEach(team => festivalTeams.push(team.id));
-    });
-    
-    const matches: Match[] = [];
-    const teamMatchCounts: { [teamId: string]: number } = {};
-    
-    festivalTeams.forEach(teamId => {
-      teamMatchCounts[teamId] = 0;
-    });
-    
-    const maxMatchesPerTeam = 5;
-    let matchCount = 0;
-    
-    // Generate matches ensuring each team plays roughly equal amounts
-    while (matchCount < 30 && festivalTeams.length >= 2) {
-      // Find teams with fewer matches
-      const availableTeams = festivalTeams.filter(teamId => teamMatchCounts[teamId] < maxMatchesPerTeam);
-      
-      if (availableTeams.length < 2) break;
-      
-      // Randomly select two teams
-      const team1 = availableTeams[Math.floor(Math.random() * availableTeams.length)];
-      let team2 = availableTeams[Math.floor(Math.random() * availableTeams.length)];
-      
-      while (team2 === team1 && availableTeams.length > 1) {
-        team2 = availableTeams[Math.floor(Math.random() * availableTeams.length)];
-      }
-      
-      if (team1 !== team2) {
-        matches.push({
-          id: `festival-${team1}-${team2}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          homeTeamId: team1,
-          awayTeamId: team2,
-          stage: 'festival' as const,
-          completed: false
-        });
-        
-        teamMatchCounts[team1]++;
-        teamMatchCounts[team2]++;
-        matchCount++;
-      }
-    }
-    
-    return matches;
-  };
-
   const getPoolMatchesWithTeams = (poolId: string): MatchWithTeams[] => {
     try {
       const matches = tournamentUtils.getPoolMatches(poolId);
@@ -580,11 +327,56 @@ export default function ScoresPage() {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       tournamentUtils.generatePoolMatches();
+      
+      // Generate new schedule and save to storage
+      const scheduledMatchesData = scheduleAllMatches();
+      saveScheduledMatchesToStorage(scheduledMatchesData);
+      
       loadMatchData();
     } catch (error) {
       console.error('Error generating matches:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateKnockout = async () => {
+    if (!tournamentUtils.isPoolStageComplete()) {
+      alert('Pool stage must be completed before generating knockout brackets');
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      tournamentUtils.generateCupBracket();
+      
+      // Update schedule with knockout matches
+      const scheduledMatchesData = scheduleAllMatches();
+      saveScheduledMatchesToStorage(scheduledMatchesData);
+      
+      loadMatchData();
+    } catch (error) {
+      console.error('Error generating knockout brackets:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRefreshFixtures = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Reload match data without regenerating schedule
+      loadMatchData();
+    } catch (error) {
+      console.error('Error refreshing fixtures:', error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -599,6 +391,9 @@ export default function ScoresPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       tournamentUtils.clearPoolMatches();
+      tournamentUtils.clearKnockoutAndFestivalMatches();
+      clearScheduledMatchesFromStorage();
+      
       loadMatchData();
     } catch (error) {
       console.error('Error clearing matches:', error);
@@ -618,6 +413,17 @@ export default function ScoresPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       storageUtils.clearPoolMatchResults();
+      
+      // Update schedule to reflect cleared results
+      const currentSchedule = loadScheduledMatchesFromStorage();
+      const updatedSchedule = currentSchedule.map(match => ({
+        ...match,
+        completed: false,
+        homeScore: undefined,
+        awayScore: undefined
+      }));
+      saveScheduledMatchesToStorage(updatedSchedule);
+      
       loadMatchData();
     } catch (error) {
       console.error('Error clearing results:', error);
@@ -707,6 +513,28 @@ export default function ScoresPage() {
               {totalTeams} Teams
             </Badge>
             
+            {/* Refresh Button - Always visible when matches are generated */}
+            {matchesGenerated && (
+              <Button
+                onClick={handleRefreshFixtures}
+                disabled={isRefreshing}
+                variant="outline"
+                size="sm"
+              >
+                {isRefreshing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </>
+                )}
+              </Button>
+            )}
+
             {!matchesGenerated && (
               <Button
                 onClick={handleGenerateMatches}
@@ -729,6 +557,27 @@ export default function ScoresPage() {
 
             {matchesGenerated && (
               <div className="flex items-center gap-2">
+                {tournamentUtils.isPoolStageComplete() && !tournamentUtils.areKnockoutBracketsGenerated() && (
+                  <Button
+                    onClick={handleGenerateKnockout}
+                    disabled={isGenerating}
+                    variant="default"
+                    size="sm"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Generate Knockout
+                      </>
+                    )}
+                  </Button>
+                )}
+                
                 <Button
                   onClick={handleGenerateMatches}
                   disabled={isGenerating}
@@ -892,10 +741,10 @@ export default function ScoresPage() {
               <TabsTrigger value="day2">Day 2</TabsTrigger>
               <TabsTrigger value="day3">Day 3</TabsTrigger>
               <TabsTrigger value="day4">Day 4</TabsTrigger>
-              {/* <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="knockout">Knockout</TabsTrigger> */}
+              <TabsTrigger value="knockout">Knockout</TabsTrigger>
               <TabsTrigger value="A">Pool A</TabsTrigger>
               <TabsTrigger value="B">Pool B</TabsTrigger>
               <TabsTrigger value="C">Pool C</TabsTrigger>
