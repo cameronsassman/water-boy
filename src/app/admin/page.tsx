@@ -1,7 +1,7 @@
 "use client"
 
-import ScoreInput from "../../components/admin/score-input"
-import TeamRegistration from "@/components/admin/team-registration"
+import ScoreInput from "./scorecard/page"
+import TeamRegistration from "./teams/page"
 
 export default function AdminPortal() {
     return(

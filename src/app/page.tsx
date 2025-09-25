@@ -1,15 +1,38 @@
 // src/app/page.tsx
 import Link from 'next/link';
+import background from "../../public/images/Background.jpg"
+import logo from "../../public/images/Logo-pack/junior-wp-logo-tranparent.png"
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            🏊‍♂️ U14 Water Polo Tournament 2025
-          </h1>
+    <div>
+      {/* Hero Section with Background */}
+      <section className="relative  text-white pt-20 pb-40 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image 
+            src={background}
+            fill
+            alt="Water polo background"
+            className="object-cover opacity-70 object-bottom"
+            priority
+          />
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className='flex justify-center'>
+            <Image
+              src={logo}
+              width={500}
+              height={500}
+              alt="Water polo logo"
+              priority
+            />
+          </div>
           <p className="text-xl md:text-2xl mb-8 text-blue-100">
             28 Schools • 4 Pools • Championship Glory
           </p>

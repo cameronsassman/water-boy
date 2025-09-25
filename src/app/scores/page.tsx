@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { tournamentUtils, MatchWithTeams } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
+import { Match } from '@/types/team';
 import MatchCard from '../../components/guests/match-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,49 +11,303 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarDays, Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award, Trash2 } from 'lucide-react';
 
+interface ScheduledMatch extends MatchWithTeams { 
+  day: number;
+  timeSlot: string;
+  arena: 1 | 2;
+}
+
+// Storage keys for persistent scheduling
+const SCHEDULED_MATCHES_KEY = 'water-polo-tournament-scheduled-matches';
+const SCHEDULE_GENERATED_KEY = 'water-polo-tournament-schedule-generated';
+
 export default function ScoresPage() {
   const [isAllocated, setIsAllocated] = useState(false);
   const [matchesGenerated, setMatchesGenerated] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [poolMatches, setPoolMatches] = useState<{[key: string]: MatchWithTeams[]}>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [poolMatches, setPoolMatches] = useState<{[key: string]: ScheduledMatch[]}>({});
   const [totalTeams, setTotalTeams] = useState(0);
-  const [allMatches, setAllMatches] = useState<MatchWithTeams[]>([]);
-  const [tournamentStats, setTournamentStats] = useState<any>(null);
+  const [allMatches, setAllMatches] = useState<ScheduledMatch[]>([]);
+  const [scheduledMatches, setScheduledMatches] = useState<{[key: number]: ScheduledMatch[]}>({});
+  const [knockoutMatches, setKnockoutMatches] = useState<ScheduledMatch[]>([]);
+  const [festivalMatches, setFestivalMatches] = useState<ScheduledMatch[]>([]);
 
   useEffect(() => {
     loadMatchData();
   }, []);
 
+  // Load scheduled matches from localStorage
+  const loadScheduledMatchesFromStorage = (): ScheduledMatch[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const stored = localStorage.getItem(SCHEDULED_MATCHES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error loading scheduled matches from storage:', error);
+      return [];
+    }
+  };
+
+  // Save scheduled matches to localStorage
+  const saveScheduledMatchesToStorage = (matches: ScheduledMatch[]): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(SCHEDULED_MATCHES_KEY, JSON.stringify(matches));
+      localStorage.setItem(SCHEDULE_GENERATED_KEY, 'true');
+    } catch (error) {
+      console.error('Error saving scheduled matches to storage:', error);
+    }
+  };
+
+  // Check if schedule exists in storage
+  const isScheduleGeneratedInStorage = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(SCHEDULE_GENERATED_KEY) === 'true';
+  };
+
+  // Clear scheduled matches from storage
+  const clearScheduledMatchesFromStorage = (): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(SCHEDULED_MATCHES_KEY);
+    localStorage.removeItem(SCHEDULE_GENERATED_KEY);
+  };
+
   const loadMatchData = () => {
     try {
       const allocated = tournamentUtils.arePoolsAllocated();
-      const generated = tournamentUtils.arePoolMatchesGenerated();
+      const poolMatchesGenerated = tournamentUtils.arePoolMatchesGenerated();
+      const scheduleGenerated = isScheduleGeneratedInStorage();
       const teams = storageUtils.getTeams();
       
       setIsAllocated(allocated);
-      setMatchesGenerated(generated);
+      setMatchesGenerated(poolMatchesGenerated && scheduleGenerated);
       setTotalTeams(teams.length);
 
-      if (generated) {
-        const matches = {
-          A: getPoolMatchesWithTeams('A'),
-          B: getPoolMatchesWithTeams('B'),
-          C: getPoolMatchesWithTeams('C'),
-          D: getPoolMatchesWithTeams('D')
-        };
-        setPoolMatches(matches);
+      if (poolMatchesGenerated && scheduleGenerated) {
+        // Load existing schedule from storage
+        const scheduledMatchesData = loadScheduledMatchesFromStorage();
         
-        // Combine all matches for "All" tab
-        const combined = Object.values(matches).flat();
-        setAllMatches(combined);
+        // Update match completion status from current results
+        const updatedScheduledMatches = scheduledMatchesData.map(match => {
+          const currentMatch = storageUtils.getTournament().matches.find(m => m.id === match.id);
+          const result = storageUtils.getMatchResult(match.id);
+          
+          return {
+            ...match,
+            completed: result?.completed || false,
+            homeScore: result?.homeScore,
+            awayScore: result?.awayScore
+          };
+        });
 
-        // Get tournament statistics
-        const stats = tournamentUtils.getTournamentStats();
-        setTournamentStats(stats);
+        const pools = {
+          A: updatedScheduledMatches.filter(m => m.poolId === 'A'),
+          B: updatedScheduledMatches.filter(m => m.poolId === 'B'),
+          C: updatedScheduledMatches.filter(m => m.poolId === 'C'),
+          D: updatedScheduledMatches.filter(m => m.poolId === 'D')
+        };
+        
+        setPoolMatches(pools);
+        setAllMatches(updatedScheduledMatches);
+        
+        // Separate pool matches from knockout/festival
+        const poolOnly = updatedScheduledMatches.filter(m => m.stage === 'pool');
+        const knockout = updatedScheduledMatches.filter(m => ['cup', 'plate', 'shield'].includes(m.stage));
+        const festival = updatedScheduledMatches.filter(m => m.stage === 'festival');
+        
+        setKnockoutMatches(knockout);
+        setFestivalMatches(festival);
+        
+        // Group by day for schedule view
+        const byDay = updatedScheduledMatches.reduce((acc, match) => {
+          if (!acc[match.day]) acc[match.day] = [];
+          acc[match.day].push(match);
+          return acc;
+        }, {} as {[key: number]: ScheduledMatch[]});
+        
+        // Sort matches within each day by time slot
+        Object.keys(byDay).forEach(day => {
+          byDay[parseInt(day)].sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
+        });
+        
+        setScheduledMatches(byDay);
+      } else if (poolMatchesGenerated && !scheduleGenerated) {
+        // Generate new schedule if pool matches exist but no schedule
+        const scheduledMatchesData = scheduleAllMatches();
+        saveScheduledMatchesToStorage(scheduledMatchesData);
+        setMatchesGenerated(true);
+        loadMatchData(); // Reload with new schedule
       }
     } catch (error) {
       console.error('Error loading match data:', error);
     }
+  };
+
+  const scheduleAllMatches = (): ScheduledMatch[] => {
+    const allScheduledMatches: ScheduledMatch[] = [];
+    
+    // 1. Schedule pool matches first (Days 1-3)
+    const poolScheduled = schedulePoolMatches();
+    allScheduledMatches.push(...poolScheduled);
+    
+    // 2. Schedule existing knockout and festival matches (Days 3-4)
+    const knockoutAndFestival = scheduleExistingKnockoutAndFestivalMatches();
+    allScheduledMatches.push(...knockoutAndFestival);
+    
+    return allScheduledMatches;
+  };
+
+  const schedulePoolMatches = (): ScheduledMatch[] => {
+    const allPoolMatches: MatchWithTeams[] = [];
+    
+    // Get all pool matches
+    ['A', 'B', 'C', 'D'].forEach(poolId => {
+      const matches = getPoolMatchesWithTeams(poolId);
+      allPoolMatches.push(...matches);
+    });
+
+    // Use deterministic scheduling based on match IDs to ensure consistency
+    return schedulePoolMatchesDeterministic(allPoolMatches);
+  };
+
+  const schedulePoolMatchesDeterministic = (matches: MatchWithTeams[]): ScheduledMatch[] => {
+    const scheduled: ScheduledMatch[] = [];
+    
+    // Sort matches by ID to ensure consistent ordering
+    const sortedMatches = [...matches].sort((a, b) => a.id.localeCompare(b.id));
+    
+    // Pre-defined time slots for each day (deterministic)
+    const day1TimeSlots = generateTimeSlotsWithBreaks(16, 19, 20);
+    const day2TimeSlots = generateTimeSlotsWithBreaks(8, 19, 0, [{ start: '12:30', end: '13:30' }]);
+    const day3PoolTimeSlots = generateTimeSlotsWithBreaks(8, 10);
+    
+    const timeSlotsByDay = [day1TimeSlots, day2TimeSlots, day3PoolTimeSlots];
+    const distribution = [16, 56, 12];
+
+    let matchIndex = 0;
+    
+    for (let day = 1; day <= 3; day++) {
+      const timeSlots = timeSlotsByDay[day - 1];
+      const targetMatches = distribution[day - 1];
+      let matchesScheduledThisDay = 0;
+      
+      for (let slotIndex = 0; slotIndex < timeSlots.length && matchesScheduledThisDay < targetMatches; slotIndex++) {
+        const timeSlot = timeSlots[slotIndex];
+        const maxMatchesThisSlot = Math.min(2, targetMatches - matchesScheduledThisDay);
+        
+        for (let arena = 1; arena <= 2 && matchesScheduledThisDay < targetMatches && arena <= maxMatchesThisSlot; arena++) {
+          if (matchIndex < sortedMatches.length) {
+            const match = sortedMatches[matchIndex];
+            scheduled.push({
+              ...match,
+              day: day,
+              timeSlot: timeSlot,
+              arena: arena as 1 | 2
+            });
+            
+            matchIndex++;
+            matchesScheduledThisDay++;
+          }
+        }
+      }
+    }
+    
+    return scheduled;
+  };
+
+  const scheduleExistingKnockoutAndFestivalMatches = (): ScheduledMatch[] => {
+    const scheduledKnockout: ScheduledMatch[] = [];
+    
+    try {
+      // Get existing knockout matches instead of generating new ones
+      const tournament = storageUtils.getTournament();
+      const allKnockoutMatches = tournament.matches.filter(match => 
+        ['cup', 'plate', 'shield', 'festival'].includes(match.stage)
+      );
+      
+      if (allKnockoutMatches.length === 0) {
+        return scheduledKnockout;
+      }
+      
+      // Get matches with team details
+      const knockoutMatchesWithTeams = allKnockoutMatches.map(match => 
+        tournamentUtils.getMatchWithTeams(match)
+      );
+      
+      // Sort by match ID for deterministic scheduling
+      const sortedKnockoutMatches = knockoutMatchesWithTeams.sort((a, b) => a.id.localeCompare(b.id));
+      
+      // Schedule knockout matches on days 3-4
+      const day3KnockoutSlots = generateTimeSlotsWithBreaks(10, 19, 30);
+      const day4Slots = generateTimeSlotsWithBreaks(7, 15);
+      
+      let matchIndex = 0;
+      
+      // Schedule Day 3 matches
+      for (let i = 0; i < day3KnockoutSlots.length && matchIndex < sortedKnockoutMatches.length; i++) {
+        const match = sortedKnockoutMatches[matchIndex];
+        scheduledKnockout.push({
+          ...match,
+          day: 3,
+          timeSlot: day3KnockoutSlots[i],
+          arena: 1
+        });
+        matchIndex++;
+      }
+      
+      // Schedule Day 4 matches
+      for (let i = 0; i < day4Slots.length && matchIndex < sortedKnockoutMatches.length; i++) {
+        const match = sortedKnockoutMatches[matchIndex];
+        scheduledKnockout.push({
+          ...match,
+          day: 4,
+          timeSlot: day4Slots[i],
+          arena: 1
+        });
+        matchIndex++;
+      }
+      
+    } catch (error) {
+      console.error('Error scheduling knockout matches:', error);
+    }
+    
+    return scheduledKnockout;
+  };
+
+  const generateTimeSlotsWithBreaks = (startHour: number, endHour: number, startMinute: number = 0, breaks: {start: string, end: string}[] = []): string[] => {
+    const slots: string[] = [];
+    let currentHour = startHour;
+    let currentMinute = startMinute;
+    
+    const timeToMinutes = (time: string): number => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    while (currentHour < endHour || (currentHour === endHour && currentMinute === 0)) {
+      if (currentHour < endHour) {
+        const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+        
+        const isInBreak = breaks.some(breakPeriod => {
+          const breakStart = timeToMinutes(breakPeriod.start);
+          const breakEnd = timeToMinutes(breakPeriod.end);
+          const currentTimeMinutes = timeToMinutes(timeStr);
+          return currentTimeMinutes >= breakStart && currentTimeMinutes < breakEnd;
+        });
+        
+        if (!isInBreak) {
+          slots.push(timeStr);
+        }
+      }
+      
+      currentMinute += 20;
+      if (currentMinute >= 60) {
+        currentMinute = 0;
+        currentHour++;
+      }
+    }
+    return slots;
   };
 
   const getPoolMatchesWithTeams = (poolId: string): MatchWithTeams[] => {
@@ -69,15 +324,59 @@ export default function ScoresPage() {
     setIsGenerating(true);
     
     try {
-      // Simulate generation delay for better UX
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       tournamentUtils.generatePoolMatches();
+      
+      // Generate new schedule and save to storage
+      const scheduledMatchesData = scheduleAllMatches();
+      saveScheduledMatchesToStorage(scheduledMatchesData);
+      
       loadMatchData();
     } catch (error) {
       console.error('Error generating matches:', error);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateKnockout = async () => {
+    if (!tournamentUtils.isPoolStageComplete()) {
+      alert('Pool stage must be completed before generating knockout brackets');
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      tournamentUtils.generateCupBracket();
+      
+      // Update schedule with knockout matches
+      const scheduledMatchesData = scheduleAllMatches();
+      saveScheduledMatchesToStorage(scheduledMatchesData);
+      
+      loadMatchData();
+    } catch (error) {
+      console.error('Error generating knockout brackets:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRefreshFixtures = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Reload match data without regenerating schedule
+      loadMatchData();
+    } catch (error) {
+      console.error('Error refreshing fixtures:', error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -92,6 +391,9 @@ export default function ScoresPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       tournamentUtils.clearPoolMatches();
+      tournamentUtils.clearKnockoutAndFestivalMatches();
+      clearScheduledMatchesFromStorage();
+      
       loadMatchData();
     } catch (error) {
       console.error('Error clearing matches:', error);
@@ -110,8 +412,18 @@ export default function ScoresPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Clear all match results but keep the matches
       storageUtils.clearPoolMatchResults();
+      
+      // Update schedule to reflect cleared results
+      const currentSchedule = loadScheduledMatchesFromStorage();
+      const updatedSchedule = currentSchedule.map(match => ({
+        ...match,
+        completed: false,
+        homeScore: undefined,
+        awayScore: undefined
+      }));
+      saveScheduledMatchesToStorage(updatedSchedule);
+      
       loadMatchData();
     } catch (error) {
       console.error('Error clearing results:', error);
@@ -120,18 +432,17 @@ export default function ScoresPage() {
     }
   };
 
-  const getMatchStats = (matches: MatchWithTeams[]) => {
+  const getMatchStats = (matches: ScheduledMatch[]) => {
     const completed = matches.filter(m => m.completed).length;
     const pending = matches.length - completed;
     return { completed, pending, total: matches.length };
   };
 
-  // Filter matches by completion status
-  const getCompletedMatches = (matches: MatchWithTeams[]) => {
+  const getCompletedMatches = (matches: ScheduledMatch[]) => {
     return matches.filter(m => m.completed);
   };
 
-  const getPendingMatches = (matches: MatchWithTeams[]) => {
+  const getPendingMatches = (matches: ScheduledMatch[]) => {
     return matches.filter(m => !m.completed);
   };
 
@@ -154,9 +465,9 @@ export default function ScoresPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <CalendarDays className="text-blue-600" />
-            Pool Fixtures
+            Tournament Fixtures
           </h1>
-          <p className="text-gray-600 mt-2">View and manage tournament fixtures</p>
+          <p className="text-gray-600 mt-2">View and manage 4-day tournament schedule</p>
         </div>
 
         <Card>
@@ -183,11 +494,17 @@ export default function ScoresPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <CalendarDays className="text-blue-600" />
-              Pool Fixtures
+              Tournament Fixtures
             </h1>
             <p className="text-gray-600 mt-2">
-              Round-robin matches for all pool stages
+              4-day tournament schedule - Pool matches and knockout stages
             </p>
+            <div className="text-xs text-gray-500 mt-1">
+              Total Pool Matches: {allMatches.filter(m => m.stage === 'pool').length} | 
+              Day 1: {scheduledMatches[1]?.filter(m => m.stage === 'pool').length || 0} | 
+              Day 2: {scheduledMatches[2]?.filter(m => m.stage === 'pool').length || 0} | 
+              Day 3: {scheduledMatches[3]?.filter(m => m.stage === 'pool').length || 0}
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -196,6 +513,28 @@ export default function ScoresPage() {
               {totalTeams} Teams
             </Badge>
             
+            {/* Refresh Button - Always visible when matches are generated */}
+            {matchesGenerated && (
+              <Button
+                onClick={handleRefreshFixtures}
+                disabled={isRefreshing}
+                variant="outline"
+                size="sm"
+              >
+                {isRefreshing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </>
+                )}
+              </Button>
+            )}
+
             {!matchesGenerated && (
               <Button
                 onClick={handleGenerateMatches}
@@ -218,6 +557,27 @@ export default function ScoresPage() {
 
             {matchesGenerated && (
               <div className="flex items-center gap-2">
+                {tournamentUtils.isPoolStageComplete() && !tournamentUtils.areKnockoutBracketsGenerated() && (
+                  <Button
+                    onClick={handleGenerateKnockout}
+                    disabled={isGenerating}
+                    variant="default"
+                    size="sm"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Generate Knockout
+                      </>
+                    )}
+                  </Button>
+                )}
+                
                 <Button
                   onClick={handleGenerateMatches}
                   disabled={isGenerating}
@@ -237,17 +597,15 @@ export default function ScoresPage() {
                   )}
                 </Button>
                 
-                {tournamentStats && tournamentStats.completedMatches > 0 && (
-                  <Button
-                    onClick={handleClearResults}
-                    disabled={isGenerating}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear Results
-                  </Button>
-                )}
+                <Button
+                  onClick={handleClearResults}
+                  disabled={isGenerating}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear Results
+                </Button>
                 
                 <Button
                   onClick={handleClearMatches}
@@ -264,41 +622,51 @@ export default function ScoresPage() {
         </div>
       </div>
 
-      {/* Tournament Progress Stats */}
-      {matchesGenerated && tournamentStats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <div className="text-2xl font-bold text-green-600">{tournamentStats.completedMatches}</div>
-              <div className="text-sm text-gray-600">Completed</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Clock className="w-8 h-8 mx-auto mb-2 text-orange-600" />
-              <div className="text-2xl font-bold text-orange-600">{tournamentStats.pendingMatches}</div>
-              <div className="text-sm text-gray-600">Pending</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Target className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-              <div className="text-2xl font-bold text-blue-600">{tournamentStats.totalGoals}</div>
-              <div className="text-sm text-gray-600">Total Goals</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Award className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <div className="text-2xl font-bold text-purple-600">{tournamentStats.averageGoalsPerMatch}</div>
-              <div className="text-sm text-gray-600">Avg/Match</div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Tournament Schedule Overview */}
+      {matchesGenerated && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>4-Day Tournament Schedule Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="font-semibold text-blue-800">Day 1</div>
+                <div className="text-sm text-blue-600">16:20 - 19:00</div>
+                <div className="text-xs text-blue-500">16 Pool Matches</div>
+                <div className="mt-2 text-lg font-bold text-blue-700">
+                  {scheduledMatches[1]?.length || 0} matches
+                </div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="font-semibold text-green-800">Day 2</div>
+                <div className="text-sm text-green-600">08:00 - 19:00</div>
+                <div className="text-xs text-green-500">Lunch: 12:30-13:30</div>
+                <div className="text-xs text-green-500">56 Pool Matches</div>
+                <div className="mt-2 text-lg font-bold text-green-700">
+                  {scheduledMatches[2]?.length || 0} matches
+                </div>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <div className="font-semibold text-orange-800">Day 3</div>
+                <div className="text-sm text-orange-600">08:00 - 19:00</div>
+                <div className="text-xs text-orange-500">Break: 09:40-10:30</div>
+                <div className="text-xs text-orange-500">12 Pool + Knockouts</div>
+                <div className="mt-2 text-lg font-bold text-orange-700">
+                  {scheduledMatches[3]?.length || 0} matches
+                </div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="font-semibold text-purple-800">Day 4</div>
+                <div className="text-sm text-purple-600">07:00 - 15:00</div>
+                <div className="text-xs text-purple-500">Knockout Finals</div>
+                <div className="mt-2 text-lg font-bold text-purple-700">
+                  {scheduledMatches[4]?.length || 0} matches
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Matches Not Generated */}
@@ -306,13 +674,14 @@ export default function ScoresPage() {
         <Card>
           <CardContent className="text-center py-12">
             <CalendarDays className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-            <h3 className="text-xl font-semibold mb-2">Ready to Generate Fixtures</h3>
+            <h3 className="text-xl font-semibold mb-2">Ready to Generate 4-Day Tournament Schedule</h3>
             <p className="text-gray-600 mb-4">
-              Teams are allocated into pools. Generate the round-robin fixtures for pool play.
+              Teams are allocated into pools. Generate the complete tournament fixture list.
             </p>
             <div className="text-sm text-gray-500 space-y-1">
-              <p>Each team will play 6 matches (one against every other team in their pool)</p>
-              <p>Expected total matches: ~{Math.floor((totalTeams / 4) * 21)} matches</p>
+              <p>Pool Stage: 84 matches across Days 1-3</p>
+              <p>Knockout Stage: Cup, Plate, Shield brackets on Days 3-4</p>
+              <p>Festival: 30 matches for non-qualifiers on Days 3-4</p>
               
               {totalTeams !== 28 && (
                 <div className="flex items-center justify-center gap-2 mt-4 text-orange-700 bg-orange-50 p-3 rounded-lg">
@@ -348,7 +717,6 @@ export default function ScoresPage() {
                       {stats.total} matches
                     </div>
                     
-                    {/* Progress bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                       <div 
                         className={`h-2 rounded-full ${completion === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
@@ -366,24 +734,90 @@ export default function ScoresPage() {
             })}
           </div>
 
-          {/* Pool Matches Tabs with Enhanced Filtering */}
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+          {/* Daily Schedule Tabs */}
+          <Tabs defaultValue="day1" className="w-full">
+            <TabsList className="grid w-full grid-cols-12">
+              <TabsTrigger value="day1">Day 1</TabsTrigger>
+              <TabsTrigger value="day2">Day 2</TabsTrigger>
+              <TabsTrigger value="day3">Day 3</TabsTrigger>
+              <TabsTrigger value="day4">Day 4</TabsTrigger>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="knockout">Knockout</TabsTrigger>
               <TabsTrigger value="A">Pool A</TabsTrigger>
               <TabsTrigger value="B">Pool B</TabsTrigger>
               <TabsTrigger value="C">Pool C</TabsTrigger>
               <TabsTrigger value="D">Pool D</TabsTrigger>
             </TabsList>
+
+            {/* Day 1 Schedule */}
+            <TabsContent value="day1">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-blue-500" />
+                    Day 1 Schedule (16:20 - 19:00) - {scheduledMatches[1]?.length || 0} Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderDaySchedule(1)}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Day 2 Schedule */}
+            <TabsContent value="day2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-green-500" />
+                    Day 2 Schedule (08:00 - 19:00, Lunch 12:30-13:30) - {scheduledMatches[2]?.length || 0} Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderDaySchedule(2)}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Day 3 Schedule */}
+            <TabsContent value="day3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-orange-500" />
+                    Day 3 Schedule (08:00 - 19:00, Break 09:40-10:30) - Pool Finals + Knockout Begins
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderDaySchedule(3)}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Day 4 Schedule */}
+            <TabsContent value="day4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-purple-500" />
+                    Day 4 Schedule (07:00 - 15:00) - Knockout Finals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderDaySchedule(4)}
+                </CardContent>
+              </Card>
+            </TabsContent>
             
+            {/* All Matches */}
             <TabsContent value="all">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CalendarDays className="w-5 h-5 text-blue-500" />
-                    All Pool Matches
+                    All Tournament Matches
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -407,6 +841,7 @@ export default function ScoresPage() {
               </Card>
             </TabsContent>
 
+            {/* Completed Matches */}
             <TabsContent value="completed">
               <Card>
                 <CardHeader>
@@ -437,6 +872,7 @@ export default function ScoresPage() {
               </Card>
             </TabsContent>
 
+            {/* Pending Matches */}
             <TabsContent value="pending">
               <Card>
                 <CardHeader>
@@ -458,15 +894,83 @@ export default function ScoresPage() {
                     ) : (
                       <div className="text-center py-12 text-gray-500">
                         <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50 text-green-600" />
-                        <p className="text-green-700 font-medium">All pool matches completed!</p>
-                        <p className="text-sm">Ready to proceed to knockout stage</p>
+                        <p className="text-green-700 font-medium">All matches completed!</p>
+                        <p className="text-sm">Tournament complete</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Knockout Matches */}
+            <TabsContent value="knockout">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    Knockout Stage Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Cup Matches */}
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-yellow-600" />
+                        Cup Competition
+                      </h4>
+                      <div className="space-y-2">
+                        {knockoutMatches.filter(m => m.stage === 'cup').map(match => (
+                          <MatchCard key={match.id} match={match} showPool={false} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Plate Matches */}
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-blue-600" />
+                        Plate Competition
+                      </h4>
+                      <div className="space-y-2">
+                        {knockoutMatches.filter(m => m.stage === 'plate').map(match => (
+                          <MatchCard key={match.id} match={match} showPool={false} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Shield Matches */}
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Award className="w-4 h-4 text-purple-600" />
+                        Shield Competition
+                      </h4>
+                      <div className="space-y-2">
+                        {knockoutMatches.filter(m => m.stage === 'shield').map(match => (
+                          <MatchCard key={match.id} match={match} showPool={false} />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Festival Matches */}
+                    <div>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-orange-600" />
+                        Festival Matches
+                      </h4>
+                      <div className="space-y-2">
+                        {festivalMatches.map(match => (
+                          <MatchCard key={match.id} match={match} showPool={false} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
             
+            {/* Pool Specific Tabs */}
             {['A', 'B', 'C', 'D'].map(poolId => (
               <TabsContent key={poolId} value={poolId}>
                 <Card>
@@ -498,110 +1002,67 @@ export default function ScoresPage() {
               </TabsContent>
             ))}
           </Tabs>
-
-          {/* Pool Completion Status */}
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-blue-500" />
-                Pool Stage Completion Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-4 gap-6">
-                {['A', 'B', 'C', 'D'].map(poolId => {
-                  const matches = poolMatches[poolId] || [];
-                  const stats = getMatchStats(matches);
-                  const completion = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-                  const isComplete = tournamentUtils.isPoolStageComplete(poolId);
-                  
-                  return (
-                    <div key={poolId}>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${getPoolColor(poolId)}`}></div>
-                        Pool {poolId}
-                        {isComplete && (
-                          <CheckCircle className="w-4 h-4 text-green-600 ml-1" />
-                        )}
-                      </h4>
-                      <div className="space-y-2 text-sm text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Matches:</span>
-                          <span>{stats.completed}/{stats.total} ({completion}%)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Teams:</span>
-                          <span>{tournamentUtils.getTeamsByPool(poolId).length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Status:</span>
-                          <span className={isComplete ? 'text-green-600 font-medium' : 'text-orange-600'}>
-                            {isComplete ? 'Complete' : 'In Progress'}
-                          </span>
-                        </div>
-                        
-                        {/* Qualification Preview */}
-                        {isComplete && (
-                          <div className="pt-2 border-t">
-                            <div className="text-xs text-gray-500 mb-1">Qualification:</div>
-                            <div className="flex items-center gap-1 text-xs">
-                              <Trophy className="w-3 h-3 text-yellow-500" />
-                              <span>4 → Cup</span>
-                              <span className="mx-1">|</span>
-                              <Award className="w-3 h-3 text-blue-500" />
-                              <span>3 → Festival</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Overall Tournament Status */}
-              <div className="mt-6 pt-6 border-t">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-blue-600" />
-                      Tournament Progress
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Complete all pool matches to unlock knockout stage
-                    </p>
-                  </div>
-                  
-                  <div className="text-right">
-                    {tournamentUtils.isPoolStageComplete() ? (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <CheckCircle className="w-5 h-5" />
-                        <div>
-                          <div className="font-semibold">Pool Stage Complete</div>
-                          <div className="text-sm">Ready for Knockout Generation</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-orange-600">
-                        <Clock className="w-5 h-5" />
-                        <div>
-                          <div className="font-semibold">Pool Stage In Progress</div>
-                          <div className="text-sm">
-                            {Object.values(poolMatches).flat().filter(m => m.completed).length}/
-                            {Object.values(poolMatches).flat().length} matches completed
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>
   );
+
+  // Helper function to render daily schedule
+  function renderDaySchedule(day: number) {
+    const dayMatches = scheduledMatches[day];
+    
+    if (!dayMatches || dayMatches.length === 0) {
+      return (
+        <div className="text-center py-12 text-gray-500">
+          <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No matches scheduled for Day {day}</p>
+        </div>
+      );
+    }
+
+    // Group matches by time slot
+    const matchesByTime = dayMatches.reduce((acc, match) => {
+      if (!acc[match.timeSlot]) acc[match.timeSlot] = [];
+      acc[match.timeSlot].push(match);
+      return acc;
+    }, {} as {[key: string]: ScheduledMatch[]});
+
+    return (
+      <div className="space-y-6">
+        {Object.entries(matchesByTime)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([timeSlot, matches]) => (
+            <div key={timeSlot} className="border rounded-lg p-4">
+              <h4 className="font-semibold mb-3 text-center bg-gray-100 py-2 rounded">
+                {timeSlot}
+              </h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h5 className="text-sm font-medium text-center mb-2 text-blue-600">Arena 1</h5>
+                  {matches.find(m => m.arena === 1) ? (
+                    <MatchCard match={matches.find(m => m.arena === 1)!} showPool={true} />
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded">
+                      No match scheduled
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h5 className="text-sm font-medium text-center mb-2 text-green-600">Arena 2</h5>
+                  {matches.find(m => m.arena === 2) ? (
+                    <MatchCard match={matches.find(m => m.arena === 2)!} showPool={true} />
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded">
+                      No match scheduled
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+      </div>
+    );
+  }
 }
 
 function getPoolColor(poolId: string): string {

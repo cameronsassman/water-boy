@@ -3,8 +3,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, Trophy, Target, Award, Users } from 'lucide-react';
 
+interface ScheduledMatch extends MatchWithTeams {
+  day?: number;
+  timeSlot?: string;
+  arena?: 1 | 2;
+}
+
 interface MatchCardProps {
-  match: MatchWithTeams;
+  match: ScheduledMatch;
   showPool?: boolean;
   size?: 'small' | 'normal' | 'large';
   showProgression?: boolean;
@@ -23,6 +29,9 @@ export default function MatchCard({
   
   // Determine if teams are placeholder (TBD)
   const isPlaceholder = match.homeTeam.id === 'TBD' || match.awayTeam.id === 'TBD';
+  
+  // Check if this is a scheduled match with day/time info
+  const isScheduled = match.day && match.timeSlot && match.arena;
   
   // Get stage-specific styling and icons
   const getStageInfo = () => {
@@ -105,7 +114,7 @@ export default function MatchCard({
       `}>
         {/* Match Header */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Stage Badge */}
             {match.stage !== 'pool' && (
               <Badge variant="outline" className={`text-xs ${stageInfo.color}`}>
@@ -118,6 +127,20 @@ export default function MatchCard({
             {showPool && match.poolId && (
               <Badge variant="outline" className="text-xs">
                 Pool {match.poolId}
+              </Badge>
+            )}
+            
+            {/* Schedule Badge */}
+            {isScheduled && (
+              <Badge variant="secondary" className="text-xs">
+                Day {match.day} - {match.timeSlot}
+              </Badge>
+            )}
+            
+            {/* Arena Badge */}
+            {match.arena && (
+              <Badge variant="outline" className={`text-xs ${match.arena === 1 ? 'text-blue-600' : 'text-green-600'}`}>
+                Arena {match.arena}
               </Badge>
             )}
             
