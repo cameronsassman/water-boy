@@ -892,10 +892,10 @@ export default function ScoresPage() {
               <TabsTrigger value="day2">Day 2</TabsTrigger>
               <TabsTrigger value="day3">Day 3</TabsTrigger>
               <TabsTrigger value="day4">Day 4</TabsTrigger>
-              <TabsTrigger value="all">All</TabsTrigger>
+              {/* <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="knockout">Knockout</TabsTrigger>
+              <TabsTrigger value="knockout">Knockout</TabsTrigger> */}
               <TabsTrigger value="A">Pool A</TabsTrigger>
               <TabsTrigger value="B">Pool B</TabsTrigger>
               <TabsTrigger value="C">Pool C</TabsTrigger>
