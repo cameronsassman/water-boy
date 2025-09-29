@@ -5,10 +5,9 @@ import { MatchResult } from '@/types/match';
 import { PlayerStats } from '@/types/player';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Users, Target, AlertTriangle, Save, X, Plus, Minus, CheckCircle } from 'lucide-react';
+import { Trophy, Target, Save, X, CheckCircle } from 'lucide-react';
 
 export default function ScoreInput() {
   const [availableMatches, setAvailableMatches] = useState<MatchWithTeams[]>([]);
@@ -24,13 +23,10 @@ export default function ScoreInput() {
 
   const loadMatches = () => {
     try {
-      // Load all matches (pool, cup, plate, shield, festival)
       const tournament = storageUtils.getTournament();
       const allMatches = tournament.matches;
       const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
-      
-      // Filter out matches that are already completed if desired, or show all
-      setAvailableMatches(matchesWithTeams.filter(m => !m.completed)); // Show only pending matches for input
+      setAvailableMatches(matchesWithTeams.filter(m => !m.completed));
     } catch (error) {
       console.error('Error loading matches:', error);
     }
@@ -39,14 +35,12 @@ export default function ScoreInput() {
   const selectMatch = (match: MatchWithTeams) => {
     setSelectedMatch(match);
     
-    // Load existing result if available
     const existingResult = storageUtils.getMatchResult(match.id);
     
     if (existingResult) {
       setHomeTeamStats(existingResult.homeTeamStats);
       setAwayTeamStats(existingResult.awayTeamStats);
     } else {
-      // Initialize empty stats for all players
       const homeStats = match.homeTeam.players.map(player => ({
         playerId: player.id,
         capNumber: player.capNumber,
@@ -86,26 +80,6 @@ export default function ScoreInput() {
     ));
   };
 
-  const incrementStat = (
-    teamType: 'home' | 'away',
-    playerId: string,
-    statType: keyof Omit<PlayerStats, 'playerId' | 'capNumber'>
-  ) => {
-    const currentStats = teamType === 'home' ? homeTeamStats : awayTeamStats;
-    const currentValue = currentStats.find(s => s.playerId === playerId)?.[statType] || 0;
-    updatePlayerStat(teamType, playerId, statType, currentValue + 1);
-  };
-
-  const decrementStat = (
-    teamType: 'home' | 'away',
-    playerId: string,
-    statType: keyof Omit<PlayerStats, 'playerId' | 'capNumber'>
-  ) => {
-    const currentStats = teamType === 'home' ? homeTeamStats : awayTeamStats;
-    const currentValue = currentStats.find(s => s.playerId === playerId)?.[statType] || 0;
-    updatePlayerStat(teamType, playerId, statType, Math.max(0, currentValue - 1));
-  };
-
   const calculateTeamScore = (teamStats: PlayerStats[]): number => {
     return teamStats.reduce((total, player) => total + player.goals, 0);
   };
@@ -131,12 +105,10 @@ export default function ScoreInput() {
       
       storageUtils.saveMatchResult(result);
       
-      // NEW: Update knockout progression if this is a knockout match
       if (['cup', 'plate', 'shield'].includes(selectedMatch.stage)) {
         tournamentUtils.updateKnockoutProgression(selectedMatch.id);
       }
 
-      // Reload matches to show updated status
       loadMatches();
       
       setSaveSuccess(true);
@@ -153,141 +125,6 @@ export default function ScoreInput() {
     setSelectedMatch(null);
     setHomeTeamStats([]);
     setAwayTeamStats([]);
-  };
-
-  const renderPlayerStatsRow = (
-    player: any,
-    stats: PlayerStats,
-    teamType: 'home' | 'away'
-  ) => {
-    return (
-      <tr key={player.id} className="border-b hover:bg-gray-50">
-        <td className="p-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="w-8 h-8 rounded-full flex items-center justify-center p-0 text-xs">
-              {player.capNumber}
-            </Badge>
-            <span className="font-medium text-sm">{player.name}</span>
-          </div>
-        </td>
-        
-        {/* Goals */}
-        <td className="p-3">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => decrementStat(teamType, player.id, 'goals')}
-            >
-              <Minus className="w-3 h-3" />
-            </Button>
-            <Input
-              type="number"
-              min="0"
-              value={stats.goals}
-              onChange={(e) => updatePlayerStat(teamType, player.id, 'goals', parseInt(e.target.value) || 0)}
-              className="w-12 text-center p-1 h-8"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => incrementStat(teamType, player.id, 'goals')}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
-          </div>
-        </td>
-        
-        {/* Kick-outs */}
-        <td className="p-3">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => decrementStat(teamType, player.id, 'kickOuts')}
-            >
-              <Minus className="w-3 h-3" />
-            </Button>
-            <Input
-              type="number"
-              min="0"
-              value={stats.kickOuts}
-              onChange={(e) => updatePlayerStat(teamType, player.id, 'kickOuts', parseInt(e.target.value) || 0)}
-              className="w-12 text-center p-1 h-8"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => incrementStat(teamType, player.id, 'kickOuts')}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
-          </div>
-        </td>
-        
-        {/* Yellow Cards */}
-        <td className="p-3">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => decrementStat(teamType, player.id, 'yellowCards')}
-            >
-              <Minus className="w-3 h-3" />
-            </Button>
-            <Input
-              type="number"
-              min="0"
-              value={stats.yellowCards}
-              onChange={(e) => updatePlayerStat(teamType, player.id, 'yellowCards', parseInt(e.target.value) || 0)}
-              className="w-12 text-center p-1 h-8"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => incrementStat(teamType, player.id, 'yellowCards')}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
-          </div>
-        </td>
-        
-        {/* Red Cards */}
-        <td className="p-3">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => decrementStat(teamType, player.id, 'redCards')}
-            >
-              <Minus className="w-3 h-3" />
-            </Button>
-            <Input
-              type="number"
-              min="0"
-              value={stats.redCards}
-              onChange={(e) => updatePlayerStat(teamType, player.id, 'redCards', parseInt(e.target.value) || 0)}
-              className="w-12 text-center p-1 h-8"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-6 h-6 p-0"
-              onClick={() => incrementStat(teamType, player.id, 'redCards')}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
-          </div>
-        </td>
-      </tr>
-    );
   };
 
   if (!selectedMatch) {
@@ -357,148 +194,227 @@ export default function ScoreInput() {
   const awayScore = calculateTeamScore(awayTeamStats);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Trophy className="text-blue-600" />
-              Match Scorecard
-            </h1>
-            <p className="text-gray-600 mt-2">
-              {selectedMatch.stage === 'pool' ? `Pool ${selectedMatch.poolId}` : selectedMatch.round ? `${selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} ${selectedMatch.round}` : selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} • {selectedMatch.homeTeam.schoolName} vs {selectedMatch.awayTeam.schoolName}
+            <h1 className="text-2xl font-bold">Match Scorecard</h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {selectedMatch.stage === 'pool' ? `Pool ${selectedMatch.poolId}` : selectedMatch.round ? `${selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} - ${selectedMatch.round}` : selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)}
             </p>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={clearMatch}
-              variant="outline"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Back to Matches
+          <div className="flex items-center gap-2">
+            <Button onClick={clearMatch} variant="outline" size="sm">
+              <X className="w-4 h-4 mr-1" />
+              Back
             </Button>
-            
-            <Button
-              onClick={saveMatchResult}
-              disabled={isSaving}
-              className="min-w-32"
-            >
-              {isSaving ? (
-                'Saving...'
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Result
-                </>
-              )}
+            <Button onClick={saveMatchResult} disabled={isSaving} size="sm" className="bg-green-600 hover:bg-green-700">
+              <Save className="w-4 h-4 mr-1" />
+              {isSaving ? 'Saving...' : 'Save Result'}
             </Button>
           </div>
+        </div>
+
+        {saveSuccess && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+            ✅ Match result saved successfully!
+          </div>
+        )}
+
+        {/* Score Display */}
+        <div className="bg-gradient-to-r from-gray-700 to-gray-800 text-white p-8 rounded-lg shadow-lg mb-6">
+          <div className="flex items-center justify-center gap-12">
+            <div className="text-center">
+              <div className="text-lg font-medium mb-2">{selectedMatch.homeTeam.schoolName}</div>
+              <div className="text-6xl font-bold">{homeScore}</div>
+            </div>
+            <div className="text-3xl font-light">-</div>
+            <div className="text-center">
+              <div className="text-lg font-medium mb-2">{selectedMatch.awayTeam.schoolName}</div>
+              <div className="text-6xl font-bold">{awayScore}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Teams Side by Side */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          
+          {/* Home Team */}
+          <div className="bg-white rounded-lg shadow">
+            {/* School Name */}
+            <div className="bg-blue-600 text-white p-4 rounded-t-lg">
+              <h2 className="text-xl font-bold text-center">{selectedMatch.homeTeam.schoolName}</h2>
+            </div>
+            
+            {/* Players Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-100 border-b">
+                    <th className="text-left p-3 font-medium">Player</th>
+                    <th className="text-center p-3 font-medium">Goals</th>
+                    <th className="text-center p-3 font-medium">Fouls</th>
+                    <th className="text-center p-3 font-medium">Yellow</th>
+                    <th className="text-center p-3 font-medium">Red</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedMatch.homeTeam.players.map((player) => {
+                    const stats = homeTeamStats.find(s => s.playerId === player.id);
+                    if (!stats) return null;
+                    
+                    return (
+                      <tr key={player.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                              {player.capNumber}
+                            </div>
+                            <span className="font-medium">{player.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.goals}
+                            onChange={(e) => updatePlayerStat('home', player.id, 'goals', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.kickOuts}
+                            onChange={(e) => updatePlayerStat('home', player.id, 'kickOuts', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.yellowCards}
+                            onChange={(e) => updatePlayerStat('home', player.id, 'yellowCards', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.redCards}
+                            onChange={(e) => updatePlayerStat('home', player.id, 'redCards', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Coach and Manager */}
+            <div className="p-4 bg-gray-50 border-t">
+              <div className="text-sm space-y-1">
+                <p><span className="font-semibold">Coach:</span> {selectedMatch.homeTeam.coachName || 'N/A'}</p>
+                <p><span className="font-semibold">Manager:</span> {selectedMatch.homeTeam.managerName || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Away Team */}
+          <div className="bg-white rounded-lg shadow">
+            {/* School Name */}
+            <div className="bg-green-600 text-white p-4 rounded-t-lg">
+              <h2 className="text-xl font-bold text-center">{selectedMatch.awayTeam.schoolName}</h2>
+            </div>
+            
+            {/* Players Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-100 border-b">
+                    <th className="text-left p-3 font-medium">Player</th>
+                    <th className="text-center p-3 font-medium">Goals</th>
+                    <th className="text-center p-3 font-medium">Fouls</th>
+                    <th className="text-center p-3 font-medium">Yellow</th>
+                    <th className="text-center p-3 font-medium">Red</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedMatch.awayTeam.players.map((player) => {
+                    const stats = awayTeamStats.find(s => s.playerId === player.id);
+                    if (!stats) return null;
+                    
+                    return (
+                      <tr key={player.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                              {player.capNumber}
+                            </div>
+                            <span className="font-medium">{player.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.goals}
+                            onChange={(e) => updatePlayerStat('away', player.id, 'goals', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.kickOuts}
+                            onChange={(e) => updatePlayerStat('away', player.id, 'kickOuts', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.yellowCards}
+                            onChange={(e) => updatePlayerStat('away', player.id, 'yellowCards', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={stats.redCards}
+                            onChange={(e) => updatePlayerStat('away', player.id, 'redCards', parseInt(e.target.value) || 0)}
+                            className="w-16 text-center"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Coach and Manager */}
+            <div className="p-4 bg-gray-50 border-t">
+              <div className="text-sm space-y-1">
+                <p><span className="font-semibold">Coach:</span> {selectedMatch.awayTeam.coachName || 'N/A'}</p>
+                <p><span className="font-semibold">Manager:</span> {selectedMatch.awayTeam.managerName || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      {saveSuccess && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-          ✅ Match result saved successfully!
-        </div>
-      )}
-
-      {/* Score Display */}
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center">
-              <div className="text-2xl font-bold mb-2">{selectedMatch.homeTeam.schoolName}</div>
-              <div className="text-5xl font-bold text-blue-600">{homeScore}</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-gray-400 text-xl mb-4">vs</div>
-              <Badge variant="outline">
-                {selectedMatch.stage === 'pool' ? `Pool ${selectedMatch.poolId}` : selectedMatch.round ? `${selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)} ${selectedMatch.round}` : selectedMatch.stage.charAt(0).toUpperCase() + selectedMatch.stage.slice(1)}
-              </Badge>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-2xl font-bold mb-2">{selectedMatch.awayTeam.schoolName}</div>
-              <div className="text-5xl font-bold text-green-600">{awayScore}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Player Stats Tabs */}
-      <Tabs defaultValue="home" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="home">{selectedMatch.homeTeam.schoolName}</TabsTrigger>
-          <TabsTrigger value="away">{selectedMatch.awayTeam.schoolName}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="home" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                {selectedMatch.homeTeam.schoolName} Player Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left p-3 font-medium text-sm text-gray-600">Player</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Goals</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Kick-outs</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Yellow</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Red</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedMatch.homeTeam.players.map(player => {
-                      const stats = homeTeamStats.find(s => s.playerId === player.id);
-                      return stats ? renderPlayerStatsRow(player, stats, 'home') : null;
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="away" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                {selectedMatch.awayTeam.schoolName} Player Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left p-3 font-medium text-sm text-gray-600">Player</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Goals</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Kick-outs</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Yellow</th>
-                      <th className="text-center p-3 font-medium text-sm text-gray-600">Red</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedMatch.awayTeam.players.map(player => {
-                      const stats = awayTeamStats.find(s => s.playerId === player.id);
-                      return stats ? renderPlayerStatsRow(player, stats, 'away') : null;
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
