@@ -188,8 +188,8 @@ export default function TeamDetailPage() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="players">Players</TabsTrigger>
           <TabsTrigger value="matches">Match History</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="awards">Team Awards</TabsTrigger>
+          {/* <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="awards">Team Awards</TabsTrigger> */}
         </TabsList>
 
         {/* Players Tab */}
@@ -210,9 +210,7 @@ export default function TeamDetailPage() {
                       <thead>
                         <tr className="border-b bg-gray-50">
                           <th className="text-left p-3 font-medium text-sm text-gray-600">Player</th>
-                          <th className="text-center p-3 font-medium text-sm text-gray-600">MP</th>
                           <th className="text-center p-3 font-medium text-sm text-gray-600">Goals</th>
-                          <th className="text-center p-3 font-medium text-sm text-gray-600">Avg/M</th>
                           <th className="text-center p-3 font-medium text-sm text-gray-600">K/O</th>
                           <th className="text-center p-3 font-medium text-sm text-gray-600">YC</th>
                           <th className="text-center p-3 font-medium text-sm text-gray-600">RC</th>
@@ -220,7 +218,6 @@ export default function TeamDetailPage() {
                       </thead>
                       <tbody>
                         {teamStats.players
-                          .sort((a, b) => b.goals - a.goals)
                           .map(player => (
                           <tr key={player.playerId} className="border-b hover:bg-gray-50">
                             <td className="p-3">
@@ -236,7 +233,6 @@ export default function TeamDetailPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="text-center p-3 text-sm">{player.matchesPlayed}</td>
                             <td className="text-center p-3">
                               <span className={`font-medium ${player.goals > 0 ? 'text-green-600' : 'text-gray-400'}`}>
                                 {player.goals}
@@ -407,7 +403,6 @@ export default function TeamDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
                 Match History ({teamStats.matchHistory.length} matches)
               </CardTitle>
             </CardHeader>

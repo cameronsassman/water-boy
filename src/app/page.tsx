@@ -1,14 +1,43 @@
-// src/app/page.tsx
 import Link from 'next/link';
 import background from "../../public/images/Background.jpg"
 import logo from "../../public/images/Logo-pack/junior-wp-logo-tranparent.png"
+import investments from "../../public/images/Sponsors Logos/MnG-Investments-Logo.png"
+import geddes from "../../public/images/Sponsors Logos/Geddes.jpeg"
+import rsa_web from "../../public/images/Sponsors Logos/RSA-WEB.png"
+import stikka from "../../public/images/Sponsors Logos/STIKKA.png"
+import fnb from "../../public/images/Sponsors Logos/FNB.png"
+import zapmed from "../../public/images/Sponsors Logos/ZAPMED.png"
 import Image from 'next/image';
+
+const sponsors = [
+  { image: investments, alt: "MnG Investments" },
+  { image: geddes, alt: "Geddes" },
+  { image: rsa_web, alt: "RSA Web" },
+  { image: stikka, alt: "STIKKA" },
+  { image: fnb, alt: "FNB" },
+  { image: zapmed, alt: "ZAPMED" },
+];
+
+const videoMessages = [
+  {
+    title: "Welcome from the Headmaster",
+    description: "A message about sportsmanship and excellence",
+    placeholder: "Headmaster Welcome Video",
+    content: "Welcome to our annual U14 Water Polo Tournament. We wish all teams the very best of luck!"
+  },
+  {
+    title: "From the Team Captains",
+    description: "Inspiration from student leaders",
+    placeholder: "Captain Message Video",
+    content: "Hear from team captains about fair play and giving your best effort in every match."
+  }
+];
 
 export default function HomePage() {
   return (
     <div>
       {/* Hero Section with Background */}
-      <section className="relative  text-white pt-20 pb-40 overflow-hidden">
+      <section className="relative text-white pt-20 pb-40 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image 
@@ -27,205 +56,106 @@ export default function HomePage() {
           <div className='flex justify-center'>
             <Image
               src={logo}
-              width={500}
-              height={500}
+              width={400}
+              height={400}
               alt="Water polo logo"
               priority
             />
           </div>
-          <p className="text-xl md:text-2xl mb-8 text-blue-100">
-            28 Schools • 4 Pools • Championship Glory
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <Link 
               href="/pools"
-              className="bg-white text-blue-800 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="bg-white text-blue-800 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
             >
               View Pool Standings
             </Link>
             <Link 
-              href="/brackets"
-              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors border border-blue-500"
+              href="/scores"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl border border-blue-500 flex items-center justify-center gap-2"
             >
-              Tournament Bracket
+              View Fixtures
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Video Messages Section */}
-      <section className="py-12">
+      {/* Tournament Messages Section */}
+      <section className="py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Tournament Messages
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Headmaster Message */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Welcome from the Headmaster
-                </h3>
-                <p className="text-gray-600">
-                  A message about sportsmanship and excellence
-                </p>
-              </div>
-              
-              <div className="bg-gray-100 rounded-lg aspect-video flex items-center justify-center mb-4">
-                <div className="text-center text-gray-500">
-                  <div className="text-4xl mb-2">🎥</div>
-                  <p>Headmaster Welcome Video</p>
-                  <p className="text-sm">(Video will be embedded here)</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+            {videoMessages.map((message, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-2 border-blue-100 hover:border-blue-300 transition-all duration-300">
+                <div className="text-center mb-4 md:mb-6">
+                  <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
+                    {message.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm md:text-base">
+                    {message.description}
+                  </p>
+                </div>
+                
+                {/* Video Placeholder */}
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg aspect-video flex items-center justify-center mb-4 border-2 border-blue-200">
+                  <div className="text-center text-blue-600">
+                    <div className="text-3xl md:text-4xl mb-2">📹</div>
+                    <p className="text-sm md:text-base font-medium">{message.placeholder}</p>
+                    <p className="text-xs md:text-sm mt-1 text-blue-500">(Video will be embedded here)</p>
+                  </div>
                 </div>
               </div>
-              
-              <p className="text-gray-700 text-center text-sm">
-                Welcome to our annual U14 Water Polo Tournament. We wish all teams the very best of luck!
-              </p>
-            </div>
-
-            {/* Team Captain Message */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
-                  From the Team Captains
-                </h3>
-                <p className="text-gray-600">
-                  Inspiration from student leaders
-                </p>
-              </div>
-              
-              <div className="bg-gray-100 rounded-lg aspect-video flex items-center justify-center mb-4">
-                <div className="text-center text-gray-500">
-                  <div className="text-4xl mb-2">🎥</div>
-                  <p>Captain Message Video</p>
-                  <p className="text-sm">(Video will be embedded here)</p>
-                </div>
-              </div>
-              
-              <p className="text-gray-700 text-center text-sm">
-                Hear from team captains about fair play and giving your best effort in every match.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Quick Access Cards */}
-      <section className="py-12 bg-gray-50">
+      {/* Sponsors Section */}
+      <section className="py-12 md:py-16 bg-gradient-to-b from-blue-50 to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Tournament Hub
-          </h2>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Pool Standings Card */}
-            <Link href="/pools" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">🏊‍♂️</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Pool Standings</h3>
-                  <p className="text-gray-600 text-sm">
-                    Check your team's position in Pool A, B, C, or D
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Teams Card */}
-            <Link href="/teams" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">🏫</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">All Teams</h3>
-                  <p className="text-gray-600 text-sm">
-                    Browse all 28 participating schools and their players
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Bracket Card */}
-            <Link href="/brackets" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">🥇</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Tournament Bracket</h3>
-                  <p className="text-gray-600 text-sm">
-                    Follow the knockout stages and championship path
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Scores Card */}
-            <Link href="/scores" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">📊</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Match Results</h3>
-                  <p className="text-gray-600 text-sm">
-                    View completed match scores and upcoming fixtures
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Rules Card */}
-            <Link href="/rules" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">📋</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Tournament Rules</h3>
-                  <p className="text-gray-600 text-sm">
-                    Format, regulations, and competition structure
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Sponsors Card */}
-            <Link href="/sponsors" className="group">
-              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow group-hover:scale-105 transition-transform">
-                <div className="text-center">
-                  <div className="text-4xl mb-4">🤝</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Our Sponsors</h3>
-                  <p className="text-gray-600 text-sm">
-                    Thank you to our tournament supporters
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Tournament Stats Preview */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
-              Tournament at a Glance
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              Our Sponsors
             </h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">28</div>
-                <div className="text-gray-600">Schools</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">4</div>
-                <div className="text-gray-600">Pools</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">84</div>
-                <div className="text-gray-600">Pool Matches</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">3</div>
-                <div className="text-gray-600">Knockout Stages</div>
-              </div>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Thank you to our generous sponsors for making this tournament possible
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 border-2 border-blue-100">
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 lg:gap-12 items-center justify-items-center mt-8">
+              {sponsors.map((sponsor, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-center p-4 md:p-6 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-300"
+                >
+                  <Image
+                    src={sponsor.image}
+                    width={240}
+                    height={100}
+                    alt={sponsor.alt}
+                    className="w-full max-w-[200px] md:max-w-[240px] lg:max-w-[260px] h-auto object-contain"
+                    sizes="(max-width: 768px) 200px, (max-width: 1024px) 240px, 260px"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Layout */}
+            <div className="md:hidden grid grid-cols-2 gap-6 items-center justify-items-center">
+              {sponsors.map((sponsor, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-center p-4 bg-gray-50 rounded-lg border border-gray-200"
+                >
+                  <Image
+                    src={sponsor.image}
+                    width={160}
+                    height={70}
+                    alt={sponsor.alt}
+                    className="w-full max-w-[140px] h-auto object-contain"
+                    sizes="140px"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
