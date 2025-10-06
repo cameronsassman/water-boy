@@ -1,8 +1,7 @@
 import React from 'react';
 import { MatchWithTeams } from '@/utils/tournament-logic';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Crown, Medal, Clock, CheckCircle } from 'lucide-react';
+import { Crown, Medal, Clock, CheckCircle } from 'lucide-react';
 
 interface BracketDisplayProps {
   roundOf16: MatchWithTeams[];
@@ -72,7 +71,6 @@ export default function BracketDisplay({
           </div>
           
           <div className="space-y-1">
-            {/* Home Team */}
             <div className={`
               flex items-center justify-between p-1 rounded
               ${homeWon ? 'bg-green-100 font-semibold' : ''}
@@ -85,7 +83,6 @@ export default function BracketDisplay({
               </span>
             </div>
             
-            {/* Away Team */}
             <div className={`
               flex items-center justify-between p-1 rounded
               ${awayWon ? 'bg-green-100 font-semibold' : ''}
@@ -105,11 +102,9 @@ export default function BracketDisplay({
 
   return (
     <div className="space-y-8 overflow-x-auto">
-      {/* Tournament Bracket Layout */}
       <div className="min-w-4xl">
         <div className="grid grid-cols-7 gap-4 items-center">
           
-          {/* Round of 16 - Left Side (A vs D) */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-center mb-2">Round of 16</h4>
             <div className="space-y-2">
@@ -119,7 +114,6 @@ export default function BracketDisplay({
             </div>
           </div>
 
-          {/* Quarter Finals - Left Side */}
           <div className="space-y-6">
             <h4 className="text-sm font-semibold text-center mb-2">Quarter Finals</h4>
             <div className="space-y-4">
@@ -129,19 +123,16 @@ export default function BracketDisplay({
             </div>
           </div>
 
-          {/* Semi Finals - Left Side */}
           <div className="flex flex-col justify-center">
             <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
             <div className="space-y-8">
-              {semiFinals.slice(0,1).map(match => ( // Only first semi-final for left side
+              {semiFinals.slice(0,1).map(match => (
                 <BracketMatch key={match.id} match={match} />
               ))}
             </div>
           </div>
 
-          {/* Finals Column */}
           <div className="flex flex-col justify-center space-y-6">
-            {/* Cup Final */}
             <div>
               <h4 className="text-sm font-semibold text-center mb-2 flex items-center justify-center gap-1">
                 <Crown className="w-4 h-4 text-yellow-500" />
@@ -150,7 +141,6 @@ export default function BracketDisplay({
               <BracketMatch match={final} size="large" highlight={true} />
             </div>
             
-            {/* Third Place */}
             <div>
               <h4 className="text-sm font-semibold text-center mb-2 flex items-center justify-center gap-1">
                 <Medal className="w-4 h-4 text-orange-500" />
@@ -160,18 +150,15 @@ export default function BracketDisplay({
             </div>
           </div>
 
-          {/* Semi Finals - Right Side (Mirror) */}
           <div className="flex flex-col justify-center">
             <h4 className="text-sm font-semibold text-center mb-4">Semi Finals</h4>
             <div className="space-y-8">
-              {/* Display the second semi-final for the right side */}
               {semiFinals.slice(1,2).map(match => (
                 <BracketMatch key={match.id} match={match} />
               ))}
             </div>
           </div>
 
-          {/* Quarter Finals - Right Side */}
           <div className="space-y-6">
             <h4 className="text-sm font-semibold text-center mb-2">Quarter Finals</h4>
             <div className="space-y-4">
@@ -181,7 +168,6 @@ export default function BracketDisplay({
             </div>
           </div>
 
-          {/* Round of 16 - Right Side (B vs C) */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-center mb-2">Round of 16</h4>
             <div className="space-y-2">
@@ -193,7 +179,6 @@ export default function BracketDisplay({
         </div>
       </div>
 
-      {/* Bracket Legend */}
       <div className="flex justify-center">
         <Card className="p-4">
           <div className="flex items-center gap-6 text-sm">

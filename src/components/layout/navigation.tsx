@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
 const navigationItems = [
-  { name: 'Home', href: '/', icon: '🏠' },
-  { name: 'Rules', href: '/rules', icon: '📋' },
-  { name: 'Sponsors', href: '/sponsors', icon: '🤝' },
-  { name: 'Previous Scores', href: '/scores', icon: '📊' },
-  { name: 'Teams', href: '/teams', icon: '🏊‍♂️' },
-  { name: 'Pools', href: '/pools', icon: '🏆' },
-  { name: 'Knockout Bracket', href: '/brackets', icon: '🥇' },
+  { name: 'Home', href: '/' },
+  // { name: 'Rules', href: '/rules' },
+  // { name: 'Sponsors', href: '/sponsors' },
+  { name: 'Fixtures', href: '/scores' },
+  { name: 'Teams', href: '/teams' },
+  { name: 'Pools', href: '/pools' },
+  // { name: 'Knockout Bracket', href: '/brackets' },
 ];
 
 export default function Navigation() {
@@ -35,32 +35,33 @@ export default function Navigation() {
     if (pathname !== href) {
       setIsNavigating(true);
       setIsMobileMenuOpen(false);
-      // Use router.push instead of Link for better control
       router.push(href);
     }
   };
 
   return (
     <nav className="bg-blue-900 shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo/Brand */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <button
               onClick={() => handleNavigation('/')}
-              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+              className="flex items-center hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-300 rounded"
             >
-              <span className="text-2xl">🏊‍♂️</span>
-              <span className="text-white font-bold text-lg hidden sm:block">
-                U14 Water Polo Tournament
-              </span>
-              <span className="text-white font-bold text-lg sm:hidden">
-                U14 Tournament
+              <span className="text-white font-bold whitespace-nowrap">
+                {/* Different text sizes for different devices */}
+                <span className="text-sm sm:text-base md:text-lg lg:text-xl">
+                  SACS Water Polo
+                </span>
+                <span className="hidden sm:inline text-sm sm:text-base md:text-lg lg:text-xl">
+                  {' '}Tournament
+                </span>
               </span>
             </button>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Full items on large screens */}
           <div className="hidden lg:flex items-center space-x-1">
             {navigationItems.map((item) => {
               const isActive = pathname === item.href;
@@ -69,24 +70,50 @@ export default function Navigation() {
                   key={item.name}
                   onClick={() => handleNavigation(item.href)}
                   disabled={isNavigating}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 ${
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
                     isActive
-                      ? 'bg-blue-700 text-white'
+                      ? 'bg-blue-700 text-white shadow-inner'
                       : 'text-blue-100 hover:bg-blue-800 hover:text-white'
                   }`}
                 >
-                  <span className="mr-1">{item.icon}</span>
                   {item.name}
                 </button>
               );
             })}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="lg:hidden flex items-center">
+          {/* Tablet Navigation - Compact items on medium screens */}
+          <div className="hidden md:flex lg:hidden items-center space-x-1">
+            {navigationItems.map((item) => {
+              const isActive = pathname === item.href;
+              const shortName = 
+                item.name === 'Previous Scores' ? 'Scores' :
+                item.name === 'Knockout Bracket' ? 'Bracket' :
+                item.name;
+              
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavigation(item.href)}
+                  disabled={isNavigating}
+                  className={`px-2 py-2 rounded-md text-xs font-medium transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                    isActive
+                      ? 'bg-blue-700 text-white shadow-inner'
+                      : 'text-blue-100 hover:bg-blue-800 hover:text-white'
+                  }`}
+                  title={item.name}
+                >
+                  {shortName}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile menu button - Show on small screens only */}
+          <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-blue-100 hover:text-white p-2"
+              className="text-blue-100 hover:text-white p-2 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded transition-colors"
               aria-label="Toggle mobile menu"
             >
               <svg
@@ -117,8 +144,8 @@ export default function Navigation() {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-blue-800">
+          <div className="md:hidden border-t border-blue-700">
+            <div className="px-2 pt-2 pb-4 space-y-1 bg-blue-800">
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -126,13 +153,12 @@ export default function Navigation() {
                     key={item.name}
                     onClick={() => handleNavigation(item.href)}
                     disabled={isNavigating}
-                    className={`w-full text-left block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 disabled:opacity-50 ${
+                    className={`w-full text-left px-4 py-3 rounded-md text-base font-medium transition-colors duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300 ${
                       isActive
-                        ? 'bg-blue-700 text-white'
+                        ? 'bg-blue-700 text-white shadow-inner'
                         : 'text-blue-100 hover:bg-blue-700 hover:text-white'
                     }`}
                   >
-                    <span className="mr-2">{item.icon}</span>
                     {item.name}
                   </button>
                 );

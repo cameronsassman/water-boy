@@ -164,7 +164,6 @@ export default function BracketsPage() {
       {!poolStageComplete && (
         <Card>
           <CardContent className="text-center py-12">
-            <Calendar className="w-16 h-16 mx-auto mb-4 text-orange-400" />
             <h3 className="text-xl font-semibold mb-2">Pool Stage In Progress</h3>
             <p className="text-gray-600 mb-4">
               Complete all pool matches before the knockout stage can begin.
