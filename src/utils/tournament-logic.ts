@@ -2,6 +2,12 @@ import { Team, Pool, Tournament, Match } from '@/types/team';
 import { MatchResult } from '@/types/match';
 import { storageUtils } from './storage';
 
+// Extended interface to handle additional properties
+interface ExtendedMatch extends Match {
+  parent1Result?: 'winner' | 'loser';
+  parent2Result?: 'winner' | 'loser';
+}
+
 export const tournamentUtils = {
   // Randomly allocate teams into 4 pools (7 teams each)
   allocateTeamsToPools: (): void => {
@@ -269,82 +275,123 @@ export const tournamentUtils = {
 
     // Clear existing knockout matches
     tournament.matches = tournament.matches.filter(match => 
-      !['cup', 'plate', 'shield', 'festival'].includes(match.stage)
+      !['cup', 'plate', 'shield', 'playoff', 'festival'].includes(match.stage)
     );
 
-    // PHASE 2.1: Generate Cup Round of 16 (A vs D, B vs C format)
+    // DAY 3 PART 2: Generate Cup Round of 16
     const roundOf16Matches: Match[] = [];
     
-    // A1 vs D4, A2 vs D3, A3 vs D2, A4 vs D1
-    for (let i = 0; i < 4; i++) {
-      const matchId = `cup-r16-${i + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-      roundOf16Matches.push({
-        id: matchId,
-        homeTeamId: poolAQualifiers[i].id,
-        awayTeamId: poolDQualifiers[3 - i].id,
-        stage: 'cup',
-        completed: false,
-        round: 'round-of-16',
-        bracketPosition: i + 1
-      });
-    }
+    // A1 vs D4, B1 vs C4, C1 vs B4, D1 vs A4 (1st place teams)
+    roundOf16Matches.push(
+      createMatch('cup', 'round-of-16', poolAQualifiers[0].id, poolDQualifiers[3].id, 1),
+      createMatch('cup', 'round-of-16', poolBQualifiers[0].id, poolCQualifiers[3].id, 2),
+      createMatch('cup', 'round-of-16', poolCQualifiers[0].id, poolBQualifiers[3].id, 3),
+      createMatch('cup', 'round-of-16', poolDQualifiers[0].id, poolAQualifiers[3].id, 4)
+    );
+    
+    // A2 vs D3, B2 vs C3, C2 vs B3, D2 vs A3 (2nd place teams)
+    roundOf16Matches.push(
+      createMatch('cup', 'round-of-16', poolAQualifiers[1].id, poolDQualifiers[2].id, 5),
+      createMatch('cup', 'round-of-16', poolBQualifiers[1].id, poolCQualifiers[2].id, 6),
+      createMatch('cup', 'round-of-16', poolCQualifiers[1].id, poolBQualifiers[2].id, 7),
+      createMatch('cup', 'round-of-16', poolDQualifiers[1].id, poolAQualifiers[2].id, 8)
+    );
 
-    // B1 vs C4, B2 vs C3, B3 vs C2, B4 vs C1
-    for (let i = 0; i < 4; i++) {
-      const matchId = `cup-r16-${i + 5}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-      roundOf16Matches.push({
-        id: matchId,
-        homeTeamId: poolBQualifiers[i].id,
-        awayTeamId: poolCQualifiers[3 - i].id,
-        stage: 'cup',
-        completed: false,
-        round: 'round-of-16',
-        bracketPosition: i + 5
-      });
-    }
+    // Generate Shield Quarter Finals (Cup R16 losers)
+    const shieldQuarterFinals: Match[] = [];
+    shieldQuarterFinals.push(
+      createPlaceholderMatch('shield', 'shield-quarter-final', roundOf16Matches[0].id, roundOf16Matches[4].id, 1, 'loser', 'loser'),
+      createPlaceholderMatch('shield', 'shield-quarter-final', roundOf16Matches[5].id, roundOf16Matches[1].id, 2, 'loser', 'loser'),
+      createPlaceholderMatch('shield', 'shield-quarter-final', roundOf16Matches[2].id, roundOf16Matches[6].id, 3, 'loser', 'loser'),
+      createPlaceholderMatch('shield', 'shield-quarter-final', roundOf16Matches[7].id, roundOf16Matches[3].id, 4, 'loser', 'loser')
+    );
 
-    // PHASE 2.2: Generate Cup bracket structure (QF, SF, Final, 3rd Place)
-    const quarterFinalMatches = generatePlaceholderMatches('cup', 'quarter-final', 4, roundOf16Matches);
-    const semiFinalMatches = generatePlaceholderMatches('cup', 'semi-final', 2, quarterFinalMatches);
-    const cupFinal = generatePlaceholderMatches('cup', 'final', 1, semiFinalMatches);
-    const cupThirdPlace = generatePlaceholderMatches('cup', 'third-place', 1, semiFinalMatches, 'loser');
+    // Generate Cup Quarter Finals (Cup R16 winners)
+    const cupQuarterFinals: Match[] = [];
+    cupQuarterFinals.push(
+      createPlaceholderMatch('cup', 'quarter-final', roundOf16Matches[0].id, roundOf16Matches[4].id, 1),
+      createPlaceholderMatch('cup', 'quarter-final', roundOf16Matches[5].id, roundOf16Matches[1].id, 2),
+      createPlaceholderMatch('cup', 'quarter-final', roundOf16Matches[2].id, roundOf16Matches[6].id, 3),
+      createPlaceholderMatch('cup', 'quarter-final', roundOf16Matches[7].id, roundOf16Matches[3].id, 4)
+    );
 
-    // PHASE 2.3: Generate Plate Bracket (for Cup R16 losers)
-    const plateRound1Matches = generatePlaceholderMatches('plate', 'plate-round-1', 8, roundOf16Matches, 'loser');
-    const plateQuarterFinals = generatePlaceholderMatches('plate', 'plate-quarter-final', 4, plateRound1Matches);
-    const plateSemiFinals = generatePlaceholderMatches('plate', 'plate-semi-final', 2, plateQuarterFinals);
-    const plateFinal = generatePlaceholderMatches('plate', 'plate-final', 1, plateSemiFinals);
-    const plateThirdPlace = generatePlaceholderMatches('plate', 'plate-third-place', 1, plateSemiFinals, 'loser');
+    // DAY 4: Playoff Round 1 (Shield QF losers)
+    const playoffRound1: Match[] = [];
+    playoffRound1.push(
+      createPlaceholderMatch('playoff', 'playoff-round-1', shieldQuarterFinals[0].id, shieldQuarterFinals[1].id, 1, 'loser', 'loser'),
+      createPlaceholderMatch('playoff', 'playoff-round-1', shieldQuarterFinals[2].id, shieldQuarterFinals[3].id, 2, 'loser', 'loser')
+    );
 
-    // PHASE 2.4: Generate Shield Bracket (for Plate QF losers)
-    const shieldSemiFinals = generatePlaceholderMatches('shield', 'shield-semi-final', 2, plateQuarterFinals, 'loser');
-    const shieldFinal = generatePlaceholderMatches('shield', 'shield-final', 1, shieldSemiFinals);
-    const shieldThirdPlace = generatePlaceholderMatches('shield', 'shield-third-place', 1, shieldSemiFinals, 'loser');
+    // Shield Semi Finals (Shield QF winners)
+    const shieldSemiFinals: Match[] = [];
+    shieldSemiFinals.push(
+      createPlaceholderMatch('shield', 'shield-semi-final', shieldQuarterFinals[0].id, shieldQuarterFinals[1].id, 1),
+      createPlaceholderMatch('shield', 'shield-semi-final', shieldQuarterFinals[2].id, shieldQuarterFinals[3].id, 2)
+    );
 
-    // PHASE 2.5: Generate Festival Matches (bottom 3 from each pool + early exits)
+    // Plate Semi Finals (Cup QF losers)
+    const plateSemiFinals: Match[] = [];
+    plateSemiFinals.push(
+      createPlaceholderMatch('plate', 'plate-semi-final', cupQuarterFinals[0].id, cupQuarterFinals[1].id, 1, 'loser', 'loser'),
+      createPlaceholderMatch('plate', 'plate-semi-final', cupQuarterFinals[2].id, cupQuarterFinals[3].id, 2, 'loser', 'loser')
+    );
+
+    // Cup Semi Finals (Cup QF winners)
+    const cupSemiFinals: Match[] = [];
+    cupSemiFinals.push(
+      createPlaceholderMatch('cup', 'semi-final', cupQuarterFinals[0].id, cupQuarterFinals[1].id, 1),
+      createPlaceholderMatch('cup', 'semi-final', cupQuarterFinals[2].id, cupQuarterFinals[3].id, 2)
+    );
+
+    // 15th/16th Playoff (Playoff R1 losers)
+    const playoff15th16th = createPlaceholderMatch('playoff', '15th-16th', playoffRound1[0].id, playoffRound1[1].id, 1, 'loser', 'loser');
+
+    // 13th/14th Playoff (Playoff R1 winners)
+    const playoff13th14th = createPlaceholderMatch('playoff', '13th-14th', playoffRound1[0].id, playoffRound1[1].id, 1);
+
+    // Shield 3rd/4th (Shield SF losers)
+    const shieldThirdPlace = createPlaceholderMatch('shield', 'shield-third-place', shieldSemiFinals[0].id, shieldSemiFinals[1].id, 1, 'loser', 'loser');
+
+    // Shield Final (Shield SF winners)
+    const shieldFinal = createPlaceholderMatch('shield', 'shield-final', shieldSemiFinals[0].id, shieldSemiFinals[1].id, 1);
+
+    // Plate 3rd/4th (Plate SF losers)
+    const plateThirdPlace = createPlaceholderMatch('plate', 'plate-third-place', plateSemiFinals[0].id, plateSemiFinals[1].id, 1, 'loser', 'loser');
+
+    // Plate Final (Plate SF winners)
+    const plateFinal = createPlaceholderMatch('plate', 'plate-final', plateSemiFinals[0].id, plateSemiFinals[1].id, 1);
+
+    // Cup 3rd/4th (Cup SF losers)
+    const cupThirdPlace = createPlaceholderMatch('cup', 'third-place', cupSemiFinals[0].id, cupSemiFinals[1].id, 1, 'loser', 'loser');
+
+    // Cup Final (Cup SF winners)
+    const cupFinal = createPlaceholderMatch('cup', 'final', cupSemiFinals[0].id, cupSemiFinals[1].id, 1);
+
+    // Generate Festival Matches (bottom 3 from each pool)
     const festivalTeams: string[] = [];
     tournament.pools.forEach(pool => {
       tournamentUtils.getPoolNonQualifiers(pool.id).forEach(team => festivalTeams.push(team.id));
     });
     
-    // Generate round-robin festival matches for pool non-qualifiers
     const festivalMatches = generateRoundRobinMatches(festivalTeams, undefined, 'festival');
 
     // Add all matches to tournament
     tournament.matches.push(
       ...roundOf16Matches,
-      ...quarterFinalMatches, 
-      ...semiFinalMatches, 
-      ...cupFinal, 
-      ...cupThirdPlace,
-      ...plateRound1Matches, 
-      ...plateQuarterFinals, 
-      ...plateSemiFinals, 
-      ...plateFinal, 
-      ...plateThirdPlace,
-      ...shieldSemiFinals, 
-      ...shieldFinal, 
-      ...shieldThirdPlace,
+      ...shieldQuarterFinals,
+      ...cupQuarterFinals,
+      ...playoffRound1,
+      ...shieldSemiFinals,
+      ...plateSemiFinals,
+      ...cupSemiFinals,
+      playoff15th16th,
+      playoff13th14th,
+      shieldThirdPlace,
+      shieldFinal,
+      plateThirdPlace,
+      plateFinal,
+      cupThirdPlace,
+      cupFinal,
       ...festivalMatches
     );
 
@@ -352,10 +399,10 @@ export const tournamentUtils = {
 
     return {
       roundOf16: roundOf16Matches,
-      quarterFinals: quarterFinalMatches,
-      semiFinals: semiFinalMatches,
-      final: cupFinal[0],
-      thirdPlace: cupThirdPlace[0]
+      quarterFinals: cupQuarterFinals,
+      semiFinals: cupSemiFinals,
+      final: cupFinal,
+      thirdPlace: cupThirdPlace
     };
   },
 
@@ -833,7 +880,11 @@ export const tournamentUtils = {
 };
 
 // Helper function to generate round-robin matches for a pool
-function generateRoundRobinMatches(teamIds: string[], poolId?: string, stage: 'pool' | 'festival' = 'pool'): Match[] {
+function generateRoundRobinMatches(
+  teamIds: string[], 
+  poolId?: string, 
+  stage: 'pool' | 'festival' = 'pool'
+): Match[] {
   const matches: Match[] = [];
   
   for (let i = 0; i < teamIds.length; i++) {
@@ -851,6 +902,54 @@ function generateRoundRobinMatches(teamIds: string[], poolId?: string, stage: 'p
   }
   
   return matches;
+}
+
+// Helper function to create a match
+function createMatch(
+  stage: 'cup' | 'plate' | 'shield' | 'pool' | 'festival' | 'playoff', 
+  round: string, 
+  homeTeamId: string, 
+  awayTeamId: string, 
+  bracketPosition?: number
+): Match {
+  return {
+    id: `${stage}-${round}-${homeTeamId}-vs-${awayTeamId}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    homeTeamId,
+    awayTeamId,
+    stage,
+    round,
+    completed: false,
+    bracketPosition
+  } as Match;
+}
+
+// Helper function to create a placeholder match that depends on parent matches
+function createPlaceholderMatch(
+  stage: 'cup' | 'plate' | 'shield' | 'pool' | 'festival' | 'playoff',
+  round: string,
+  parentMatch1Id: string,
+  parentMatch2Id: string,
+  bracketPosition: number,
+  parent1Result: 'winner' | 'loser' = 'winner',
+  parent2Result: 'winner' | 'loser' = 'winner'
+): Match {
+  const match: any = {
+    id: `${stage}-${round}-pos${bracketPosition}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    homeTeamId: 'TBD',
+    awayTeamId: 'TBD',
+    stage,
+    round,
+    completed: false,
+    bracketPosition,
+    parentMatch1: parentMatch1Id,
+    parentMatch2: parentMatch2Id
+  };
+  
+  // Add extended properties if needed
+  if (parent1Result !== 'winner') match.parent1Result = parent1Result;
+  if (parent2Result !== 'winner') match.parent2Result = parent2Result;
+  
+  return match as Match;
 }
 
 // Helper function to generate limited festival matches (4-5 games per team max)
@@ -896,7 +995,7 @@ function generateLimitedFestivalMatches(teamIds: string[]): Match[] {
 
 // Helper function to generate placeholder matches for knockout rounds
 function generatePlaceholderMatches(
-  stage: 'cup' | 'plate' | 'shield', 
+  stage: 'cup' | 'plate' | 'shield' | 'pool' | 'festival' | 'playoff', 
   round: string, 
   count: number, 
   parentMatches: Match[],
@@ -908,17 +1007,20 @@ function generatePlaceholderMatches(
     const parentMatch1 = parentMatches[i * 2];
     const parentMatch2 = parentMatches[i * 2 + 1];
 
-    matches.push({
+    const match: any = {
       id: `${stage}-${round}-${i + 1}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       homeTeamId: 'TBD',
       awayTeamId: 'TBD',
       stage: stage,
       round,
       completed: false,
-      bracketPosition: i + 1,
-      parentMatch1: parentMatch1 ? parentMatch1.id : undefined,
-      parentMatch2: parentMatch2 ? parentMatch2.id : undefined
-    });
+      bracketPosition: i + 1
+    };
+
+    if (parentMatch1) match.parentMatch1 = parentMatch1.id;
+    if (parentMatch2) match.parentMatch2 = parentMatch2.id;
+
+    matches.push(match as Match);
   }
   
   return matches;

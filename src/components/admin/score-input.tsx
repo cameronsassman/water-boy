@@ -133,7 +133,7 @@ export default function ScoreInput() {
     setAwayTeamStats([]);
   };
 
-const renderPlayerTable = (
+  const renderPlayerTable = (
     players: any[],
     statsArr: PlayerStats[],
     team: "home" | "away"
@@ -198,7 +198,7 @@ const renderPlayerTable = (
                                 team,
                                 player.id,
                                 statType,
-                                (stats as any)[statType] - 1
+                                stats[statType] - 1
                               )
                             }
                             className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 font-bold transition-colors flex-shrink-0"
@@ -207,7 +207,7 @@ const renderPlayerTable = (
                           </button>
   
                           <span className="w-8 text-center font-semibold text-gray-900 text-base">
-                            {(stats as any)[statType]}
+                            {stats[statType]}
                           </span>
   
                           <button
@@ -216,7 +216,7 @@ const renderPlayerTable = (
                                 team,
                                 player.id,
                                 statType,
-                                (stats as any)[statType] + 1
+                                stats[statType] + 1
                               )
                             }
                             className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold transition-all shadow-sm hover:shadow flex-shrink-0

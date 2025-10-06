@@ -1,8 +1,6 @@
 import { Team } from '@/types/team';
 import { PlayerStats } from '@/types/player';
-import { MatchResult } from '@/types/match';
 import { storageUtils } from '@/utils/storage';
-import { tournamentUtils } from '@/utils/tournament-logic';
 
 export interface PlayerStatsSummary extends PlayerStats {
   playerName: string;
@@ -204,7 +202,7 @@ export const teamStatsUtils = {
     
     // Find the player and their team
     let playerTeam: Team | null = null;
-    let player: any = null;
+    let player: { id: string; name: string; capNumber: number } | null = null;
     
     for (const team of teams) {
       const foundPlayer = team.players.find(p => p.id === playerId);
@@ -218,7 +216,7 @@ export const teamStatsUtils = {
     if (!player || !playerTeam) return null;
 
     // Aggregate stats across all matches
-    let totalStats: PlayerStats = {
+    const totalStats: PlayerStats = {
       playerId: player.id,
       capNumber: player.capNumber,
       goals: 0,
@@ -405,7 +403,14 @@ export const teamStatsUtils = {
     let draws = 0;
     let team1Goals = 0;
     let team2Goals = 0;
-    const matchResults: any[] = [];
+    const matchResults: Array<{
+      matchId: string;
+      team1Score: number;
+      team2Score: number;
+      stage: string;
+      round?: string;
+      date?: string;
+    }> = [];
 
     h2hMatches.forEach(match => {
       const result = allResults.find(r => r.matchId === match.id);

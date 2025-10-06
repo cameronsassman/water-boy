@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Save, Trash2, CalendarDays, Users, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, AlertCircle } from 'lucide-react';
+
+interface Player {
+  id: string;
+  name: string;
+  capNumber: number;
+}
 
 interface Team {
   id: string;
   schoolName: string;
-  players: any[];
+  players: Player[];
   poolId?: string;
 }
 
@@ -235,7 +241,7 @@ export default function ManualFixtureEntry() {
           setFixtures(imported);
           saveFixtures(imported);
           alert('Fixtures imported successfully!');
-        } catch (error) {
+        } catch {
           alert('Error importing fixtures. Please check the file format.');
         }
       };
