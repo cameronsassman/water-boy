@@ -24,7 +24,7 @@ export interface Match {
   homeTeamId: string;
   awayTeamId: string;
   poolId?: string;
-  stage: 'pool' | 'cup' | 'plate' | 'shield' | 'festival';
+  stage: 'pool' | 'cup' | 'plate' | 'shield' | "playoff" | 'festival';
   homeScore?: number;
   awayScore?: number;
   completed: boolean;

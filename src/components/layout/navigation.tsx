@@ -19,16 +19,16 @@ export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // Don't show navigation on admin routes
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
-
   // Close mobile menu when pathname changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsNavigating(false);
   }, [pathname]);
+
+  // Don't show navigation on admin routes
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   // Handle navigation with loading state
   const handleNavigation = (href: string) => {

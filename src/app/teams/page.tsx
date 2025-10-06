@@ -14,8 +14,6 @@ import {
   ArrowLeft,
   Search,
   Filter,
-  Clock,
-  CheckCircle,
   Waves,
 } from 'lucide-react';
 
@@ -46,7 +44,6 @@ export default function TeamsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPool, setFilterPool] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'points' | 'goals' | 'played'>('name');
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadTeams();
@@ -58,7 +55,6 @@ export default function TeamsPage() {
   };
 
   const loadTeamStats = async (team: Team) => {
-    setLoading(true);
     try {
       const standing = team.poolId
         ? tournamentUtils.getPoolStandings(team.poolId).find((s) => s.team.id === team.id)
@@ -129,8 +125,6 @@ export default function TeamsPage() {
       });
     } catch (error) {
       console.error('Error loading team stats:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -467,7 +461,7 @@ export default function TeamsPage() {
               <div className="bg-white px-4 py-3 rounded-xl border-2 border-blue-300">
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'name' | 'points' | 'goals' | 'played')}
                   className="bg-transparent border-0 focus:ring-0 text-sm font-medium text-blue-700"
                 >
                   <option value="name">Sort by Name</option>
@@ -542,7 +536,7 @@ export default function TeamsPage() {
               </div>
               <h3 className="text-xl font-bold text-blue-800 mb-2">No Teams in the Pool!</h3>
               <p className="text-gray-600 mb-4">
-                No teams match your search. Try different filters to find what you're looking for!
+                No teams match your search. Try different filters to find what you&apos;re looking for!
               </p>
               <Button 
                 onClick={() => {
