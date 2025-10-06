@@ -25,7 +25,14 @@ export default function ScoreInput() {
       const tournament = storageUtils.getTournament();
       const allMatches = tournament.matches;
       const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
-      setAvailableMatches(matchesWithTeams.filter(m => !m.completed));
+      // Filter out matches without valid teams and incomplete matches
+      setAvailableMatches(matchesWithTeams.filter(m => 
+        !m.completed && 
+        m.homeTeam && 
+        m.awayTeam && 
+        m.homeTeam.id !== 'TBD' && 
+        m.awayTeam.id !== 'TBD'
+      ));
     } catch (error) {
       console.error('Error loading matches:', error);
     }

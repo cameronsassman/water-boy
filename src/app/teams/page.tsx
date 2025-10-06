@@ -1,512 +1,562 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { tournamentUtils, MatchWithTeams } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
-import MatchCard from '../../components/guests/match-card';
-import { Button } from '@/components/ui/button';
+import { tournamentUtils, MatchWithTeams, TeamStanding } from '@/utils/tournament-logic';
+import { Team } from '@/types/team';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, RefreshCw } from 'lucide-react';
+import {
+  Users,
+  ArrowLeft,
+  Search,
+  Filter,
+  Clock,
+  CheckCircle,
+  Waves,
+} from 'lucide-react';
 
-interface ScheduledMatch extends MatchWithTeams { 
-  day: number;
-  timeSlot: string;
-  arena: 1 | 2;
+interface TeamStats {
+  team: Team;
+  standing: TeamStanding;
+  matches: MatchWithTeams[];
+  playerStats: { [playerId: string]: AggregatedPlayerStats };
 }
 
-const SCHEDULED_MATCHES_KEY = 'water-polo-tournament-scheduled-matches';
-const SCHEDULE_GENERATED_KEY = 'water-polo-tournament-schedule-generated';
+interface AggregatedPlayerStats {
+  playerId: string;
+  name: string;
+  capNumber: number;
+  matchesPlayed: number;
+  totalGoals: number;
+  totalKickOuts: number;
+  totalYellowCards: number;
+  totalRedCards: number;
+  goalsPerMatch: number;
+  disciplinaryPoints: number;
+}
 
-export default function ScoresPage() {
-  const [isAllocated, setIsAllocated] = useState(false);
-  const [matchesGenerated, setMatchesGenerated] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [totalTeams, setTotalTeams] = useState(0);
-  const [scheduledMatches, setScheduledMatches] = useState<{[key: number]: ScheduledMatch[]}>({});
+export default function TeamsPage() {
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPool, setFilterPool] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'points' | 'goals' | 'played'>('name');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadMatchData();
+    loadTeams();
   }, []);
 
-  const loadScheduledMatchesFromStorage = (): ScheduledMatch[] => {
-    if (typeof window === 'undefined') return [];
+  const loadTeams = () => {
+    const allTeams = storageUtils.getTeams();
+    setTeams(allTeams);
+  };
+
+  const loadTeamStats = async (team: Team) => {
+    setLoading(true);
     try {
-      const stored = localStorage.getItem(SCHEDULED_MATCHES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error loading scheduled matches from storage:', error);
-      return [];
-    }
-  };
+      const standing = team.poolId
+        ? tournamentUtils.getPoolStandings(team.poolId).find((s) => s.team.id === team.id)
+        : null;
 
-  const saveScheduledMatchesToStorage = (matches: ScheduledMatch[]): void => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem(SCHEDULED_MATCHES_KEY, JSON.stringify(matches));
-      localStorage.setItem(SCHEDULE_GENERATED_KEY, 'true');
-    } catch (error) {
-      console.error('Error saving scheduled matches to storage:', error);
-    }
-  };
+      const allMatches = storageUtils.getTournament().matches;
+      const teamMatches = allMatches
+        .filter((match) => match.homeTeamId === team.id || match.awayTeamId === team.id)
+        .map((match) => tournamentUtils.getMatchWithTeams(match));
 
-  const isScheduleGeneratedInStorage = (): boolean => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(SCHEDULE_GENERATED_KEY) === 'true';
-  };
+      const playerStats: { [playerId: string]: AggregatedPlayerStats } = {};
 
-  const clearScheduledMatchesFromStorage = (): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(SCHEDULED_MATCHES_KEY);
-    localStorage.removeItem(SCHEDULE_GENERATED_KEY);
-  };
+      team.players.forEach((player) => {
+        playerStats[player.id] = {
+          playerId: player.id,
+          name: player.name,
+          capNumber: player.capNumber,
+          matchesPlayed: 0,
+          totalGoals: 0,
+          totalKickOuts: 0,
+          totalYellowCards: 0,
+          totalRedCards: 0,
+          goalsPerMatch: 0,
+          disciplinaryPoints: 0,
+        };
+      });
 
-  const loadMatchData = () => {
-    try {
-      const allocated = tournamentUtils.arePoolsAllocated();
-      const poolMatchesGenerated = tournamentUtils.arePoolMatchesGenerated();
-      const scheduleGenerated = isScheduleGeneratedInStorage();
-      const teams = storageUtils.getTeams();
-      
-      setIsAllocated(allocated);
-      setMatchesGenerated(poolMatchesGenerated && scheduleGenerated);
-      setTotalTeams(teams.length);
+      teamMatches.forEach((match) => {
+        if (match.completed) {
+          const matchResult = storageUtils.getMatchResult(match.id);
+          if (matchResult) {
+            const isHome = match.homeTeam.id === team.id;
+            const teamMatchStats = isHome ? matchResult.homeTeamStats : matchResult.awayTeamStats;
 
-      if (poolMatchesGenerated && scheduleGenerated) {
-        const scheduledMatchesData = loadScheduledMatchesFromStorage();
-        
-        const updatedScheduledMatches = scheduledMatchesData.map(match => {
-          const currentMatch = storageUtils.getTournament().matches.find(m => m.id === match.id);
-          const result = storageUtils.getMatchResult(match.id);
-          
-          const homeTeam = match.homeTeam || { id: 'TBD', schoolName: 'TBD', players: [] };
-          const awayTeam = match.awayTeam || { id: 'TBD', schoolName: 'TBD', players: [] };
-          
-          return {
-            ...match,
-            homeTeam,
-            awayTeam,
-            completed: result?.completed || false,
-            homeScore: result?.homeScore,
-            awayScore: result?.awayScore
-          };
-        });
-        
-        const byDay = updatedScheduledMatches.reduce((acc, match) => {
-          if (!acc[match.day]) acc[match.day] = [];
-          acc[match.day].push(match);
-          return acc;
-        }, {} as {[key: number]: ScheduledMatch[]});
-        
-        Object.keys(byDay).forEach(day => {
-          byDay[parseInt(day)].sort((a, b) => a.timeSlot.localeCompare(b.timeSlot));
-        });
-        
-        setScheduledMatches(byDay);
-      } else if (poolMatchesGenerated && !scheduleGenerated) {
-        const scheduledMatchesData = scheduleAllMatches();
-        saveScheduledMatchesToStorage(scheduledMatchesData);
-        setMatchesGenerated(true);
-        loadMatchData();
-      }
-    } catch (error) {
-      console.error('Error loading match data:', error);
-    }
-  };
-
-  const scheduleAllMatches = (): ScheduledMatch[] => {
-    const allScheduledMatches: ScheduledMatch[] = [];
-    
-    const poolScheduled = schedulePoolMatches();
-    allScheduledMatches.push(...poolScheduled);
-    
-    const knockoutAndFestival = scheduleExistingKnockoutAndFestivalMatches();
-    allScheduledMatches.push(...knockoutAndFestival);
-    
-    return allScheduledMatches;
-  };
-
-  const schedulePoolMatches = (): ScheduledMatch[] => {
-    const allPoolMatches: MatchWithTeams[] = [];
-    
-    ['A', 'B', 'C', 'D'].forEach(poolId => {
-      const matches = getPoolMatchesWithTeams(poolId);
-      allPoolMatches.push(...matches);
-    });
-
-    return schedulePoolMatchesDeterministic(allPoolMatches);
-  };
-
-  const schedulePoolMatchesDeterministic = (matches: MatchWithTeams[]): ScheduledMatch[] => {
-    const scheduled: ScheduledMatch[] = [];
-    
-    const sortedMatches = [...matches].sort((a, b) => a.id.localeCompare(b.id));
-    
-    const day1TimeSlots = generateTimeSlotsWithBreaks(16, 19, 20);
-    const day2TimeSlots = generateTimeSlotsWithBreaks(8, 19, 0, [{ start: '12:30', end: '13:30' }]);
-    const day3PoolTimeSlots = generateTimeSlotsWithBreaks(8, 10);
-    
-    const timeSlotsByDay = [day1TimeSlots, day2TimeSlots, day3PoolTimeSlots];
-    const distribution = [16, 56, 12];
-
-    let matchIndex = 0;
-    
-    for (let day = 1; day <= 3; day++) {
-      const timeSlots = timeSlotsByDay[day - 1];
-      const targetMatches = distribution[day - 1];
-      let matchesScheduledThisDay = 0;
-      
-      for (let slotIndex = 0; slotIndex < timeSlots.length && matchesScheduledThisDay < targetMatches; slotIndex++) {
-        const timeSlot = timeSlots[slotIndex];
-        const maxMatchesThisSlot = Math.min(2, targetMatches - matchesScheduledThisDay);
-        
-        for (let arena = 1; arena <= 2 && matchesScheduledThisDay < targetMatches && arena <= maxMatchesThisSlot; arena++) {
-          if (matchIndex < sortedMatches.length) {
-            const match = sortedMatches[matchIndex];
-            scheduled.push({
-              ...match,
-              day: day,
-              timeSlot: timeSlot,
-              arena: arena as 1 | 2
+            teamMatchStats.forEach((stat) => {
+              if (playerStats[stat.playerId]) {
+                const player = playerStats[stat.playerId];
+                player.matchesPlayed += 1;
+                player.totalGoals += stat.goals;
+                player.totalKickOuts += stat.kickOuts;
+                player.totalYellowCards += stat.yellowCards;
+                player.totalRedCards += stat.redCards;
+                player.disciplinaryPoints += stat.yellowCards * 1 + stat.redCards * 3;
+                player.goalsPerMatch =
+                  player.matchesPlayed > 0 ? player.totalGoals / player.matchesPlayed : 0;
+              }
             });
-            
-            matchIndex++;
-            matchesScheduledThisDay++;
           }
         }
-      }
-    }
-    
-    return scheduled;
-  };
+      });
 
-  const scheduleExistingKnockoutAndFestivalMatches = (): ScheduledMatch[] => {
-    const scheduledKnockout: ScheduledMatch[] = [];
-    
-    try {
-      const tournament = storageUtils.getTournament();
-      const allKnockoutMatches = tournament.matches.filter(match => 
-        ['cup', 'plate', 'shield', 'festival'].includes(match.stage)
-      );
-      
-      if (allKnockoutMatches.length === 0) {
-        return scheduledKnockout;
-      }
-      
-      const knockoutMatchesWithTeams = allKnockoutMatches.map(match => 
-        tournamentUtils.getMatchWithTeams(match)
-      );
-      
-      const sortedKnockoutMatches = knockoutMatchesWithTeams.sort((a, b) => a.id.localeCompare(b.id));
-      
-      const day3KnockoutSlots = generateTimeSlotsWithBreaks(10, 19, 30);
-      const day4Slots = generateTimeSlotsWithBreaks(7, 15);
-      
-      let matchIndex = 0;
-      
-      for (let i = 0; i < day3KnockoutSlots.length && matchIndex < sortedKnockoutMatches.length; i++) {
-        const match = sortedKnockoutMatches[matchIndex];
-        scheduledKnockout.push({
-          ...match,
-          day: 3,
-          timeSlot: day3KnockoutSlots[i],
-          arena: 1
-        });
-        matchIndex++;
-      }
-      
-      for (let i = 0; i < day4Slots.length && matchIndex < sortedKnockoutMatches.length; i++) {
-        const match = sortedKnockoutMatches[matchIndex];
-        scheduledKnockout.push({
-          ...match,
-          day: 4,
-          timeSlot: day4Slots[i],
-          arena: 1
-        });
-        matchIndex++;
-      }
-      
+      setTeamStats({
+        team,
+        standing:
+          standing || {
+            team,
+            played: 0,
+            won: 0,
+            drawn: 0,
+            lost: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          },
+        matches: teamMatches,
+        playerStats,
+      });
     } catch (error) {
-      console.error('Error scheduling knockout matches:', error);
-    }
-    
-    return scheduledKnockout;
-  };
-
-  const generateTimeSlotsWithBreaks = (startHour: number, endHour: number, startMinute: number = 0, breaks: {start: string, end: string}[] = []): string[] => {
-    const slots: string[] = [];
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-    
-    const timeToMinutes = (time: string): number => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-    
-    while (currentHour < endHour || (currentHour === endHour && currentMinute === 0)) {
-      if (currentHour < endHour) {
-        const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-        
-        const isInBreak = breaks.some(breakPeriod => {
-          const breakStart = timeToMinutes(breakPeriod.start);
-          const breakEnd = timeToMinutes(breakPeriod.end);
-          const currentTimeMinutes = timeToMinutes(timeStr);
-          return currentTimeMinutes >= breakStart && currentTimeMinutes < breakEnd;
-        });
-        
-        if (!isInBreak) {
-          slots.push(timeStr);
-        }
-      }
-      
-      currentMinute += 20;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour++;
-      }
-    }
-    return slots;
-  };
-
-  const getPoolMatchesWithTeams = (poolId: string): MatchWithTeams[] => {
-    try {
-      const matches = tournamentUtils.getPoolMatches(poolId);
-      return matches.map(match => tournamentUtils.getMatchWithTeams(match));
-    } catch (error) {
-      console.error(`Error loading matches for pool ${poolId}:`, error);
-      return [];
-    }
-  };
-
-  const handleRefreshFixtures = async () => {
-    setIsRefreshing(true);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      loadMatchData();
-    } catch (error) {
-      console.error('Error refreshing fixtures:', error);
+      console.error('Error loading team stats:', error);
     } finally {
-      setIsRefreshing(false);
+      setLoading(false);
     }
   };
 
-  if (totalTeams === 0 && !isAllocated) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-600" />
-          <p>Loading tournament data...</p>
-        </div>
-      </div>
-    );
-  }
+  const filteredTeams = teams.filter((team) => {
+    const matchesSearch =
+      team.schoolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      team.coachName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      team.managerName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPool = filterPool === 'all' || team.poolId === filterPool;
+    return matchesSearch && matchesPool;
+  });
 
-  if (!isAllocated) {
+  const sortedTeams = [...filteredTeams].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.schoolName.localeCompare(b.schoolName);
+      case 'points':
+        const aStanding = a.poolId
+          ? tournamentUtils.getPoolStandings(a.poolId).find((s) => s.team.id === a.id)
+          : null;
+        const bStanding = b.poolId
+          ? tournamentUtils.getPoolStandings(b.poolId).find((s) => s.team.id === b.id)
+          : null;
+        return (bStanding?.points || 0) - (aStanding?.points || 0);
+      case 'goals':
+        const aGoals = a.poolId
+          ? tournamentUtils.getPoolStandings(a.poolId).find((s) => s.team.id === a.id)?.goalsFor || 0
+          : 0;
+        const bGoals = b.poolId
+          ? tournamentUtils.getPoolStandings(b.poolId).find((s) => s.team.id === b.id)?.goalsFor || 0
+          : 0;
+        return bGoals - aGoals;
+      case 'played':
+        const aPlayed = a.poolId
+          ? tournamentUtils.getPoolStandings(a.poolId).find((s) => s.team.id === a.id)?.played || 0
+          : 0;
+        const bPlayed = b.poolId
+          ? tournamentUtils.getPoolStandings(b.poolId).find((s) => s.team.id === b.id)?.played || 0
+          : 0;
+        return bPlayed - aPlayed;
+      default:
+        return 0;
+    }
+  });
+
+  if (selectedTeam && teamStats) {
+    const completedMatches = teamStats.matches.filter((m) => m.completed);
+    const upcomingMatches = teamStats.matches.filter((m) => !m.completed);
+
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Team Header with Water Theme */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2 text-blue-800">
-            Tournament Fixtures
-          </h1>
-          <p className="text-gray-600 mt-2">View and manage 4-day tournament schedule</p>
+          <div className="flex items-center gap-4 mb-4">
+            <Button 
+              onClick={() => setSelectedTeam(null)} 
+              variant="outline" 
+              size="sm"
+              className="border-blue-200 hover:bg-blue-50 text-blue-700"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to All Teams
+            </Button>
+          </div>
+          
+          <div className="bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+            {/* Water wave decoration */}
+            <div className="absolute bottom-0 right-0 opacity-20">
+              <Waves className="w-32 h-32" />
+            </div>
+            
+            <div className="flex items-start justify-between relative z-10">
+              <div className="flex items-center gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-1">{teamStats.team.schoolName}</h1>
+                  <div className="flex flex-wrap gap-4 text-blue-100 text-sm">
+                    <span className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
+                      Coach: {teamStats.team.coachName}
+                    </span>
+                    <span className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
+                      Manager: {teamStats.team.managerName}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-end gap-2">
+                {teamStats.team.poolId && (
+                  <Badge className="bg-yellow-400 text-blue-800 border-0 text-sm px-3 py-1 font-bold">
+                    Pool {teamStats.team.poolId}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-          <CardContent className="text-center py-12">
-            <Users className="w-16 h-16 mx-auto mb-4 text-blue-400" />
-            <h3 className="text-xl font-semibold mb-2 text-blue-800">Pool Allocation Required</h3>
-            <p className="text-gray-600 mb-4">
-              {totalTeams} teams are registered but need to be allocated into pools before fixtures can be generated.
-            </p>
-            <p className="text-sm text-gray-500">
-              Go to the Pools page to allocate teams into pools first.
-            </p>
-          </CardContent>
-        </Card>
+        {/* Team Stats Tabs */}
+        <Tabs defaultValue="players" className="w-full">
+          <TabsList className="w-full max-w-md grid grid-cols-2 bg-blue-100 p-1 rounded-xl border border-blue-200">
+            <TabsTrigger 
+              value="players" 
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
+            >
+              Player Stats
+            </TabsTrigger>
+            <TabsTrigger 
+              value="matches"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
+            >
+              Match History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="players" className="mt-6">
+            <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
+              <CardHeader className="border-b border-blue-200 bg-white/50">
+                <CardTitle className="flex items-center gap-3 text-xl text-blue-800">
+                  Player Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-blue-500 text-white">
+                        <th className="p-4 text-left font-bold">Player</th>
+                        <th className="p-4 text-center font-bold">Goals</th>
+                        <th className="p-4 text-center font-bold">Kick-outs</th>
+                        <th className="p-4 text-center font-bold">Yellow</th>
+                        <th className="p-4 text-center font-bold">Red</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.values(teamStats.playerStats).map((player, index) => (
+                        <tr 
+                          key={player.playerId} 
+                          className={`border-b border-blue-100 hover:bg-blue-100/50 transition-colors ${
+                            index % 2 === 0 ? 'bg-white' : 'bg-blue-50/30'
+                          }`}
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 border-white shadow">
+                                {player.capNumber}
+                              </div>
+                              <div>
+                                <span className="font-bold text-gray-900">{player.name}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full text-sm border border-blue-200">
+                              {player.totalGoals}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className="text-gray-700 font-bold">
+                              {player.totalKickOuts}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            {/* Always show yellow cards, even if 0 */}
+                            <span className={`font-bold px-2 py-1 rounded text-sm border ${
+                              player.totalYellowCards > 0 
+                                ? 'bg-yellow-100 text-yellow-700 border-yellow-200' 
+                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}>
+                              {player.totalYellowCards}
+                            </span>
+                          </td>
+                          <td className="p-4 text-center">
+                            {/* Always show red cards, even if 0 */}
+                            <span className={`font-bold px-2 py-1 rounded text-sm border ${
+                              player.totalRedCards > 0 
+                                ? 'bg-red-100 text-red-700 border-red-200' 
+                                : 'bg-gray-100 text-gray-500 border-gray-200'
+                            }`}>
+                              {player.totalRedCards}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="matches" className="mt-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Completed Matches */}
+              {completedMatches.length > 0 && (
+                <Card className="border-2 border-green-200 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
+                  <CardHeader className="border-b border-green-200 bg-white/50">
+                    <CardTitle className="flex items-center gap-3">
+                      Match Results
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3">
+                    {completedMatches.map((match) => {
+                      const homeScore = match.homeScore ?? 0;
+                      const awayScore = match.awayScore ?? 0;
+                      // Determine opponent and if the selected team is home or away
+                      const isHomeTeam = match.homeTeam.id === selectedTeam.id;
+                      const opponent = isHomeTeam ? match.awayTeam : match.homeTeam;
+                      const teamScore = isHomeTeam ? homeScore : awayScore;
+                      const opponentScore = isHomeTeam ? awayScore : homeScore;
+
+                      return (
+                        <div
+                          key={match.id}
+                          className="flex items-center justify-between p-3 bg-white border-2 border-green-200 rounded-xl hover:bg-green-100 transition-all shadow-sm"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <span className="font-bold text-gray-800 block">
+                                vs {opponent.schoolName}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Pool {opponent.poolId}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">
+                              {teamScore} - {opponentScore}
+                            </span>
+                            {teamScore > opponentScore ? (
+                              <Badge className="bg-green-500 text-white border-0">WIN</Badge>
+                            ) : teamScore < opponentScore ? (
+                              <Badge className="bg-red-500 text-white border-0">LOSS</Badge>
+                            ) : (
+                              <Badge className="bg-gray-500 text-white border-0">DRAW</Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upcoming Matches */}
+              {upcomingMatches.length > 0 && (
+                <Card className="border-2 border-orange-200 shadow-lg bg-gradient-to-br from-orange-50 to-amber-50">
+                  <CardHeader className="border-b border-orange-200 bg-white/50">
+                    <CardTitle className="flex items-center gap-3 text-orange-700">
+                      Upcoming Matches ({upcomingMatches.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3">
+                    {upcomingMatches.map((match) => {
+                      // Determine opponent for upcoming matches
+                      const isHomeTeam = match.homeTeam.id === selectedTeam.id;
+                      const opponent = isHomeTeam ? match.awayTeam : match.homeTeam;
+                      
+                      return (
+                        <div
+                          key={match.id}
+                          className="flex items-center justify-between p-3 bg-white border-2 border-orange-200 rounded-xl hover:bg-orange-100 transition-all shadow-sm"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="bg-orange-500 p-2 rounded-lg">
+                            </div>
+                            <div>
+                              <span className="font-bold text-gray-800 block">
+                                vs {opponent.schoolName}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Pool {opponent.poolId}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge className="bg-orange-500 text-white border-0 animate-pulse">
+                            Coming up
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-            Tournament Fixtures
+            Water Polo Teams
           </h1>
         </div>
-        <p className="text-gray-600 text-lg">View the complete 4-day tournament schedule</p>
+        <p className="text-gray-600 text-lg">Dive into team stats and player performance!</p>
       </div>
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {matchesGenerated && (
-              <Button
-                onClick={handleRefreshFixtures}
-                disabled={isRefreshing}
-                variant="outline"
-                size="sm"
-                className="border-blue-300 text-blue-700 hover:bg-blue-50"
-              >
-                {isRefreshing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh
-                  </>
-                )}
-              </Button>
-            )}
+      {/* Filters Card */}
+      <Card className="mb-8 border-2 border-blue-200 shadow-lg bg-gradient-to-r from-blue-50 to-cyan-50">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="relative flex-1 min-w-[280px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 w-5 h-5" />
+              <Input
+                placeholder="Find teams by school, coach, or manager..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-11 h-12 bg-white border-blue-300 focus:border-blue-500 text-lg"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 bg-white px-4 py-3 rounded-xl border-2 border-blue-300">
+                <Filter className="w-4 h-4 text-blue-500" />
+                <select
+                  value={filterPool}
+                  onChange={(e) => setFilterPool(e.target.value)}
+                  className="bg-transparent border-0 focus:ring-0 text-sm font-medium text-blue-700"
+                >
+                  <option value="all">All Pools</option>
+                  <option value="A">Pool A</option>
+                  <option value="B">Pool B</option>
+                  <option value="C">Pool C</option>
+                  <option value="D">Pool D</option>
+                </select>
+              </div>
+
+              <div className="bg-white px-4 py-3 rounded-xl border-2 border-blue-300">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent border-0 focus:ring-0 text-sm font-medium text-blue-700"
+                >
+                  <option value="name">Sort by Name</option>
+                  <option value="points">Sort by Points</option>
+                  <option value="goals">Sort by Goals</option>
+                  <option value="played">Sort by Games</option>
+                </select>
+              </div>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Teams Grid */}
+      {sortedTeams.length > 0 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedTeams.map((team) => (
+            <Card
+              key={team.id}
+              className="cursor-pointer border-2 border-blue-200 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-white to-blue-50 group overflow-hidden hover:border-blue-400 hover:-translate-y-1"
+              onClick={() => {
+                setSelectedTeam(team);
+                loadTeamStats(team);
+              }}
+            >
+              {/* Water wave top accent */}
+              <div className="h-2 bg-gradient-to-r from-cyan-400 to-blue-500"></div>
+              
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg font-bold text-blue-800 group-hover:text-blue-600 transition-colors">
+                    {team.schoolName}
+                  </CardTitle>
+                  {team.poolId && (
+                    <Badge className="bg-yellow-400 text-blue-800 border-0 font-bold text-sm">
+                      Pool {team.poolId}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3 text-sm text-gray-700">
+                  <div className="flex items-center gap-2 bg-blue-100/50 p-2 rounded-lg">
+                    <span className="font-medium">Coach: {team.coachName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-blue-100/50 p-2 rounded-lg">
+                    <span className="font-medium">Manager: {team.managerName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-blue-100/50 p-2 rounded-lg">
+                    <span className="font-medium">{team.players.length} players</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-blue-100">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full bg-blue-500 text-white hover:bg-blue-600 border-blue-500 font-bold"
+                  >
+                    🏊 View Team Stats
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </div>
-
-      {matchesGenerated && (
-        <>
-          <Tabs defaultValue="day1" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 bg-blue-100 p-1 rounded-xl border border-blue-200">
-              <TabsTrigger 
-                value="day1"
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
+      ) : (
+        <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
+          <CardContent className="py-16 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-10 h-10 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-bold text-blue-800 mb-2">No Teams in the Pool!</h3>
+              <p className="text-gray-600 mb-4">
+                No teams match your search. Try different filters to find what you're looking for!
+              </p>
+              <Button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterPool('all');
+                }}
+                className="bg-blue-500 text-white hover:bg-blue-600"
               >
-                Day 1
-              </TabsTrigger>
-              <TabsTrigger 
-                value="day2"
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
-              >
-                Day 2
-              </TabsTrigger>
-              <TabsTrigger 
-                value="day3"
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
-              >
-                Day 3
-              </TabsTrigger>
-              <TabsTrigger 
-                value="day4"
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
-              >
-                Day 4
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="day1" className="mt-6">
-              <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardHeader className="border-b border-blue-200 bg-white/50">
-                  <CardTitle className="flex items-center gap-3 text-xl text-blue-800">
-                    Wednesday, October 15
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {renderDaySchedule(1)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="day2" className="mt-6">
-              <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardHeader className="border-b border-blue-200 bg-white/50">
-                  <CardTitle className="flex items-center gap-3 text-xl text-blue-800">
-                    Thursday, October 16
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {renderDaySchedule(2)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="day3" className="mt-6">
-              <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardHeader className="border-b border-blue-200 bg-white/50">
-                  <CardTitle className="flex items-center gap-3 text-xl text-blue-800">
-                    Friday, October 17
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {renderDaySchedule(3)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="day4" className="mt-6">
-              <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-                <CardHeader className="border-b border-blue-200 bg-white/50">
-                  <CardTitle className="flex items-center gap-3 text-xl text-blue-800">
-                    Saturday, October 18
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {renderDaySchedule(4)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
+                Clear Filters
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
-
-  function renderDaySchedule(day: number) {
-    const dayMatches = scheduledMatches[day];
-    
-    if (!dayMatches || dayMatches.length === 0) {
-      return (
-        <div className="text-center py-12 text-gray-500">
-          <p>No matches scheduled for Day {day}</p>
-        </div>
-      );
-    }
-
-    const matchesByTime = dayMatches.reduce((acc, match) => {
-      if (!acc[match.timeSlot]) acc[match.timeSlot] = [];
-      acc[match.timeSlot].push(match);
-      return acc;
-    }, {} as {[key: string]: ScheduledMatch[]});
-
-    return (
-      <div className="space-y-6">
-        {Object.entries(matchesByTime)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([timeSlot, matches]) => (
-            <div key={timeSlot} className="border-2 border-blue-200 rounded-xl p-6 bg-white shadow-sm">
-              <h4 className="font-semibold mb-4 text-center bg-blue-100 text-blue-800 py-3 rounded-lg">
-                {timeSlot}
-              </h4>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h5 className="text-sm font-medium text-center mb-3 text-blue-600 bg-blue-50 py-2 rounded">Arena 1</h5>
-                  {matches.find(m => m.arena === 1) ? (
-                    <MatchCard match={matches.find(m => m.arena === 1)!} showPool={true} />
-                  ) : (
-                    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50">
-                      No match scheduled
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h5 className="text-sm font-medium text-center mb-3 text-green-600 bg-green-50 py-2 rounded">Arena 2</h5>
-                  {matches.find(m => m.arena === 2) ? (
-                    <MatchCard match={matches.find(m => m.arena === 2)!} showPool={true} />
-                  ) : (
-                    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-green-200 rounded-lg bg-green-50/50">
-                      No match scheduled
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-      </div>
-    );
-  }
 }

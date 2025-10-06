@@ -609,35 +609,67 @@ export default function ScoresPage() {
       <div className="space-y-6">
         {Object.entries(matchesByTime)
           .sort(([a], [b]) => a.localeCompare(b))
-          .map(([timeSlot, matches]) => (
-            <div key={timeSlot} className="border-2 border-blue-200 rounded-xl p-6 bg-white shadow-sm">
-              <h4 className="font-semibold mb-4 text-center bg-blue-100 text-blue-800 py-3 rounded-lg">
-                {timeSlot}
-              </h4>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h5 className="text-sm font-medium text-center mb-3 text-blue-600 bg-blue-50 py-2 rounded">Arena 1</h5>
-                  {matches.find(m => m.arena === 1) ? (
-                    <MatchCard match={matches.find(m => m.arena === 1)!} showPool={true} />
-                  ) : (
-                    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50">
-                      No match scheduled
-                    </div>
+          .map(([timeSlot, matches]) => {
+            const arena1Match = matches.find(m => m.arena === 1);
+            const arena2Match = matches.find(m => m.arena === 2);
+            
+            // Determine if this slot has knockout/bracket matches
+            const hasKnockoutMatch = arena1Match && ['cup', 'plate', 'shield'].includes(arena1Match.stage);
+            const hasFestivalMatch = arena2Match && arena2Match.stage === 'festival';
+            
+            return (
+              <div key={timeSlot} className="border-2 border-blue-200 rounded-xl p-6 bg-white shadow-sm">
+                <h4 className="font-semibold mb-4 text-center bg-blue-100 text-blue-800 py-3 rounded-lg flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  {timeSlot}
+                  {hasKnockoutMatch && (
+                    <Badge variant="outline" className="ml-2 text-yellow-600 border-yellow-400">
+                      <Trophy className="w-3 h-3 mr-1" />
+                      Knockout
+                    </Badge>
                   )}
-                </div>
-                <div>
-                  <h5 className="text-sm font-medium text-center mb-3 text-green-600 bg-green-50 py-2 rounded">Arena 2</h5>
-                  {matches.find(m => m.arena === 2) ? (
-                    <MatchCard match={matches.find(m => m.arena === 2)!} showPool={true} />
-                  ) : (
-                    <div className="text-center py-8 text-gray-400 border-2 border-dashed border-green-200 rounded-lg bg-green-50/50">
-                      No match scheduled
-                    </div>
+                  {hasFestivalMatch && (
+                    <Badge variant="outline" className="ml-2 text-orange-600 border-orange-400">
+                      <Waves className="w-3 h-3 mr-1" />
+                      Festival
+                    </Badge>
                   )}
+                </h4>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="text-sm font-medium text-center mb-3 text-blue-600 bg-blue-50 py-2 rounded flex items-center justify-center gap-2">
+                      Arena 1
+                      {hasKnockoutMatch && (
+                        <span className="text-xs text-yellow-600">(Knockout)</span>
+                      )}
+                    </h5>
+                    {arena1Match ? (
+                      <MatchCard match={arena1Match} showPool={arena1Match.stage === 'pool'} />
+                    ) : (
+                      <div className="text-center py-8 text-gray-400 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50">
+                        No match scheduled
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-medium text-center mb-3 text-green-600 bg-green-50 py-2 rounded flex items-center justify-center gap-2">
+                      Arena 2
+                      {hasFestivalMatch && (
+                        <span className="text-xs text-orange-600">(Festival)</span>
+                      )}
+                    </h5>
+                    {arena2Match ? (
+                      <MatchCard match={arena2Match} showPool={arena2Match.stage === 'pool'} />
+                    ) : (
+                      <div className="text-center py-8 text-gray-400 border-2 border-dashed border-green-200 rounded-lg bg-green-50/50">
+                        No match scheduled
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     );
   }
