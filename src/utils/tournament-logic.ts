@@ -197,6 +197,23 @@ export const tournamentUtils = {
     await storageUtils.saveTournament(tournament);
   },
 
+  // Get match with team details
+  getMatchWithTeams: (match: Match): MatchWithTeams => {
+    const tournament = storageUtils.getTournament();
+    const homeTeam = tournament.teams.find(t => t.id === match.homeTeamId);
+    const awayTeam = tournament.teams.find(t => t.id === match.awayTeamId);
+
+    if (!homeTeam || !awayTeam) {
+      throw new Error(`Teams not found for match ${match.id}`);
+    }
+
+    return {
+      ...match,
+      homeTeam,
+      awayTeam
+    };
+  },
+
   // Helpers for match winner/loser
   getMatchWinner: async (matchId: string): Promise<string | null> => {
     const result = await storageUtils.getMatchResult(matchId);
