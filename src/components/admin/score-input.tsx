@@ -8,6 +8,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Target, Save, X, CheckCircle } from 'lucide-react';
 
+interface Player {
+  id: string;
+  name: string;
+  capNumber: number;
+}
+
 export default function ScoreInput() {
   const [availableMatches, setAvailableMatches] = useState<MatchWithTeams[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<MatchWithTeams | null>(null);
@@ -134,7 +140,7 @@ export default function ScoreInput() {
   };
 
   const renderPlayerTable = (
-    players: any[],
+    players: Player[],
     statsArr: PlayerStats[],
     team: "home" | "away"
   ) => {
