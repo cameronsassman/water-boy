@@ -144,6 +144,8 @@ export default function ScoreInput() {
     statsArr: PlayerStats[],
     team: "home" | "away"
   ) => {
+    const statTypes = ["goals", "kickOuts", "yellowCards", "redCards"] as const;
+    
     return (
       <div className="overflow-x-hidden">
         <table className="w-full text-sm" dir={team === "home" ? "rtl" : "ltr"}>
@@ -191,59 +193,57 @@ export default function ScoreInput() {
                     </div>
                   </td>
   
-                  {(["goals", "kickOuts", "yellowCards", "redCards"] as const).map(
-                    (statType) => (
-                      <td
-                        key={statType}
-                        className="py-3 px-4 text-center"
-                      >
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() =>
-                              updatePlayerStat(
-                                team,
-                                player.id,
-                                statType,
-                                stats[statType] - 1
-                              )
-                            }
-                            className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 font-bold transition-colors flex-shrink-0"
-                          >
-                            −
-                          </button>
+                  {statTypes.map((statType) => (
+                    <td
+                      key={statType}
+                      className="py-3 px-4 text-center"
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() =>
+                            updatePlayerStat(
+                              team,
+                              player.id,
+                              statType,
+                              stats[statType] - 1
+                            )
+                          }
+                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 font-bold transition-colors flex-shrink-0"
+                        >
+                          −
+                        </button>
   
-                          <span className="w-8 text-center font-semibold text-gray-900 text-base">
-                            {stats[statType]}
-                          </span>
+                        <span className="w-8 text-center font-semibold text-gray-900 text-base">
+                          {stats[statType]}
+                        </span>
   
-                          <button
-                            onClick={() =>
-                              updatePlayerStat(
-                                team,
-                                player.id,
-                                statType,
-                                stats[statType] + 1
-                              )
-                            }
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold transition-all shadow-sm hover:shadow flex-shrink-0
-                              ${
-                                statType === "goals"
-                                  ? team === "home"
-                                    ? "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                                    : "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
-                                  : statType === "kickOuts"
-                                  ? "bg-gradient-to-br from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600"
-                                  : statType === "yellowCards"
-                                  ? "bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900"
-                                  : "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                              }`}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </td>
-                    )
-                  )}
+                        <button
+                          onClick={() =>
+                            updatePlayerStat(
+                              team,
+                              player.id,
+                              statType,
+                              stats[statType] + 1
+                            )
+                          }
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold transition-all shadow-sm hover:shadow flex-shrink-0
+                            ${
+                              statType === "goals"
+                                ? team === "home"
+                                  ? "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                                  : "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                                : statType === "kickOuts"
+                                ? "bg-gradient-to-br from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600"
+                                : statType === "yellowCards"
+                                ? "bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900"
+                                : "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                            }`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                  ))}
                 </tr>
               );
             })}
