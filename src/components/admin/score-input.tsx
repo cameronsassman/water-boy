@@ -140,7 +140,7 @@ export default function ScoreInput() {
   };
 
   const renderPlayerTable = (
-    players: Player[],
+    players: Array<{ id: string; name: string; capNumber: number }>,
     statsArr: PlayerStats[],
     team: "home" | "away"
   ) => {
