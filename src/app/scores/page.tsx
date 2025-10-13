@@ -149,7 +149,6 @@ export default function ScoresPage() {
       <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <Trophy className="w-8 h-8 text-blue-600" />
             <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
               Tournament Fixtures
             </h1>
@@ -159,7 +158,6 @@ export default function ScoresPage() {
 
         <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
           <CardContent className="text-center py-12">
-            <Users className="w-16 h-16 mx-auto mb-4 text-blue-400" />
             <h3 className="text-xl font-semibold mb-2 text-blue-800">No Fixtures Available</h3>
             <p className="text-gray-600 mb-4">
               {totalTeams > 0 
@@ -181,7 +179,6 @@ export default function ScoresPage() {
       {/* Header Section */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <Trophy className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
             Tournament Fixtures
           </h1>
@@ -212,21 +209,6 @@ export default function ScoresPage() {
                 </>
               )}
             </Button>
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-              {matches.length} Matches Total
-            </Badge>
-          </div>
-          
-          {/* Overall Stats */}
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span>{matches.filter(m => m.completed).length} completed</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4 text-blue-600" />
-              <span>{matches.filter(m => !m.completed).length} pending</span>
-            </div>
           </div>
         </div>
       </div>
@@ -241,11 +223,6 @@ export default function ScoresPage() {
               className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
             >
               Day {day}
-              {scheduledMatches[day] && (
-                <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs bg-white text-blue-600">
-                  {scheduledMatches[day].length}
-                </Badge>
-              )}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -261,16 +238,6 @@ export default function ScoresPage() {
                     {day === 3 && 'Friday, October 17'}
                     {day === 4 && 'Saturday, October 18'}
                   </span>
-                  {scheduledMatches[day] && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                        {scheduledMatches[day].filter(m => m.completed).length} completed
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">
-                        {scheduledMatches[day].filter(m => !m.completed).length} pending
-                      </Badge>
-                    </div>
-                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
@@ -289,7 +256,6 @@ export default function ScoresPage() {
     if (!dayMatches || dayMatches.length === 0) {
       return (
         <div className="text-center py-12 text-gray-500">
-          <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
           <p>No matches scheduled for Day {day}</p>
         </div>
       );
@@ -316,7 +282,6 @@ export default function ScoresPage() {
             return (
               <div key={timeSlot} className="border-2 border-blue-200 rounded-xl p-6 bg-white shadow-sm">
                 <h4 className="font-semibold mb-4 text-center bg-blue-100 text-blue-800 py-3 rounded-lg flex items-center justify-center gap-2">
-                  <Clock className="w-4 h-4" />
                   {timeSlot}
                   {hasKnockoutMatch && (
                     <Badge variant="outline" className="ml-2 text-yellow-600 border-yellow-400">
@@ -334,7 +299,7 @@ export default function ScoresPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <h5 className="text-sm font-medium text-center mb-3 text-blue-600 bg-blue-50 py-2 rounded flex items-center justify-center gap-2">
-                      Arena 1
+                      Aquatic Centre
                       {hasKnockoutMatch && (
                         <span className="text-xs text-yellow-600">(Knockout)</span>
                       )}
@@ -349,7 +314,7 @@ export default function ScoresPage() {
                   </div>
                   <div>
                     <h5 className="text-sm font-medium text-center mb-3 text-green-600 bg-green-50 py-2 rounded flex items-center justify-center gap-2">
-                      Arena 2
+                      High School
                       {hasFestivalMatch && (
                         <span className="text-xs text-orange-600">(Festival)</span>
                       )}

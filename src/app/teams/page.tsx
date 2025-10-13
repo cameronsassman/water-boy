@@ -215,10 +215,10 @@ export default function TeamsPage() {
   const getPoolFilterText = () => {
     switch (filterPool) {
       case 'all': return 'All Pools';
-      case 'A': return 'Pool A';
-      case 'B': return 'Pool B';
-      case 'C': return 'Pool C';
-      case 'D': return 'Pool D';
+      case 'A': return 'Group A';
+      case 'B': return 'Group B';
+      case 'C': return 'Group C';
+      case 'D': return 'Group D';
       default: return 'All Pools';
     }
   };
@@ -277,7 +277,7 @@ export default function TeamsPage() {
                       </h1>
                       {teamStats.team.poolAllocation && (
                         <Badge className="bg-yellow-400 text-blue-800 border-0 text-base px-4 py-1.5 font-bold shadow-md w-fit mx-auto md:mx-0">
-                          Pool {teamStats.team.poolAllocation}
+                          Group {teamStats.team.poolAllocation}
                         </Badge>
                       )}
                     </div>
@@ -295,7 +295,7 @@ export default function TeamsPage() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 text-center shadow-lg border-2 border-blue-300">
                     <div className="text-3xl font-bold text-blue-600 mb-1">{teamStats.standing.points}</div>
                     <div className="text-xs font-semibold text-gray-600 uppercase">Points</div>
@@ -377,7 +377,6 @@ export default function TeamsPage() {
                         <th className="p-4 text-left font-bold">Player</th>
                         <th className="p-4 text-center font-bold">Matches</th>
                         <th className="p-4 text-center font-bold">Goals</th>
-                        <th className="p-4 text-center font-bold">Avg</th>
                         <th className="p-4 text-center font-bold">Kick-outs</th>
                         <th className="p-4 text-center font-bold">Yellow</th>
                         <th className="p-4 text-center font-bold">Red</th>
@@ -409,11 +408,6 @@ export default function TeamsPage() {
                           <td className="p-4 text-center">
                             <span className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-sm border-2 border-blue-300 inline-block shadow-sm">
                               {player.totalGoals}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className="text-gray-700 font-bold text-base">
-                              {player.goalsPerMatch.toFixed(1)}
                             </span>
                           </td>
                           <td className="p-4 text-center">
@@ -484,7 +478,7 @@ export default function TeamsPage() {
                                 vs {opponent.schoolName}
                               </div>
                               <div className="text-xs text-gray-500 font-medium">
-                                {match.stage === 'pool' ? `Pool ${match.poolId}` : match.stage}
+                                {match.stage === 'group' ? `Group ${match.poolId}` : match.stage}
                               </div>
                             </div>
                             
@@ -537,7 +531,7 @@ export default function TeamsPage() {
                                 vs {opponent.schoolName}
                               </div>
                               <div className="text-xs text-gray-500 font-medium">
-                                {match.stage === 'pool' ? `Pool ${match.poolId}` : match.stage}
+                                {match.stage === 'group' ? `Group ${match.poolId}` : match.stage}
                               </div>
                             </div>
                             
@@ -625,25 +619,25 @@ export default function TeamsPage() {
                     onClick={() => setFilterPool('A')}
                     className="cursor-pointer focus:bg-blue-50 focus:text-blue-700"
                   >
-                    Pool A
+                    Group A
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setFilterPool('B')}
                     className="cursor-pointer focus:bg-blue-50 focus:text-blue-700"
                   >
-                    Pool B
+                    Group B
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setFilterPool('C')}
                     className="cursor-pointer focus:bg-blue-50 focus:text-blue-700"
                   >
-                    Pool C
+                    Group C
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setFilterPool('D')}
                     className="cursor-pointer focus:bg-blue-50 focus:text-blue-700"
                   >
-                    Pool D
+                    Group D
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -711,7 +705,7 @@ export default function TeamsPage() {
               <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 p-6">
                 {team.poolAllocation && (
                   <Badge className="absolute top-3 right-3 bg-yellow-400 text-blue-800 border-0 font-bold text-sm shadow-md z-10">
-                    Pool {team.poolAllocation}
+                    Group {team.poolAllocation}
                   </Badge>
                 )}
                 
