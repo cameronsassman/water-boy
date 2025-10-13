@@ -134,7 +134,7 @@ export default function TeamRegistration() {
         coachName: data.coachName.trim(),
         managerName: data.managerName.trim(),
         poolAllocation: data.poolAllocation,
-        teamLogo: data.teamLogo || null,
+        teamLogo: data.teamLogo || undefined, // Convert empty string to undefined instead of null
         players: data.players.map(player => ({
           name: player.name.trim(),
           capNumber: player.capNumber
