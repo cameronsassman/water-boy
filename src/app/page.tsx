@@ -9,6 +9,12 @@ import fnb from "../../public/images/Sponsors Logos/FNB.png"
 import zapmed from "../../public/images/Sponsors Logos/ZAPMED.png"
 import Image from 'next/image';
 
+// Import fixture images
+import day1Fixture from "../../public/images/fixtures/Wednesday.png";
+import day2Fixture from "../../public/images/fixtures/Thursday.png";
+import day3Fixture from "../../public/images/fixtures/Friday.png";
+import poolsFixture from "../../public/images/fixtures/Saturday.png";
+
 const sponsors = [
   { image: investments, alt: "MnG Investments" },
   { image: geddes, alt: "Geddes" },
@@ -23,13 +29,43 @@ const videoMessages = [
     title: "Welcome from the Headmaster",
     description: "A message about sportsmanship and excellence",
     placeholder: "Headmaster Welcome Video",
-    content: "Welcome to our annual U14 Water Polo Tournament. We wish all teams the very best of luck!"
+    content: "Welcome to our annual U14 Water Polo Tournament. We wish all teams the very best of luck!",
+    videoSrc: "/videos/headmaster-welcome.mp4"
   },
   {
     title: "From the Team Captains",
     description: "Inspiration from student leaders",
     placeholder: "Captain Message Video",
-    content: "Hear from team captains about fair play and giving your best effort in every match."
+    content: "Hear from team captains about fair play and giving your best effort in every match.",
+    videoSrc: "/videos/Captains.mp4"
+  }
+];
+
+// Separate fixture images - using imported images for preview and string paths for download
+const fixtureFiles = [
+  { 
+    name: "Day 1 Schedule", 
+    path: "/images/fixtures/Wednesday.png",
+    image: day1Fixture,
+    description: "Wednesday matches and timings"
+  },
+  { 
+    name: "Day 2 Schedule", 
+    path: "/images/fixtures/Thursday.png",
+    image: day2Fixture,
+    description: "Thursday matches and timings"
+  },
+  { 
+    name: "Day 3 Schedule", 
+    path: "/images/fixtures/Friday.png",
+    image: day3Fixture,
+    description: "Friday matches and finals"
+  },
+  { 
+    name: "Day 4 Schedule", 
+    path: "/images/fixtures/Saturday.png",
+    image: poolsFixture,
+    description: "Saturday matches and finals"
   }
 ];
 
@@ -69,12 +105,14 @@ export default function HomePage() {
             >
               View Pool Standings
             </Link>
-            <Link 
-              href="/scores"
+            
+            {/* View Fixtures Button - Links to fixtures section */}
+            <a 
+              href="#fixtures"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl border border-blue-500 flex items-center justify-center gap-2"
             >
               View Fixtures
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -94,16 +132,98 @@ export default function HomePage() {
                   </p>
                 </div>
                 
-                {/* Video Placeholder */}
-                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg aspect-video flex items-center justify-center mb-4 border-2 border-blue-200">
-                  <div className="text-center text-blue-600">
-                    <div className="text-3xl md:text-4xl mb-2">📹</div>
-                    <p className="text-sm md:text-base font-medium">{message.placeholder}</p>
-                    <p className="text-xs md:text-sm mt-1 text-blue-500">(Video will be embedded here)</p>
-                  </div>
+                {/* Video Player */}
+                <div className="rounded-lg aspect-video mb-4 overflow-hidden bg-black">
+                  <video
+                    controls
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                    playsInline
+                  >
+                    <source src={message.videoSrc} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+                
+                <div className="text-center text-gray-500 text-sm mt-2">
+                  {message.content}
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Fixtures Section */}
+      <section id="fixtures" className="py-12 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              Tournament Fixtures
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Download individual fixture schedules for each day
+            </p>
+          </div>
+          
+          <div className="bg-blue-50 rounded-xl shadow-lg p-6 md:p-8 border-2 border-blue-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {fixtureFiles.map((file, index) => (
+                <div key={index} className="bg-white rounded-lg p-6 shadow-md border border-blue-200 hover:border-blue-400 transition-all duration-300">
+                  <div className="text-center">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">
+                      {file.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4">
+                      {file.description}
+                    </p>
+                    
+                    {/* Preview Image - Using imported image object */}
+                    <div className="mb-4 rounded-lg overflow-hidden border-2 border-gray-200">
+                      <Image
+                        src={file.image}
+                        width={300}
+                        height={200}
+                        alt={file.name}
+                        className="w-full h-auto object-contain"
+                        placeholder="blur"
+                      />
+                    </div>
+                    
+                    {/* Download Button - Using string path */}
+                    <a 
+                      href={file.path}
+                      download={`${file.name.replace(/\s+/g, '-')}.png`}
+                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                    >
+                      <span>📥</span>
+                      Download
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Download All Section */}
+            <div className="mt-8 pt-6 border-t border-blue-200">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Download All Fixtures
+                </h3>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {fixtureFiles.map((file, index) => (
+                    <a 
+                      key={index}
+                      href={file.path}
+                      download={`${file.name.replace(/\s+/g, '-')}.png`}
+                      className="inline-flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-green-700 transition-all duration-300"
+                    >
+                      {file.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
