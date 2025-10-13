@@ -1,155 +1,182 @@
-import { useState } from 'react';
-import { Player, Team } from '@/types/team';
-import { storageUtils } from '@/utils/storage';
-import { validationUtils } from '@/utils/validation';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Users, Award } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2, Plus, Users, Award, Loader2, Upload, X } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { teamService } from '@/utils/storage';
+
+// Validation schema matching Prisma schema
+const playerSchema = z.object({
+  name: z.string().min(2, 'Player name must be at least 2 characters'),
+  capNumber: z.number().min(1, 'Cap number must be at least 1')
+    .max(15, 'Cap number cannot exceed 15')
+});
+
+const formSchema = z.object({
+  schoolName: z.string().min(2, 'School name must be at least 2 characters'),
+  coachName: z.string().min(2, 'Coach name must be at least 2 characters'),
+  managerName: z.string().min(2, 'Manager name must be at least 2 characters'),
+  poolAllocation: z.string().min(1, 'Please select a pool allocation'),
+  teamLogo: z.string().optional(),
+  players: z.array(playerSchema)
+    .min(7, 'A team must have at least 7 players')
+    .max(13, 'A team can have maximum 13 players')
+    .refine(
+      (players) => {
+        const capNumbers = players.map(p => p.capNumber);
+        return new Set(capNumbers).size === capNumbers.length;
+      },
+      { message: 'Cap numbers must be unique' }
+    )
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+interface PlayerFormData {
+  name: string;
+  capNumber: number;
+}
 
 export default function TeamRegistration() {
-  const [schoolName, setSchoolName] = useState('');
-  const [coachName, setCoachName] = useState('');
-  const [managerName, setManagerName] = useState('');
-  const [players, setPlayers] = useState<Player[]>([
-    { id: '1', name: '', capNumber: 1 }
-  ]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      schoolName: '',
+      coachName: '',
+      managerName: '',
+      poolAllocation: '',
+      teamLogo: '',
+      players: [{ name: '', capNumber: 1 }]
+    }
+  });
+
+  const players = form.watch('players');
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        form.setError('teamLogo', { message: 'Please select an image file' });
+        return;
+      }
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        form.setError('teamLogo', { message: 'Image must be less than 2MB' });
+        return;
+      }
+
+      // Create preview and base64 string
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setLogoPreview(base64String);
+        form.setValue('teamLogo', base64String);
+      };
+      reader.readAsDataURL(file);
+      form.clearErrors('teamLogo');
+    }
+  };
+
+  const removeLogo = () => {
+    form.setValue('teamLogo', '');
+    setLogoPreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const addPlayer = () => {
     if (players.length >= 13) return;
     
-    const newPlayer: Player = {
-      id: Date.now().toString(),
-      name: '',
-      capNumber: getNextAvailableCapNumber()
-    };
-    
-    setPlayers([...players, newPlayer]);
-  };
-
-  const removePlayer = (playerId: string) => {
-    if (players.length <= 1) return;
-    setPlayers(players.filter(p => p.id !== playerId));
-    
-    // Clear any errors for removed player
-    const newErrors = { ...errors };
-    delete newErrors[`player_${playerId}_name`];
-    delete newErrors[`player_${playerId}_cap`];
-    setErrors(newErrors);
-  };
-
-  const updatePlayer = (playerId: string, field: 'name' | 'capNumber', value: string | number) => {
-    setPlayers(players.map(p => 
-      p.id === playerId 
-        ? { ...p, [field]: value }
-        : p
-    ));
-    
-    // Clear related errors
-    const newErrors = { ...errors };
-    delete newErrors[`player_${playerId}_${field === 'capNumber' ? 'cap' : 'name'}`];
-    setErrors(newErrors);
-  };
-
-  const getNextAvailableCapNumber = (): number => {
     const usedNumbers = players.map(p => p.capNumber);
+    let nextCapNumber = 1;
     for (let i = 1; i <= 15; i++) {
-      if (!usedNumbers.includes(i)) return i;
+      if (!usedNumbers.includes(i)) {
+        nextCapNumber = i;
+        break;
+      }
     }
-    return 1;
+    
+    form.setValue('players', [
+      ...players, 
+      { name: '', capNumber: nextCapNumber }
+    ]);
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    // Validate school name
-    const schoolError = validationUtils.validateSchoolName(schoolName);
-    if (schoolError) newErrors.schoolName = schoolError;
-
-    // Check if school name is already taken
-    if (!schoolError && storageUtils.isSchoolNameTaken(schoolName)) {
-      newErrors.schoolName = 'This school name is already registered';
-    }
-
-    // Validate coach name
-    const coachError = validationUtils.validatePersonName(coachName, 'Coach');
-    if (coachError) newErrors.coachName = coachError;
-
-    // Validate manager name
-    const managerError = validationUtils.validatePersonName(managerName, 'Manager');
-    if (managerError) newErrors.managerName = managerError;
-
-    // Validate team size
-    const teamSizeError = validationUtils.validateTeamPlayers(players);
-    if (teamSizeError) newErrors.teamSize = teamSizeError;
-
-    // Validate each player
-    players.forEach(player => {
-      const nameError = validationUtils.validatePlayerName(player.name);
-      if (nameError) newErrors[`player_${player.id}_name`] = nameError;
-
-      const capError = validationUtils.validateCapNumber(player.capNumber, players, player.id);
-      if (capError) newErrors[`player_${player.id}_cap`] = capError;
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const removePlayer = (index: number) => {
+    if (players.length <= 1) return;
+    const newPlayers = players.filter((_, i) => i !== index);
+    form.setValue('players', newPlayers);
   };
 
-  const handleSubmit = async () => {
-    
-    if (!validateForm()) return;
+  const getUsedCapNumbers = (currentIndex: number): number[] => {
+    return players
+      .filter((_, index) => index !== currentIndex)
+      .map(p => p.capNumber);
+  };
 
-    setIsSubmitting(true);
-    
+  const onSubmit = async (data: FormValues) => {
     try {
-      const newTeam: Team = {
-        id: Date.now().toString(),
-        schoolName: schoolName.trim(),
-        coachName: coachName.trim(),
-        managerName: managerName.trim(),
-        players: players.map(p => ({
-          ...p,
-          name: p.name.trim()
+      // Prepare team data for API - matches Prisma schema
+      const teamData = {
+        schoolName: data.schoolName.trim(),
+        coachName: data.coachName.trim(),
+        managerName: data.managerName.trim(),
+        poolAllocation: data.poolAllocation,
+        teamLogo: data.teamLogo || null,
+        players: data.players.map(player => ({
+          name: player.name.trim(),
+          capNumber: player.capNumber
         }))
       };
 
-      console.log('Submitting team:', newTeam);
-
-      storageUtils.addTeam(newTeam);
+      await teamService.createTeam(teamData);
       
       // Reset form
-      setSchoolName('');
-      setCoachName('');
-      setManagerName('');
-      setPlayers([{ id: Date.now().toString(), name: '', capNumber: 1 }]);
-      setErrors({});
+      form.reset({ 
+        schoolName: '', 
+        coachName: '', 
+        managerName: '',
+        poolAllocation: '',
+        teamLogo: '',
+        players: [{ name: '', capNumber: 1 }] 
+      });
+      setLogoPreview('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       setSubmitSuccess(true);
-      
-      // Hide success message after 3 seconds
       setTimeout(() => setSubmitSuccess(false), 3000);
-      
-    } catch (error) {
-      console.error('Error saving team:', error);
-      setErrors({ submit: 'Failed to save team. Please try again.' });
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      if (error.message.includes('already exists')) {
+        form.setError('schoolName', { message: error.message });
+      } else {
+        form.setError('root', { 
+          message: error.message || 'Failed to register team. Please try again.' 
+        });
+      }
     }
   };
 
   return (
-    <div className=" p-6">
+    <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Award className="text-blue-600" />
           Team Registration
         </h1>
-        <p className="text-gray-600 mt-2">
-          Register a new team for the U14 Water Polo Tournament
-        </p>
+        <p className="text-gray-600 mt-2">Register a new team for the U14 Water Polo Tournament</p>
       </div>
 
       {submitSuccess && (
@@ -158,182 +185,268 @@ export default function TeamRegistration() {
         </div>
       )}
 
-      <div className="space-y-6">
-        {/* Team Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Team Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">School Name</label>
-              <Input
-                value={schoolName}
-                onChange={(e) => {
-                  setSchoolName(e.target.value);
-                  if (errors.schoolName) {
-                    const { schoolName, ...rest } = errors;
-                    setErrors(rest);
-                  }
-                }}
-                placeholder="Enter school name"
-                className={errors.schoolName ? 'border-red-500' : ''}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Team Details Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Team Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="schoolName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>School Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter school name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.schoolName && (
-                <p className="text-red-500 text-sm mt-1">{errors.schoolName}</p>
-              )}
-            </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Coach Name</label>
-                <Input
-                  value={coachName}
-                  onChange={(e) => {
-                    setCoachName(e.target.value);
-                    if (errors.coachName) {
-                      const { coachName, ...rest } = errors;
-                      setErrors(rest);
-                    }
-                  }}
-                  placeholder="Enter coach name"
-                  className={errors.coachName ? 'border-red-500' : ''}
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="coachName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Coach Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter coach name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.coachName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.coachName}</p>
-                )}
+
+                <FormField
+                  control={form.control}
+                  name="managerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Manager Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter manager name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Manager Name</label>
-                <Input
-                  value={managerName}
-                  onChange={(e) => {
-                    setManagerName(e.target.value);
-                    if (errors.managerName) {
-                      const { managerName, ...rest } = errors;
-                      setErrors(rest);
-                    }
-                  }}
-                  placeholder="Enter manager name"
-                  className={errors.managerName ? 'border-red-500' : ''}
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="poolAllocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pool Allocation</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a pool" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="A">Pool A</SelectItem>
+                          <SelectItem value="B">Pool B</SelectItem>
+                          <SelectItem value="C">Pool C</SelectItem>
+                          <SelectItem value="D">Pool D</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.managerName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.managerName}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Players */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center justify-between'>
-              Players ({players.length}/13)
-              <Button
-                type="button"
-                onClick={addPlayer}
-                disabled={players.length >= 13}
-                size="sm"
-                variant="outline"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Player
-              </Button>
-            </CardTitle>
-            {errors.teamSize && (
-              <p className="text-red-500 text-sm">{errors.teamSize}</p>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {players.map((player, index) => (
-                <div key={player.id} className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
+                <FormItem>
+                  <FormLabel>Team Logo (Optional)</FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Supported formats: JPG, PNG, GIF. Max size: 2MB
+                      </p>
                     </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </div>
+
+              {logoPreview && (
+                <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium">Logo Preview:</p>
                     <Button
                       type="button"
-                      onClick={() => removePlayer(player.id)}
-                      disabled={players.length <= 1}
+                      onClick={removeLogo}
                       size="sm"
                       variant="ghost"
-                      className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-red-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Player Name</label>
-                      <Input
-                        value={player.name}
-                        onChange={(e) => updatePlayer(player.id, 'name', e.target.value)}
-                        placeholder="Enter name"
-                        className={`text-sm ${errors[`player_${player.id}_name`] ? 'border-red-500' : ''}`}
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 border rounded-lg bg-white flex items-center justify-center">
+                      <img 
+                        src={logoPreview} 
+                        alt="Team logo preview" 
+                        className="w-full h-full object-contain rounded"
                       />
-                      {errors[`player_${player.id}_name`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`player_${player.id}_name`]}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Cap #</label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="15"
-                        value={player.capNumber}
-                        onChange={(e) => updatePlayer(player.id, 'capNumber', parseInt(e.target.value) || 1)}
-                        className={`text-sm ${errors[`player_${player.id}_cap`] ? 'border-red-500' : ''}`}
-                      />
-                      {errors[`player_${player.id}_cap`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`player_${player.id}_cap`]}</p>
-                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Players Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center justify-between'>
+                Players ({players.length}/13)
+                <Button 
+                  type="button" 
+                  onClick={addPlayer} 
+                  disabled={players.length >= 13} 
+                  size="sm" 
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Player
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {players.map((player: PlayerFormData, index: number) => {
+                  const usedCapNumbers = getUsedCapNumbers(index);
+                  
+                  return (
+                    <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                          {player.capNumber}
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => removePlayer(index)}
+                          disabled={players.length <= 1}
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name={`players.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Player Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Enter name" 
+                                  className="text-sm" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`players.${index}.capNumber`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Cap Number</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="15"
+                                  className="text-sm"
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const value = parseInt(e.target.value) || 1;
+                                    field.onChange(value);
+                                  }}
+                                  onBlur={field.onBlur}
+                                />
+                              </FormControl>
+                              {usedCapNumbers.includes(field.value) && (
+                                <p className="text-xs text-amber-600">
+                                  This cap number is already used by another player
+                                </p>
+                              )}
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {form.formState.errors.root && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+              {form.formState.errors.root.message}
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Submit */}
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setSchoolName('');
-              setCoachName('');
-              setManagerName('');
-              setPlayers([{ id: Date.now().toString(), name: '', capNumber: 1 }]);
-              setErrors({});
-            }}
-          >
-            Clear Form
-          </Button>
-          
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="min-w-32"
-          >
-            {isSubmitting ? 'Registering...' : 'Register Team'}
-          </Button>
-        </div>
-
-        {errors.submit && (
-          <p className="text-red-500 text-center">{errors.submit}</p>
-        )}
-      </div>
+          <div className="flex justify-end gap-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => {
+                form.reset();
+                setLogoPreview('');
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+              disabled={form.formState.isSubmitting}
+            >
+              Clear Form
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={form.formState.isSubmitting} 
+              className="min-w-32"
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                'Register Team'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

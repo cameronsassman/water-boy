@@ -1,98 +1,135 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL")       // connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // direct connection
+  url      = env("DATABASE_URL")
 }
 
-// Teams
 model Team {
-  id         String   @id
-  schoolName String
-  coachName  String
-  managerName String
-  poolId     String?  // optional
-  players    Player[]
-  matchesHome Match[] @relation("HomeMatches")
-  matchesAway Match[] @relation("AwayMatches")
-  poolTeams  PoolTeam[]
+  id             String   @id @default(cuid())
+  schoolName     String   @unique
+  coachName      String
+  managerName    String
+  poolAllocation String?  // Changed from poolId to match your form
+  teamLogo       String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  players          Player[]
+  homeMatches      Match[]        @relation("HomeTeam")
+  awayMatches      Match[]        @relation("AwayTeam")
+  homeMatchResults MatchResult[]  @relation("HomeTeamResult")
+  awayMatchResults MatchResult[]  @relation("AwayTeamResult")
+
+  @@index([poolAllocation])
 }
 
-// Players
 model Player {
-  id        String @id
-  teamId    String
+  id        String   @id @default(cuid())
   name      String
   capNumber Int
-  team      Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  stats     PlayerStat[]
+  teamId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  playerStats PlayerStats[]
+
+  @@unique([teamId, capNumber])
+  @@index([teamId])
 }
 
-// Pools
-model Pool {
-  id    String @id
-  name  String
-  poolTeams PoolTeam[]
-  matches Match[]
-}
-
-// Pool-Team relation table
-model PoolTeam {
-  poolId String
-  teamId String
-  pool   Pool @relation(fields: [poolId], references: [id], onDelete: Cascade)
-  team   Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@id([poolId, teamId])
-}
-
-// Matches
-model Match {
-  id              String @id
-  homeTeamId      String?
-  awayTeamId      String?
-  poolId          String?
-  stage           String
-  homeScore       Int?
-  awayScore       Int?
-  completed       Boolean  @default(false)
-  round           String?
-  bracketPosition Int?
-  parentMatch1    String?
-  parentMatch2    String?
-
-  homeTeam Team? @relation("HomeMatches", fields: [homeTeamId], references: [id])
-  awayTeam Team? @relation("AwayMatches", fields: [awayTeamId], references: [id])
-  pool     Pool? @relation(fields: [poolId], references: [id])
-  result   MatchResult?
-  playerStats PlayerStat[]
-}
-
-// Match results
 model MatchResult {
-  id          Int    @id @default(autoincrement())
-  matchId     String @unique
+  id          String   @id @default(cuid())
+  matchId     String   @unique
+  homeTeamId  String
+  awayTeamId  String
   homeScore   Int
   awayScore   Int
-  completed   Boolean @default(false)
+  completed   Boolean  @default(true)
   completedAt DateTime @default(now())
-  match       Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  match       Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homeTeam    Team          @relation("HomeTeamResult", fields: [homeTeamId], references: [id])
+  awayTeam    Team          @relation("AwayTeamResult", fields: [awayTeamId], references: [id])
+  playerStats PlayerStats[]
+
+  @@index([matchId])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
 }
 
-// Player stats per match
-model PlayerStat {
-  id         Int     @id @default(autoincrement())
-  matchId    String
-  playerId   String
-  capNumber  Int
-  goals      Int @default(0)
-  kickOuts   Int @default(0)
-  yellowCards Int @default(0)
-  redCards   Int @default(0)
+model Match {
+  id         String   @id @default(cuid())
+  homeTeamId String
+  awayTeamId String
+  poolId     String?
+  stage      String
+  round      String?
+  day        Int
+  timeSlot   String
+  arena      Int
+  completed  Boolean  @default(false)
+  homeScore  Int?
+  awayScore  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [playerId], references: [id])
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  matchResult MatchResult?
+
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([stage, poolId])
+  @@index([day, timeSlot, arena])
+  @@index([completed])
+}
+
+model PlayerStats {
+  id            String   @id @default(cuid())
+  matchResultId String
+  playerId      String
+  capNumber     Int
+  goals         Int      @default(0)
+  kickOuts      Int      @default(0)
+  yellowCards   Int      @default(0)
+  redCards      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matchResult MatchResult @relation(fields: [matchResultId], references: [id], onDelete: Cascade)
+  player      Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchResultId, playerId])
+  @@index([matchResultId])
+  @@index([playerId])
+}
+
+model Pool {
+  id        String   @id @default(cuid())
+  poolId    String   @unique
+  name      String
+  teamIds   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([poolId])
+}
+
+model Tournament {
+  id               String   @id @default(cuid())
+  name             String   @default("U14 Water Polo Tournament")
+  startDate        DateTime
+  endDate          DateTime
+  poolsAllocated   Boolean  @default(false)
+  matchesGenerated Boolean  @default(false)
+  currentStage     String   @default("setup")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

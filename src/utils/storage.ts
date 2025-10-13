@@ -1,5 +1,5 @@
-import { Team, Tournament } from '@/types/team';
-import { MatchResult } from '@/types/match';
+import { Team, Tournament, PlayerType } from '@/types/team';
+import { Match, MatchResult, PlayerStats, NewMatchForm } from '@/types/match';
 
 const STORAGE_KEY = 'water-polo-tournament';
 const RESULTS_KEY = 'water-polo-tournament-results';
@@ -301,5 +301,111 @@ export const storageUtils = {
                  (resultsData ? new Blob([resultsData]).size : 0),
       lastModified: new Date().toISOString()
     };
+  }
+};
+
+const API_BASE = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+export const teamService = {
+  // Create a new team
+  async createTeam(teamData: Omit<Team, 'id'>): Promise<Team> {
+    const response = await fetch(`${API_BASE}/api/teams`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(teamData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create team');
+    }
+
+    return response.json();
+  },
+
+  // Get all teams
+  async getTeams(): Promise<Team[]> {
+    const response = await fetch(`${API_BASE}/api/teams`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch teams');
+    }
+
+    return response.json();
+  },
+
+  // Get team by ID
+  async getTeam(id: string): Promise<Team> {
+    const response = await fetch(`${API_BASE}/api/teams/${id}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch team');
+    }
+
+    return response.json();
+  },
+
+  // Delete team
+  async deleteTeam(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/api/teams/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete team');
+    }
+  }
+};
+
+export type { PlayerType, Team };
+
+// Add to your existing storage.ts file, after the teamService
+
+export const matchService = {
+  // Create a new match
+  async createMatch(matchData: any): Promise<any> {
+    const response = await fetch(`${API_BASE}/api/matches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(matchData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create match');
+    }
+
+    return response.json();
+  },
+
+  // Get all matches with filters
+  async getMatches(filters?: { day?: number; stage?: string; poolId?: string; completed?: boolean }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filters?.day) params.append('day', filters.day.toString());
+    if (filters?.stage) params.append('stage', filters.stage);
+    if (filters?.poolId) params.append('poolId', filters.poolId);
+    if (filters?.completed !== undefined) params.append('completed', filters.completed.toString());
+
+    const url = `${API_BASE}/api/matches${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch matches');
+    }
+
+    return response.json();
+  },
+
+  // Delete match
+  async deleteMatch(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/api/matches/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete match');
+    }
   }
 };

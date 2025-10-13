@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
-import { tournamentUtils, MatchWithTeams } from '@/utils/tournament-logic';
-import { storageUtils } from '@/utils/storage';
-import { MatchResult } from '@/types/match';
-import { PlayerStats } from '@/types/player';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Target, Save, X, CheckCircle } from 'lucide-react';
+import { Trophy, Target, Save, X, CheckCircle, Loader2 } from 'lucide-react';
 
 interface Player {
   id: string;
@@ -14,45 +10,130 @@ interface Player {
   capNumber: number;
 }
 
+interface Team {
+  id: string;
+  schoolName: string;
+  coachName: string;
+  managerName: string;
+  players: Player[];
+}
+
+interface Match {
+  id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeam: Team;
+  awayTeam: Team;
+  poolId?: string;
+  stage: string;
+  round?: string;
+  day: number;
+  timeSlot: string;
+  arena: number;
+  completed: boolean;
+  homeScore?: number;
+  awayScore?: number;
+}
+
+interface PlayerStats {
+  playerId: string;
+  capNumber: number;
+  goals: number;
+  kickOuts: number;
+  yellowCards: number;
+  redCards: number;
+}
+
 export default function ScoreInput() {
-  const [availableMatches, setAvailableMatches] = useState<MatchWithTeams[]>([]);
-  const [selectedMatch, setSelectedMatch] = useState<MatchWithTeams | null>(null);
+  const [availableMatches, setAvailableMatches] = useState<Match[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [homeTeamStats, setHomeTeamStats] = useState<PlayerStats[]>([]);
   const [awayTeamStats, setAwayTeamStats] = useState<PlayerStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadMatches();
   }, []);
 
-  const loadMatches = () => {
+  const loadMatches = async () => {
     try {
-      const tournament = storageUtils.getTournament();
-      const allMatches = tournament.matches;
-      const matchesWithTeams = allMatches.map(match => tournamentUtils.getMatchWithTeams(match));
-      // Filter out matches without valid teams and incomplete matches
-      setAvailableMatches(matchesWithTeams.filter(m => 
-        !m.completed && 
-        m.homeTeam && 
-        m.awayTeam && 
-        m.homeTeam.id !== 'TBD' && 
-        m.awayTeam.id !== 'TBD'
-      ));
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('/api/matches?completed=false');
+      
+      if (!response.ok) {
+        throw new Error('Failed to load matches');
+      }
+      
+      const matches: Match[] = await response.json();
+      
+      // Filter matches that have both teams loaded
+      const validMatches = matches.filter(match => 
+        match.homeTeam && 
+        match.awayTeam && 
+        match.homeTeam.players && 
+        match.awayTeam.players
+      );
+      
+      setAvailableMatches(validMatches);
     } catch (error) {
       console.error('Error loading matches:', error);
+      setError('Failed to load matches. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const selectMatch = (match: MatchWithTeams) => {
+  const selectMatch = async (match: Match) => {
     setSelectedMatch(match);
+    setError(null);
 
-    const existingResult = storageUtils.getMatchResult(match.id);
-
-    if (existingResult) {
-      setHomeTeamStats(existingResult.homeTeamStats);
-      setAwayTeamStats(existingResult.awayTeamStats);
-    } else {
+    try {
+      // Check if there's an existing result
+      const response = await fetch(`/api/match-results?matchId=${match.id}`);
+      
+      if (response.ok) {
+        const existingResult = await response.json();
+        
+        if (existingResult) {
+          // Load existing player stats
+          const statsResponse = await fetch(`/api/player-stats?matchResultId=${existingResult.id}`);
+          
+          if (statsResponse.ok) {
+            const playerStats = await statsResponse.json();
+            
+            // Separate home and away team stats
+            const homeStats: PlayerStats[] = [];
+            const awayStats: PlayerStats[] = [];
+            
+            playerStats.forEach((stat: any) => {
+              const playerStat: PlayerStats = {
+                playerId: stat.playerId,
+                capNumber: stat.capNumber,
+                goals: stat.goals,
+                kickOuts: stat.kickOuts,
+                yellowCards: stat.yellowCards,
+                redCards: stat.redCards
+              };
+              
+              if (match.homeTeam.players.some(p => p.id === stat.playerId)) {
+                homeStats.push(playerStat);
+              } else {
+                awayStats.push(playerStat);
+              }
+            });
+            
+            setHomeTeamStats(homeStats);
+            setAwayTeamStats(awayStats);
+            return;
+          }
+        }
+      }
+      
+      // Initialize new stats if no existing result
       const homeStats = match.homeTeam.players.map(player => ({
         playerId: player.id,
         capNumber: player.capNumber,
@@ -73,6 +154,10 @@ export default function ScoreInput() {
 
       setHomeTeamStats(homeStats);
       setAwayTeamStats(awayStats);
+      
+    } catch (error) {
+      console.error('Error loading match result:', error);
+      setError('Failed to load match data. Please try again.');
     }
   };
 
@@ -100,34 +185,88 @@ export default function ScoreInput() {
     if (!selectedMatch) return;
 
     setIsSaving(true);
+    setError(null);
 
     try {
       const homeScore = calculateTeamScore(homeTeamStats);
       const awayScore = calculateTeamScore(awayTeamStats);
 
-      const result: MatchResult = {
-        matchId: selectedMatch.id,
-        homeScore,
-        awayScore,
-        homeTeamStats,
-        awayTeamStats,
-        completed: true,
-        completedAt: new Date().toISOString()
-      };
+      // Create match result
+      const resultResponse = await fetch('/api/match-results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          matchId: selectedMatch.id,
+          homeTeamId: selectedMatch.homeTeamId,
+          awayTeamId: selectedMatch.awayTeamId,
+          homeScore,
+          awayScore,
+          completed: true
+        }),
+      });
 
-      storageUtils.saveMatchResult(result);
-
-      if (['cup', 'plate', 'shield'].includes(selectedMatch.stage)) {
-        tournamentUtils.updateKnockoutProgression(selectedMatch.id);
+      if (!resultResponse.ok) {
+        const errorData = await resultResponse.json();
+        throw new Error(errorData.error || 'Failed to save match result');
       }
 
-      loadMatches();
+      const matchResult = await resultResponse.json();
+
+      // Save player stats
+      const allStats = [...homeTeamStats, ...awayTeamStats];
+      
+      for (const stat of allStats) {
+        const statResponse = await fetch('/api/player-stats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            matchResultId: matchResult.id,
+            playerId: stat.playerId,
+            capNumber: stat.capNumber,
+            goals: stat.goals,
+            kickOuts: stat.kickOuts,
+            yellowCards: stat.yellowCards,
+            redCards: stat.redCards
+          }),
+        });
+
+        if (!statResponse.ok) {
+          const errorData = await statResponse.json();
+          throw new Error(errorData.error || 'Failed to save player stats');
+        }
+      }
+
+      // Update match completion status
+      const matchResponse = await fetch(`/api/matches/${selectedMatch.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          completed: true,
+          homeScore,
+          awayScore
+        }),
+      });
+
+      if (!matchResponse.ok) {
+        const errorData = await matchResponse.json();
+        throw new Error(errorData.error || 'Failed to update match status');
+      }
+
+      // Reload matches
+      await loadMatches();
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving match result:', error);
+      setError(error.message || 'Failed to save match result. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -137,6 +276,7 @@ export default function ScoreInput() {
     setSelectedMatch(null);
     setHomeTeamStats([]);
     setAwayTeamStats([]);
+    setError(null);
   };
 
   const renderPlayerTable = (
@@ -253,6 +393,17 @@ export default function ScoreInput() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full p-6 flex justify-center items-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 mx-auto mb-4 text-gray-400 animate-spin" />
+          <p>Loading matches...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!selectedMatch) {
     return (
       <div className="w-full p-6">
@@ -266,13 +417,19 @@ export default function ScoreInput() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            {error}
+          </div>
+        )}
+
         {availableMatches.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Target className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-xl font-semibold mb-2">No Pending Matches Available</h3>
               <p className="text-gray-600">
-                Either all matches are completed, or pool fixtures/knockout brackets need to be generated.
+                Either all matches are completed, or no fixtures have been created yet.
               </p>
             </CardContent>
           </Card>
@@ -289,27 +446,22 @@ export default function ScoreInput() {
                           ? `${match.stage.charAt(0).toUpperCase() + match.stage.slice(1)} ${match.round}`
                           : match.stage.charAt(0).toUpperCase() + match.stage.slice(1)}
                     </Badge>
-                    {match.completed ? (
-                      <Badge className="text-xs bg-green-100 text-green-800">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Complete
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        Pending
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="text-xs">
+                      Pending
+                    </Badge>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-sm truncate">{match.homeTeam.schoolName}</span>
-                      {match.completed && <span className="font-bold">{match.homeScore}</span>}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-sm truncate">{match.awayTeam.schoolName}</span>
-                      {match.completed && <span className="font-bold">{match.awayScore}</span>}
                     </div>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-500">
+                    Day {match.day} • {match.timeSlot} • Arena {match.arena}
                   </div>
                 </CardContent>
               </Card>
@@ -332,7 +484,7 @@ export default function ScoreInput() {
               <div className="text-center">
                 <div className="text-xs font-medium text-gray-500 mb-1">HOME</div>
                 <div className="font-semibold text-gray-900 text-base truncate">
-                  {selectedMatch.homeTeam?.schoolName || "Home Team"}
+                  {selectedMatch.homeTeam.schoolName}
                 </div>
               </div>
 
@@ -347,13 +499,23 @@ export default function ScoreInput() {
               <div className="text-center">
                 <div className="text-xs font-medium text-gray-500 mb-1">AWAY</div>
                 <div className="font-semibold text-gray-900 text-base truncate">
-                  {selectedMatch.awayTeam?.schoolName || "Away Team"}
+                  {selectedMatch.awayTeam.schoolName}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="w-full px-4 pb-2 flex-shrink-0">
+          <div className="w-full">
+            <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          </div>
+        </div>
+      )}
 
       {saveSuccess && (
         <div className="w-full px-4 pb-2 flex-shrink-0">
@@ -411,7 +573,12 @@ export default function ScoreInput() {
           size="lg" 
           className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all"
         >
-          <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save Result'}
+          {isSaving ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 mr-2" />
+          )}
+          {isSaving ? 'Saving...' : 'Save Result'}
         </Button>
       </div>
     </div>
