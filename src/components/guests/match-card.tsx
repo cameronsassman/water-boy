@@ -1,7 +1,13 @@
-import { MatchWithTeams } from '@/utils/tournament-logic';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, Trophy, Target, Award, Users } from 'lucide-react';
+import { Team, Match } from '@/types/team';
+
+// Define MatchWithTeams locally since it's not exported from tournament-logic
+interface MatchWithTeams extends Match {
+  homeTeam?: Team;
+  awayTeam?: Team;
+}
 
 // Use intersection type instead of extending to avoid property conflicts
 type ScheduledMatch = MatchWithTeams & {

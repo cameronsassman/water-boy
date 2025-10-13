@@ -1,5 +1,5 @@
-import { Team, Tournament, PlayerType } from '@/types/team';
-import { Match, MatchResult, PlayerStats, NewMatchForm } from '@/types/match';
+import { Team, Tournament, Player } from '@/types/team';
+import { MatchResult } from '@/types/match';
 
 const STORAGE_KEY = 'water-polo-tournament';
 const RESULTS_KEY = 'water-polo-tournament-results';
@@ -359,7 +359,7 @@ export const teamService = {
   }
 };
 
-export type { PlayerType, Team };
+export type { Player, Team };
 
 // Add to your existing storage.ts file, after the teamService
 
