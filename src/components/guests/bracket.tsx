@@ -1,14 +1,13 @@
-import React from 'react';
-import { MatchWithTeams } from '@/utils/tournament-logic';
+import { MatchWithTeams as TournamentMatchWithTeams } from '@/utils/tournament-logic';
 import { Card, CardContent } from '@/components/ui/card';
 import { Crown, Medal, Clock, CheckCircle } from 'lucide-react';
 
 interface BracketDisplayProps {
-  roundOf16: MatchWithTeams[];
-  quarterFinals: MatchWithTeams[];
-  semiFinals: MatchWithTeams[];
-  final: MatchWithTeams | null;
-  thirdPlace: MatchWithTeams | null;
+  roundOf16: TournamentMatchWithTeams[];
+  quarterFinals: TournamentMatchWithTeams[];
+  semiFinals: TournamentMatchWithTeams[];
+  final: TournamentMatchWithTeams | null;
+  thirdPlace: TournamentMatchWithTeams | null;
 }
 
 export default function BracketDisplay({ 
@@ -24,7 +23,7 @@ export default function BracketDisplay({
     size = 'normal',
     highlight = false 
   }: { 
-    match: MatchWithTeams | null; 
+    match: TournamentMatchWithTeams | null; 
     size?: 'small' | 'normal' | 'large';
     highlight?: boolean;
   }) => {
