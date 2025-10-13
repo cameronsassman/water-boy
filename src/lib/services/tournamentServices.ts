@@ -18,10 +18,7 @@ export class TournamentService {
     try {
       const teams = await prisma.team.findMany({
         where: { 
-          OR: [
-            { poolId: poolId },
-            { poolAllocation: poolId }
-          ]
+          poolAllocation: poolId
         },
         include: {
           players: true,
@@ -49,12 +46,12 @@ export class TournamentService {
         const allMatches = [
           ...(team.homeMatches || []).filter(match => 
             match?.completed && 
-            (match.poolId === poolId || match.poolAllocation === poolId) &&
+            match.poolAllocation === poolId &&
             match.result
           ),
           ...(team.awayMatches || []).filter(match => 
             match?.completed && 
-            (match.poolId === poolId || match.poolAllocation === poolId) &&
+            match.poolAllocation === poolId &&
             match.result
           )
         ]
@@ -136,10 +133,7 @@ export class TournamentService {
     try {
       const teams = await prisma.team.findMany({
         where: { 
-          OR: [
-            { poolId: poolId },
-            { poolAllocation: poolId }
-          ]
+          poolAllocation: poolId
         }
       })
 
@@ -169,7 +163,6 @@ export class TournamentService {
             fixtures.push({
               homeTeamId: homeTeam.id,
               awayTeamId: awayTeam.id,
-              poolId: poolId,
               poolAllocation: poolId,
               stage: 'POOL' as const,
               day: 1, // Default to day 1
@@ -195,7 +188,7 @@ export class TournamentService {
             where: {
               homeTeamId: fixture.homeTeamId,
               awayTeamId: fixture.awayTeamId,
-              poolId: poolId,
+              poolAllocation: poolId,
               stage: 'POOL'
             }
           })
@@ -247,10 +240,7 @@ export class TournamentService {
       if (poolId) {
         const matches = await prisma.match.findMany({
           where: {
-            OR: [
-              { poolId: poolId },
-              { poolAllocation: poolId }
-            ],
+            poolAllocation: poolId,
             stage: 'POOL'
           }
         })
@@ -335,10 +325,7 @@ export class TournamentService {
     try {
       const whereCondition = poolId 
         ? {
-            OR: [
-              { poolId: poolId },
-              { poolAllocation: poolId }
-            ],
+            poolAllocation: poolId,
             stage: 'POOL'
           }
         : { stage: 'POOL' }
@@ -351,6 +338,40 @@ export class TournamentService {
     } catch (error) {
       console.error('Error clearing pool matches:', error)
       throw new Error('Failed to clear pool matches')
+    }
+  }
+
+  // Get teams by pool
+  static async getTeamsByPool(poolId: string) {
+    try {
+      return await prisma.team.findMany({
+        where: {
+          poolAllocation: poolId
+        },
+        include: {
+          players: true
+        }
+      })
+    } catch (error) {
+      console.error(`Error getting teams for pool ${poolId}:`, error)
+      throw new Error(`Failed to get teams for pool ${poolId}`)
+    }
+  }
+
+  // Check if pools are allocated
+  static async arePoolsAllocated(): Promise<boolean> {
+    try {
+      const teamsWithPools = await prisma.team.count({
+        where: {
+          poolAllocation: {
+            not: null
+          }
+        }
+      })
+      return teamsWithPools > 0
+    } catch (error) {
+      console.error('Error checking pool allocation:', error)
+      return false
     }
   }
 
