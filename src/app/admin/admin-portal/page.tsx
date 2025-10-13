@@ -48,11 +48,11 @@ export default function AdminPortal() {
         loadTournamentData();
     }, []);
 
-    const loadTournamentData = () => {
+    const loadTournamentData = async () => {
         try {
             const teams = storageUtils.getTeams();
             const allocated = tournamentUtils.arePoolsAllocated();
-            const poolMatchesGenerated = tournamentUtils.arePoolMatchesGenerated();
+            const poolMatchesGenerated = await tournamentUtils.arePoolMatchesGenerated();
             const scheduleGenerated = localStorage.getItem('water-polo-tournament-schedule-generated') === 'true';
             const matchesReady = poolMatchesGenerated && scheduleGenerated;
 
@@ -68,12 +68,15 @@ export default function AdminPortal() {
                     return result?.completed || false;
                 });
 
+                const poolStageComplete = await tournamentUtils.isPoolStageComplete();
+                const knockoutGenerated = await tournamentUtils.areKnockoutBracketsGenerated();
+
                 setTournamentStats({
                     totalMatches: allMatches.length,
                     completedMatches: completedMatches.length,
                     pendingMatches: allMatches.length - completedMatches.length,
-                    poolStageComplete: tournamentUtils.isPoolStageComplete(),
-                    knockoutGenerated: tournamentUtils.areKnockoutBracketsGenerated()
+                    poolStageComplete,
+                    knockoutGenerated
                 });
             }
         } catch (error) {
@@ -98,7 +101,8 @@ export default function AdminPortal() {
     };
 
     const handleGenerateKnockout = async () => {
-        if (!tournamentUtils.isPoolStageComplete()) {
+        const poolStageComplete = await tournamentUtils.isPoolStageComplete();
+        if (!poolStageComplete) {
             alert('Pool stage must be completed before generating knockout brackets');
             return;
         }
