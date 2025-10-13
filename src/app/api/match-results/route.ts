@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      // Create new result
+      // Create new result with all required fields
       result = await prisma.matchResult.create({
         data: {
           matchId,
@@ -59,7 +59,17 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await prisma.matchResult.findUnique({
-      where: { matchId }
+      where: { matchId },
+      include: {
+        match: {
+          include: {
+            homeTeam: true,
+            awayTeam: true
+          }
+        },
+        homeTeam: true,
+        awayTeam: true
+      }
     });
 
     return NextResponse.json(result);

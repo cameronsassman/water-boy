@@ -1,12 +1,14 @@
-// components/fixtures-form.tsx
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, AlertCircle, Loader2, Filter, Group, Eye, EyeOff } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Plus, Trash2, Calendar, Clock, MapPin } from 'lucide-react';
+import { Team, Match } from '@/types/team';
 import { matchService } from '@/utils/storage';
 import { teamService } from '@/utils/storage';
-import { tournamentUtils } from '@/utils/tournament-logic';
+import { tournamentLogic } from '@/utils/tournament-logic';
 
 interface Player {
   id: string;
@@ -14,1302 +16,569 @@ interface Player {
   capNumber: number;
 }
 
-interface Team {
-  id: string;
-  schoolName: string;
-  players: Player[];
-  poolAllocation?: string;
-  poolId?: string;
+interface FixturesFormProps {
+  onMatchesUpdate?: () => void;
 }
 
-interface Fixture {
-  id: string;
-  homeTeamId: string;
-  awayTeamId: string;
-  homeTeam?: Team;
-  awayTeam?: Team;
-  poolId?: string;
-  stage: string;
-  day: number;
-  timeSlot: string;
-  arena: number;
-  completed: boolean;
-  homeScore?: number;
-  awayScore?: number;
-  round?: string;
-}
-
-interface NewFixtureForm {
-  day: number;
-  timeSlot: string;
-  arena: number;
-  homeTeamId: string;
-  awayTeamId: string;
-  poolId: string;
-  stage: string;
-  round: string;
-}
-
-export default function ManualFixtureEntry() {
+export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [fixtures, setFixtures] = useState<Fixture[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [groupByStage, setGroupByStage] = useState(true);
-  const [showCompleted, setShowCompleted] = useState(true);
-  const [filterStage, setFilterStage] = useState<string>('all');
-  const [filterRound, setFilterRound] = useState<string>('all');
-  
-  const [newFixture, setNewFixture] = useState<NewFixtureForm>({
-    day: 1,
-    timeSlot: '16:20',
-    arena: 1,
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<string>('pool');
+  const [newMatch, setNewMatch] = useState({
     homeTeamId: '',
     awayTeamId: '',
-    poolId: 'A',
+    poolId: '',
     stage: 'pool',
-    round: 'group'
+    day: 1,
+    timeSlot: '09:00',
+    arena: 1,
+    round: ''
   });
 
-  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
-  const [isFilteringTeams, setIsFilteringTeams] = useState(false);
-
   useEffect(() => {
-    loadTeams();
-    loadFixtures();
+    loadData();
   }, []);
 
-const getFilteredTeams = async (): Promise<Team[]> => {
-  try {
-    if (teams.length === 0) return [];
-
-    console.log('=== FILTERING TEAMS ===');
-    console.log('Stage:', newFixture.stage);
-    console.log('Round:', newFixture.round);
-    console.log('Total teams available:', teams.length);
-
-    let result: Team[] = [];
-
-    switch (newFixture.stage) {
-      case 'pool':
-        const poolTeams = teams.filter(team => {
-          const teamPool = team.poolId || team.poolAllocation;
-          return teamPool === newFixture.poolId;
-        });
-        console.log(`Pool ${newFixture.poolId} teams:`, poolTeams.map(t => t.schoolName));
-        result = poolTeams;
-        break;
-      
-      case 'cup':
-        result = await getCupQualifiedTeams(newFixture.round);
-        break;
-      
-      case 'plate':
-        result = await getPlateQualifiedTeams(newFixture.round);
-        break;
-      
-      case 'shield':
-        result = await getShieldQualifiedTeams(newFixture.round);
-        break;
-      
-      case 'playoff':
-        result = await getPlayoffQualifiedTeams(newFixture.round);
-        break;
-      
-      case 'festival':
-        result = await getFestivalQualifiedTeams();
-        break;
-      
-      default:
-        result = teams;
-    }
-
-    // Ensure we always return an array, even if empty
-    if (!result || !Array.isArray(result)) {
-      console.warn('Invalid result from team filtering, returning empty array');
-      result = [];
-    }
-
-    console.log('Final filtered teams:', result.length, 'teams');
-    console.log('=== END FILTERING ===');
-    return result;
-  } catch (error) {
-    console.error('Error getting filtered teams:', error);
-    // Return empty array instead of all teams to avoid confusion
-    return [];
-  }
-};
-
-  const getCupQualifiedTeams = async (round: string): Promise<Team[]> => {
+  const loadData = async () => {
     try {
-      if (round === 'round-of-16') {
-        // For Cup Round of 16, get top 4 from ALL pools
-        const allQualifiers: Team[] = [];
-        
-        // Get qualifiers from all pools
-        const pools = ['A', 'B', 'C', 'D'];
-        for (const poolId of pools) {
-          try {
-            // Use a simplified approach - get teams from the pool directly
-            const poolTeams = teams.filter(team => {
-              const teamPool = team.poolId || team.poolAllocation;
-              return teamPool === poolId;
-            });
-            
-            // For demo purposes, take first 4 teams from each pool
-            // In real scenario, this would be based on standings
-            const qualifiers = poolTeams.slice(0, 4);
-            console.log(`Pool ${poolId} qualifiers:`, qualifiers.map(q => q.schoolName));
-            allQualifiers.push(...qualifiers);
-          } catch (error) {
-            console.error(`Error getting qualifiers for pool ${poolId}:`, error);
-            // Fallback: take any teams from this pool
-            const poolTeams = teams.filter(team => {
-              const teamPool = team.poolId || team.poolAllocation;
-              return teamPool === poolId;
-            });
-            allQualifiers.push(...poolTeams.slice(0, 4));
-          }
-        }
-        
-        console.log('All Cup R16 qualifiers:', allQualifiers.map(q => q.schoolName));
-        return allQualifiers;
-      } else {
-        // For later rounds, return empty for now (you can implement progression later)
-        console.log(`Cup ${round} - returning empty for now`);
-        return [];
-      }
-    } catch (error) {
-      console.error('Error getting cup qualified teams:', error);
-      // Fallback: return some teams for demo
-      return teams.slice(0, 8);
-    }
-  };
-  
-  // Get teams qualified for Plate rounds
-  const getPlateQualifiedTeams = async (round: string): Promise<Team[]> => {
-    try {
-      if (round === 'round-of-16') {
-        // For demo, return some teams - in real scenario these would be Cup R16 losers
-        console.log('Plate R16 - returning demo teams');
-        return teams.slice(8, 16); // Next 8 teams
-      } else {
-        console.log(`Plate ${round} - returning empty for now`);
-        return [];
-      }
-    } catch (error) {
-      console.error('Error getting plate qualified teams:', error);
-      return teams.slice(8, 16);
-    }
-  };
-  
-  // Get teams qualified for Shield rounds
-  const getShieldQualifiedTeams = async (round: string): Promise<Team[]> => {
-    try {
-      if (round === 'quarter-final') {
-        // For demo, return some teams
-        console.log('Shield QF - returning demo teams');
-        return teams.slice(16, 24); // Next 8 teams
-      } else {
-        console.log(`Shield ${round} - returning empty for now`);
-        return [];
-      }
-    } catch (error) {
-      console.error('Error getting shield qualified teams:', error);
-      return teams.slice(16, 24);
-    }
-  };
-  
-  // Get teams for Playoff rounds
-  const getPlayoffQualifiedTeams = async (round: string): Promise<Team[]> => {
-    try {
-      // For demo, return remaining teams
-      console.log(`Playoff ${round} - returning demo teams`);
-      return teams.slice(24); // Remaining teams
-    } catch (error) {
-      console.error('Error getting playoff qualified teams:', error);
-      return teams.slice(24);
-    }
-  };
-  
-  // Get teams for Festival matches
-  const getFestivalQualifiedTeams = async (): Promise<Team[]> => {
-    try {
-      // For demo, return all teams for festival
-      console.log('Festival - returning all teams for demo');
-      return teams;
-    } catch (error) {
-      console.error('Error getting festival qualified teams:', error);
-      return teams;
-    }
-  };
-
-  // Generic function to get teams from previous round
-  const getTeamsFromPreviousRound = async (stage: string, currentRound: string): Promise<Team[]> => {
-    console.log(`Getting teams for ${stage} ${currentRound} from previous round - returning empty for now`);
-    return [];
-  };
-
-  // Helper to get previous round based on current round
-  const getPreviousRound = (stage: string, currentRound: string): string | null => {
-    const roundProgressions: Record<string, Record<string, string>> = {
-      cup: {
-        'quarter-final': 'round-of-16',
-        'semi-final': 'quarter-final',
-        'final': 'semi-final',
-        'third-place': 'semi-final'
-      },
-      plate: {
-        'quarter-final': 'round-of-16',
-        'semi-final': 'quarter-final',
-        'final': 'semi-final',
-        'third-place': 'semi-final'
-      },
-      shield: {
-        'semi-final': 'quarter-final',
-        'final': 'semi-final',
-        'third-place': 'semi-final'
-      },
-      playoff: {
-        '13th-14th': 'playoff-round-1',
-        '15th-16th': 'playoff-round-1'
-      }
-    };
-
-    return roundProgressions[stage]?.[currentRound] || null;
-  };
-
-  // Helper to get matches by stage and round
-  const getMatchesByStageAndRound = async (stage: string, round: string): Promise<any[]> => {
-    try {
-      const bracketStatus = await tournamentUtils.getBracketStatus();
-      
-      switch (stage) {
-        case 'cup':
-          const cupBracket = bracketStatus.cupBracket;
-          if (!cupBracket) return [];
-          return (cupBracket as any)[getRoundPropertyName(round)] || [];
-        case 'plate':
-          const plateBracket = bracketStatus.plateBracket;
-          if (!plateBracket) return [];
-          return (plateBracket as any)[getRoundPropertyName(round)] || [];
-        case 'shield':
-          const shieldBracket = bracketStatus.shieldBracket;
-          if (!shieldBracket) return [];
-          return (shieldBracket as any)[getRoundPropertyName(round)] || [];
-        default:
-          return [];
-      }
-    } catch (error) {
-      console.error(`Error getting ${stage} ${round} matches:`, error);
-      return [];
-    }
-  };
-
-  // Helper to map round names to bracket property names
-  const getRoundPropertyName = (round: string): string => {
-    const roundMap: Record<string, string> = {
-      'round-of-16': 'roundOf16',
-      'quarter-final': 'quarterFinals',
-      'semi-final': 'semiFinals',
-      'final': 'final',
-      'third-place': 'thirdPlace',
-      'plate-round-of-16': 'round1',
-      'plate-quarter-final': 'quarterFinals',
-      'plate-semi-final': 'semiFinals',
-      'plate-final': 'final',
-      'plate-third-place': 'thirdPlace',
-      'shield-quarter-final': 'quarterFinals',
-      'shield-semi-final': 'semiFinals',
-      'shield-final': 'final',
-      'shield-third-place': 'thirdPlace',
-      'playoff-round-1': 'round1'
-    };
-    
-    return roundMap[round] || round;
-  };
-
-  // Update the useEffect that filters teams:
-  useEffect(() => {
-    const updateFilteredTeams = async () => {
-      if (teams.length === 0) {
-        setFilteredTeams([]);
-        setIsFilteringTeams(false);
-        return;
-      }
-      
-      setIsFilteringTeams(true);
-      
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        console.warn('Team filtering taking too long, using fallback');
-        setIsFilteringTeams(false);
-        setFilteredTeams(teams.slice(0, 8)); // Fallback teams
-      }, 5000); // 5 second timeout
-      
-      try {
-        const filtered = await getFilteredTeams();
-        clearTimeout(timeoutId);
-        setFilteredTeams(filtered);
-        setIsFilteringTeams(false);
-      } catch (error) {
-        console.error('Error in team filtering:', error);
-        clearTimeout(timeoutId);
-        setFilteredTeams(teams.slice(0, 8)); // Fallback teams
-        setIsFilteringTeams(false);
-      }
-    };
-    
-    updateFilteredTeams();
-  }, [newFixture.stage, newFixture.round, newFixture.poolId, teams]);
-
-  const loadTeams = async () => {
-    try {
-      console.log('Loading teams from database...');
-      const teamsData = await teamService.getTeams();
-      console.log('Teams loaded:', teamsData.map(t => ({
-        name: t.schoolName,
-        poolId: t.poolId,
-        poolAllocation: t.poolAllocation
-      })));
+      setLoading(true);
+      const [teamsData, matchesData] = await Promise.all([
+        teamService.getTeams(),
+        matchService.getMatches()
+      ]);
       setTeams(teamsData);
+      setMatches(matchesData);
     } catch (error) {
-      console.error('Error loading teams:', error);
-      alert('Failed to load teams from database');
-    }
-  };
-
-  const loadFixtures = async () => {
-    try {
-      setIsLoading(true);
-      console.log('Loading fixtures from database...');
-      const fixturesData = await matchService.getMatches();
-      console.log('Fixtures loaded:', fixturesData);
-      setFixtures(fixturesData);
-    } catch (error) {
-      console.error('Error loading fixtures:', error);
-      alert('Failed to load fixtures from database');
+      console.error('Error loading data:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // Debug function to check pool standings
-  const debugPoolStandings = async () => {
-    console.log('=== DEBUG POOL STANDINGS ===');
-    const pools = ['A', 'B', 'C', 'D'];
-    
-    for (const poolId of pools) {
-      try {
-        const standings = await tournamentUtils.getPoolStandings(poolId);
-        console.log(`Pool ${poolId} standings:`, standings.map(s => ({
-          team: s.team.schoolName,
-          points: s.points,
-          position: standings.indexOf(s) + 1
-        })));
-        
-        const qualifiers = await tournamentUtils.getPoolQualifiers(poolId);
-        console.log(`Pool ${poolId} qualifiers:`, qualifiers.map(q => q.schoolName));
-        
-        const nonQualifiers = await tournamentUtils.getPoolNonQualifiers(poolId);
-        console.log(`Pool ${poolId} non-qualifiers:`, nonQualifiers.map(q => q.schoolName));
-      } catch (error) {
-        console.error(`Error with pool ${poolId}:`, error);
-      }
-    }
-    console.log('=== END DEBUG ===');
+  const handleInputChange = (field: string, value: any) => {
+    setNewMatch(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  // Check and allocate pools if needed
-  const checkAndAllocatePools = async () => {
+  const generatePoolFixtures = async () => {
     try {
-      const arePoolsAllocated = await tournamentUtils.arePoolsAllocated();
-      console.log('Pools allocated:', arePoolsAllocated);
+      setLoading(true);
+      const generatedMatches = await tournamentLogic.generatePoolMatches(teams);
       
-      if (!arePoolsAllocated) {
-        console.log('Allocating teams to pools...');
-        await tournamentUtils.allocateTeamsToPools();
-        await loadTeams(); // Reload teams
-        console.log('Pools allocated successfully');
+      // Create matches via API
+      for (const match of generatedMatches) {
+        await matchService.createMatch({
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          poolId: match.poolId,
+          stage: match.stage,
+          day: match.day,
+          timeSlot: match.timeSlot,
+          arena: match.arena,
+          round: match.round
+        });
       }
-      
-      // Debug the allocation
-      const teamsWithPools = teams.filter(t => t.poolId || t.poolAllocation);
-      console.log('Teams with pool assignments:', teamsWithPools.length);
-      console.log('Pool distribution:', {
-        A: teams.filter(t => (t.poolId || t.poolAllocation) === 'A').length,
-        B: teams.filter(t => (t.poolId || t.poolAllocation) === 'B').length,
-        C: teams.filter(t => (t.poolId || t.poolAllocation) === 'C').length,
-        D: teams.filter(t => (t.poolId || t.poolAllocation) === 'D').length,
-      });
+
+      alert(`Successfully generated ${generatedMatches.length} pool matches`);
+      loadData();
+      onMatchesUpdate?.();
     } catch (error) {
-      console.error('Error with pool allocation:', error);
+      console.error('Error generating pool fixtures:', error);
+      alert('Error generating pool fixtures. Please check console for details.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Call this when component mounts
-  useEffect(() => {
-    if (teams.length > 0) {
-      checkAndAllocatePools();
-    }
-  }, [teams]);
-
-  // Predefined time slots for each day
-  const getTimeSlots = (day: number): string[] => {
-    switch (day) {
-      case 1:
-        return [
-          '16:20', '16:40', '17:00', '17:20', '17:40', 
-          '18:00', '18:20', '18:40', '19:00'
-        ];
-      case 2:
-        return [
-          '08:00', '08:20', '08:40', '09:00', '09:20', '09:40',
-          '10:00', '10:20', '10:40', '11:00', '11:20', '11:40',
-          '12:00', '12:20',
-          '13:30', '13:50',
-          '14:00', '14:20', '14:40', '15:00', '15:20', '15:40',
-          '16:00', '16:20', '16:40', '17:00', '17:20', '17:40',
-          '18:00', '18:20', '18:40', '19:00'
-        ];
-      case 3:
-        return [
-          '08:00', '08:20', '08:40', '09:00', '09:20', '09:40',
-          '10:30', '10:50',
-          '11:00', '11:20', '11:40', '12:00', '12:20', '12:40',
-          '13:00', '13:20', '13:40', '14:00', '14:20', '14:40',
-          '15:00', '15:20', '15:40', '16:00', '16:20', '16:40',
-          '17:00', '17:20', '17:40', '18:00', '18:20', '18:40', '19:00'
-        ];
-      case 4:
-        return [
-          '07:00', '07:20', '07:40', '08:00', '08:20', '08:40',
-          '09:00', '09:20', '09:40', '10:00', '10:20', '10:40',
-          '11:00', '11:20', '11:40', '12:00', '12:20', '12:40',
-          '13:00', '13:20', '13:40', '14:00', '14:20', '14:40', '15:00'
-        ];
-      default:
-        return ['08:00'];
-    }
-  };
-
-  // Round options based on stage
-  const getRoundOptions = (stage: string): { value: string; label: string }[] => {
-    switch (stage) {
-      case 'pool':
-        return [
-          { value: 'group', label: 'Group Stage' }
-        ];
-      case 'cup':
-        return [
-          { value: 'round-of-16', label: 'Round of 16' },
-          { value: 'quarter-final', label: 'Quarter Final' },
-          { value: 'semi-final', label: 'Semi Final' },
-          { value: 'final', label: 'Final' },
-          { value: 'third-place', label: 'Third Place' }
-        ];
-      case 'plate':
-        return [
-          { value: 'round-of-16', label: 'Plate Round of 16' },
-          { value: 'quarter-final', label: 'Plate Quarter Final' },
-          { value: 'semi-final', label: 'Plate Semi Final' },
-          { value: 'final', label: 'Plate Final' },
-          { value: 'third-place', label: 'Plate Third Place' }
-        ];
-      case 'shield':
-        return [
-          { value: 'quarter-final', label: 'Shield Quarter Final' },
-          { value: 'semi-final', label: 'Shield Semi Final' },
-          { value: 'final', label: 'Shield Final' },
-          { value: 'third-place', label: 'Shield Third Place' }
-        ];
-      case 'playoff':
-        return [
-          { value: 'playoff-round-1', label: 'Playoff Round 1' },
-          { value: '13th-14th', label: '13th/14th Playoff' },
-          { value: '15th-16th', label: '15th/16th Playoff' }
-        ];
-      case 'festival':
-        return [
-          { value: 'friendly', label: 'Friendly Match' },
-          { value: 'exhibition', label: 'Exhibition Match' }
-        ];
-      default:
-        return [{ value: 'group', label: 'Group Stage' }];
-    }
-  };
-
-  // Enhanced stage change handler with validation
-  const handleStageChange = (newStage: string) => {
-    const roundOptions = getRoundOptions(newStage);
-    const newRound = roundOptions[0]?.value || 'group';
-    
-    setNewFixture({ 
-      ...newFixture, 
-      stage: newStage,
-      round: newRound,
-      homeTeamId: '',
-      awayTeamId: '',
-      poolId: newStage === 'pool' ? newFixture.poolId : 'A'
-    });
-  };
-
-  // Enhanced round change handler
-  const handleRoundChange = (newRound: string) => {
-    setNewFixture({ 
-      ...newFixture, 
-      round: newRound,
-      homeTeamId: '',
-      awayTeamId: ''
-    });
-  };
-
-  // Add validation before creating fixture
-  const validateFixture = (): string | null => {
-    if (!newFixture.homeTeamId || !newFixture.awayTeamId) {
-      return 'Please select both teams';
-    }
-
-    if (newFixture.homeTeamId === newFixture.awayTeamId) {
-      return 'Teams must be different';
-    }
-
-    const homeTeam = teams.find(t => t.id === newFixture.homeTeamId);
-    const awayTeam = teams.find(t => t.id === newFixture.awayTeamId);
-    
-    if (!homeTeam || !awayTeam) {
-      return 'Selected teams not found';
-    }
-
-    if (!filteredTeams.find(t => t.id === newFixture.homeTeamId)) {
-      return 'Home team is not qualified for this round';
-    }
-
-    if (!filteredTeams.find(t => t.id === newFixture.awayTeamId)) {
-      return 'Away team is not qualified for this round';
-    }
-
-    return null;
-  };
-
-  const addFixture = async () => {
-    const validationError = validateFixture();
-    if (validationError) {
-      alert(validationError);
+  const generateKnockoutFixtures = async () => {
+    if (!selectedStage) {
+      alert('Please select a stage first');
       return;
     }
 
     try {
-      setIsSaving(true);
-      
-      const fixtureData = {
-        day: newFixture.day,
-        timeSlot: newFixture.timeSlot,
-        arena: newFixture.arena,
-        homeTeamId: newFixture.homeTeamId,
-        awayTeamId: newFixture.awayTeamId,
-        poolId: newFixture.stage === 'pool' ? newFixture.poolId : undefined,
-        stage: newFixture.stage,
-        round: newFixture.round
-      };
+      setLoading(true);
+      const pools = ['A', 'B', 'C', 'D'];
+      const allStandingsData: { [poolId: string]: any[] } = {};
 
-      console.log('Creating fixture:', fixtureData);
-      
-      const createdFixture = await matchService.createMatch(fixtureData);
-      console.log('Fixture created:', createdFixture);
-      
-      await loadFixtures();
+      // Calculate standings for each pool
+      for (const poolId of pools) {
+        try {
+          // Get all teams and matches first
+          const allTeams = await teamService.getTeams();
+          const allMatches = await matchService.getMatches();
 
-      setNewFixture({
-        ...newFixture,
+          // Calculate standings for all pools
+          const allStandings = tournamentLogic.calculateStandings(allTeams, allMatches);
+
+          // Get standings for the specific pool
+          const standings = allStandings[poolId] || [];
+          
+          allStandingsData[poolId] = standings;
+          console.log(`Pool ${poolId} standings:`, standings.map(s => ({
+            team: s.team.schoolName,
+            points: s.points,
+            goalDifference: s.goalDifference
+          })));
+        } catch (error) {
+          console.error(`Error getting standings for pool ${poolId}:`, error);
+          allStandingsData[poolId] = [];
+        }
+      }
+
+      // Generate knockout matches based on standings
+      const knockoutMatches = tournamentLogic.generateKnockoutMatches(allStandingsData, selectedStage);
+      
+      // Create the matches via API
+      for (const match of knockoutMatches) {
+        await matchService.createMatch({
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          poolId: match.poolId,
+          stage: match.stage,
+          day: match.day,
+          timeSlot: match.timeSlot,
+          arena: match.arena,
+          round: match.round
+        });
+      }
+
+      alert(`Successfully generated ${knockoutMatches.length} ${selectedStage} stage matches`);
+      loadData();
+      onMatchesUpdate?.();
+      
+    } catch (error) {
+      console.error('Error generating knockout fixtures:', error);
+      alert('Error generating knockout fixtures. Please check console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateFestivalFixtures = async () => {
+    try {
+      setLoading(true);
+      const pools = ['A', 'B', 'C', 'D'];
+      const allStandingsData: { [poolId: string]: any[] } = {};
+
+      // Calculate standings for each pool
+      for (const poolId of pools) {
+        try {
+          // Get all teams and matches first
+          const allTeams = await teamService.getTeams();
+          const allMatches = await matchService.getMatches();
+
+          // Calculate standings for all pools
+          const allStandings = tournamentLogic.calculateStandings(allTeams, allMatches);
+
+          // Get standings for the specific pool
+          const standings = allStandings[poolId] || [];
+          allStandingsData[poolId] = standings;
+        } catch (error) {
+          console.error(`Error getting standings for pool ${poolId}:`, error);
+          allStandingsData[poolId] = [];
+        }
+      }
+
+      // Generate festival matches
+      const festivalMatches = tournamentLogic.generateFestivalMatches(allStandingsData);
+      
+      // Create the matches via API
+      for (const match of festivalMatches) {
+        await matchService.createMatch({
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          poolId: match.poolId,
+          stage: match.stage,
+          day: match.day,
+          timeSlot: match.timeSlot,
+          arena: match.arena,
+          round: match.round
+        });
+      }
+
+      alert(`Successfully generated ${festivalMatches.length} festival matches`);
+      loadData();
+      onMatchesUpdate?.();
+      
+    } catch (error) {
+      console.error('Error generating festival fixtures:', error);
+      alert('Error generating festival fixtures. Please check console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addManualMatch = async () => {
+    if (!newMatch.homeTeamId || !newMatch.awayTeamId) {
+      alert('Please select both home and away teams');
+      return;
+    }
+
+    if (newMatch.homeTeamId === newMatch.awayTeamId) {
+      alert('Home and away teams cannot be the same');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await matchService.createMatch(newMatch);
+      
+      // Reset form
+      setNewMatch({
         homeTeamId: '',
-        awayTeamId: ''
+        awayTeamId: '',
+        poolId: '',
+        stage: 'pool',
+        day: 1,
+        timeSlot: '09:00',
+        arena: 1,
+        round: ''
       });
-
+      
+      alert('Match created successfully');
+      loadData();
+      onMatchesUpdate?.();
     } catch (error: any) {
-      console.error('Error creating fixture:', error);
-      alert(error.message || 'Failed to create fixture');
+      console.error('Error creating match:', error);
+      alert(error.message || 'Error creating match');
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
   };
 
-  const deleteFixture = async (fixtureId: string) => {
-    if (!confirm('Are you sure you want to delete this fixture?')) {
+  const deleteMatch = async (matchId: string) => {
+    if (!confirm('Are you sure you want to delete this match?')) {
       return;
     }
 
     try {
-      await matchService.deleteMatch(fixtureId);
-      setFixtures(fixtures.filter(f => f.id !== fixtureId));
-    } catch (error: any) {
-      console.error('Error deleting fixture:', error);
-      alert(error.message || 'Failed to delete fixture');
+      setLoading(true);
+      await matchService.deleteMatch(matchId);
+      alert('Match deleted successfully');
+      loadData();
+      onMatchesUpdate?.();
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      alert('Error deleting match');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const clearAllFixtures = async () => {
-    if (!confirm('Are you sure you want to clear all fixtures? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      for (const fixture of fixtures) {
-        await matchService.deleteMatch(fixture.id);
-      }
-      setFixtures([]);
-      alert('All fixtures cleared successfully');
-    } catch (error: any) {
-      console.error('Error clearing fixtures:', error);
-      alert(error.message || 'Failed to clear fixtures');
-    }
-  };
-
-  const exportFixtures = () => {
-    const dataStr = JSON.stringify(fixtures, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'fixtures.json';
-    link.click();
-  };
-
-  const importFixtures = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const importedFixtures = JSON.parse(e.target?.result as string);
-        
-        if (!Array.isArray(importedFixtures)) {
-          throw new Error('Invalid file format');
-        }
-
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const fixtureData of importedFixtures) {
-          try {
-            await matchService.createMatch(fixtureData);
-            successCount++;
-          } catch (error) {
-            console.error('Error importing fixture:', error);
-            errorCount++;
-          }
-        }
-
-        await loadFixtures();
-        
-        alert(`Fixtures imported successfully! ${successCount} created, ${errorCount} failed.`);
-        
-      } catch (error) {
-        console.error('Error importing fixtures:', error);
-        alert('Error importing fixtures. Please check the file format.');
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const getTeamName = (teamId: string): string => {
+  const getTeamName = (teamId: string) => {
     const team = teams.find(t => t.id === teamId);
-    return team ? team.schoolName : 'Unknown';
+    return team ? team.schoolName : 'Unknown Team';
   };
 
-  // Group fixtures by stage and round
-  const groupedFixtures = fixtures.reduce((acc, fixture) => {
-    if (!showCompleted && fixture.completed) return acc;
-    
-    const stage = fixture.stage;
-    const round = fixture.round || 'unknown';
-    
-    if (!acc[stage]) acc[stage] = {};
-    if (!acc[stage][round]) acc[stage][round] = [];
-    
-    acc[stage][round].push(fixture);
-    return acc;
-  }, {} as Record<string, Record<string, Fixture[]>>);
+  const filteredTeams = teams.filter(team => 
+    !newMatch.poolId || team.poolAllocation === newMatch.poolId
+  );
 
-  // Get unique stages and rounds for filtering
-  const stages = Array.from(new Set(fixtures.map(f => f.stage))).sort();
-  const rounds = Array.from(new Set(fixtures.map(f => f.round || 'unknown'))).sort();
+  const timeSlots = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30'];
+  const arenas = [1, 2, 3, 4];
+  const days = [1, 2, 3, 4];
 
-  // Filter fixtures based on stage and round
-  const filteredFixtures = fixtures.filter(fixture => {
-    if (!showCompleted && fixture.completed) return false;
-    if (filterStage !== 'all' && fixture.stage !== filterStage) return false;
-    if (filterRound !== 'all' && (fixture.round || 'unknown') !== filterRound) return false;
-    return true;
-  });
-
-  const getStageColor = (stage: string): string => {
-    const colors: Record<string, string> = {
-      pool: 'bg-blue-100 text-blue-800 border-blue-200',
-      cup: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      plate: 'bg-green-100 text-green-800 border-green-200',
-      shield: 'bg-purple-100 text-purple-800 border-purple-200',
-      playoff: 'bg-red-100 text-red-800 border-red-200',
-      festival: 'bg-orange-100 text-orange-800 border-orange-200'
-    };
-    return colors[stage] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
-
-  const getRoundLabel = (stage: string, round: string): string => {
-    const roundOptions = getRoundOptions(stage);
-    const option = roundOptions.find(opt => opt.value === round);
-    return option ? option.label : round;
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 flex justify-center items-center h-64">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400 animate-spin" />
-          <p>Loading fixtures...</p>
-        </div>
+      <div className="p-6 flex justify-center">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            Tournament Fixtures
-          </h1>
-          <p className="text-gray-600 mt-2">Create and manage tournament fixtures and brackets</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={exportFixtures} variant="outline" size="sm">
-            Export
-          </Button>
-          <label>
-            <Button variant="outline" size="sm" asChild>
-              <span>Import</span>
-            </Button>
-            <input
-              type="file"
-              accept=".json"
-              onChange={importFixtures}
-              className="hidden"
-            />
-          </label>
-          <Button onClick={clearAllFixtures} variant="destructive" size="sm">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Clear All
-          </Button>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Match Fixtures</h2>
+        <div className="text-sm text-gray-600">
+          {matches.length} matches total
         </div>
       </div>
 
-      {/* Debug buttons */}
-      <div className="flex gap-2">
-        <Button 
-          onClick={debugPoolStandings}
-          variant="outline"
-          size="sm"
-        >
-          Debug Pool Standings
-        </Button>
-        <Button 
-          onClick={checkAndAllocatePools}
-          variant="outline"
-          size="sm"
-        >
-          Allocate Pools
-        </Button>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{fixtures.length}</div>
-            <div className="text-sm text-gray-600">Total Fixtures</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {fixtures.filter(f => f.stage === 'pool').length}
-            </div>
-            <div className="text-sm text-gray-600">Pool Matches</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {fixtures.filter(f => f.stage !== 'pool').length}
-            </div>
-            <div className="text-sm text-gray-600">Knockout Matches</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {fixtures.filter(f => f.completed).length}
-            </div>
-            <div className="text-sm text-gray-600">Completed</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Add New Fixture Form */}
+      {/* Automatic Generation Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Add New Fixture
-            {!isFilteringTeams && filteredTeams.length > 0 && (
-              <Badge variant="outline" className="ml-2">
-                {filteredTeams.length} qualified teams
-              </Badge>
-            )}
-          </CardTitle>
+          <CardTitle>Automatic Fixture Generation</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Day</label>
-              <select
-                value={newFixture.day}
-                onChange={(e) => {
-                  const selectedDay = parseInt(e.target.value);
-                  setNewFixture({ 
-                    ...newFixture, 
-                    day: selectedDay,
-                    timeSlot: getTimeSlots(selectedDay)[0]
-                  });
-                }}
-                className="w-full p-2 border rounded"
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <Button
+                onClick={generatePoolFixtures}
+                disabled={teams.length === 0}
+                className="w-full"
               >
-                <option value={1}>Day 1</option>
-                <option value={2}>Day 2</option>
-                <option value={3}>Day 3</option>
-                <option value={4}>Day 4</option>
-              </select>
+                Generate Pool Matches
+              </Button>
+              <p className="text-sm text-gray-600">
+                Generates round-robin matches for all pools
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Time Slot</label>
-              <select
-                value={newFixture.timeSlot}
-                onChange={(e) => setNewFixture({ ...newFixture, timeSlot: e.target.value })}
-                className="w-full p-2 border rounded"
-              >
-                {getTimeSlots(newFixture.day).map(slot => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Arena</label>
-              <select
-                value={newFixture.arena}
-                onChange={(e) => setNewFixture({ ...newFixture, arena: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded"
-              >
-                <option value={1}>Aquatic Centre</option>
-                <option value={2}>High School Pool</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Stage</label>
-              <select
-                value={newFixture.stage}
-                onChange={(e) => handleStageChange(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="pool">Pool</option>
-                <option value="cup">Cup</option>
-                <option value="plate">Plate</option>
-                <option value="shield">Shield</option>
-                <option value="playoff">Playoff</option>
-                <option value="festival">Festival</option>
-              </select>
-            </div>
-
-            {newFixture.stage === 'pool' && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Pool</label>
-                <select
-                  value={newFixture.poolId}
-                  onChange={(e) => {
-                    setNewFixture({ 
-                      ...newFixture, 
-                      poolId: e.target.value,
-                      homeTeamId: '',
-                      awayTeamId: ''
-                    });
-                  }}
-                  className="w-full p-2 border rounded"
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Select value={selectedStage} onValueChange={setSelectedStage}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cup">Cup</SelectItem>
+                    <SelectItem value="plate">Plate</SelectItem>
+                    <SelectItem value="shield">Shield</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={generateKnockoutFixtures}
+                  disabled={teams.length === 0}
                 >
-                  <option value="A">Pool A</option>
-                  <option value="B">Pool B</option>
-                  <option value="C">Pool C</option>
-                  <option value="D">Pool D</option>
-                </select>
+                  Generate Knockout
+                </Button>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Round</label>
-              <select
-                value={newFixture.round}
-                onChange={(e) => handleRoundChange(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                {getRoundOptions(newFixture.stage).map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={newFixture.stage === 'pool' ? 'md:col-span-2' : 'md:col-span-3'}>
-              <label className="block text-sm font-medium mb-2">
-                Home Team
-                {!isFilteringTeams && filteredTeams.length > 0 && (
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({filteredTeams.length} qualified)
-                  </span>
-                )}
-              </label>
-              <select
-                value={newFixture.homeTeamId}
-                onChange={(e) => setNewFixture({ ...newFixture, homeTeamId: e.target.value })}
-                className="w-full p-2 border rounded"
-                disabled={isFilteringTeams}
-              >
-                <option value="">
-                  {isFilteringTeams ? 'Loading teams...' : 
-                   filteredTeams.length === 0 ? 'No teams available' : 'Select team...'}
-                </option>
-                {filteredTeams.map(team => (
-                  <option key={team.id} value={team.id}>
-                    {team.schoolName}
-                    {(team.poolId || team.poolAllocation) && ` (Pool ${team.poolId || team.poolAllocation})`}
-                  </option>
-                ))}
-              </select>
-              {!isFilteringTeams && filteredTeams.length === 0 && newFixture.stage === 'pool' && (
-                <p className="text-xs text-orange-600 mt-1">
-                  No teams found in Pool {newFixture.poolId}. Allocate teams to pools first.
-                </p>
-              )}
-            </div>
-
-            <div className={newFixture.stage === 'pool' ? 'md:col-span-2' : 'md:col-span-3'}>
-              <label className="block text-sm font-medium mb-2">
-                Away Team
-                {!isFilteringTeams && filteredTeams.length > 0 && (
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({filteredTeams.length} qualified)
-                  </span>
-                )}
-              </label>
-              <select
-                value={newFixture.awayTeamId}
-                onChange={(e) => setNewFixture({ ...newFixture, awayTeamId: e.target.value })}
-                className="w-full p-2 border rounded"
-                disabled={isFilteringTeams}
-              >
-                <option value="">
-                  {isFilteringTeams ? 'Loading teams...' : 
-                   filteredTeams.length === 0 ? 'No teams available' : 'Select team...'}
-                </option>
-                {filteredTeams.map(team => (
-                  <option key={team.id} value={team.id}>
-                    {team.schoolName}
-                    {(team.poolId || team.poolAllocation) && ` (Pool ${team.poolId || team.poolAllocation})`}
-                  </option>
-                ))}
-              </select>
+              <p className="text-sm text-gray-600">
+                Generates knockout matches based on pool standings
+              </p>
             </div>
           </div>
 
-          <Button 
-            onClick={addFixture} 
-            disabled={isSaving || isFilteringTeams || filteredTeams.length === 0}
-            className="mt-4 w-full"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : isFilteringTeams ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Loading Teams...
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Fixture
-                {filteredTeams.length === 0 && ' (No teams available)'}
-              </>
-            )}
+          <div className="space-y-4">
+            <Button
+              onClick={generateFestivalFixtures}
+              disabled={teams.length === 0}
+              variant="outline"
+              className="w-full"
+            >
+              Generate Festival Matches
+            </Button>
+            <p className="text-sm text-gray-600">
+              Generates friendly matches for lower-ranked teams
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Manual Match Creation */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Manual Match</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label>Home Team</Label>
+              <Select
+                value={newMatch.homeTeamId}
+                onValueChange={(value) => handleInputChange('homeTeamId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select home team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTeams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.schoolName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Away Team</Label>
+              <Select
+                value={newMatch.awayTeamId}
+                onValueChange={(value) => handleInputChange('awayTeamId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select away team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTeams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.schoolName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Stage</Label>
+              <Select
+                value={newMatch.stage}
+                onValueChange={(value) => handleInputChange('stage', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pool">Pool</SelectItem>
+                  <SelectItem value="cup">Cup</SelectItem>
+                  <SelectItem value="plate">Plate</SelectItem>
+                  <SelectItem value="shield">Shield</SelectItem>
+                  <SelectItem value="festival">Festival</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Pool</Label>
+              <Select
+                value={newMatch.poolId}
+                onValueChange={(value) => handleInputChange('poolId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select pool" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A">Pool A</SelectItem>
+                  <SelectItem value="B">Pool B</SelectItem>
+                  <SelectItem value="C">Pool C</SelectItem>
+                  <SelectItem value="D">Pool D</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label>Day</Label>
+              <Select
+                value={newMatch.day.toString()}
+                onValueChange={(value) => handleInputChange('day', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map(day => (
+                    <SelectItem key={day} value={day.toString()}>
+                      Day {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Time Slot</Label>
+              <Select
+                value={newMatch.timeSlot}
+                onValueChange={(value) => handleInputChange('timeSlot', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeSlots.map(slot => (
+                    <SelectItem key={slot} value={slot}>
+                      {slot}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Arena</Label>
+              <Select
+                value={newMatch.arena.toString()}
+                onValueChange={(value) => handleInputChange('arena', parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {arenas.map(arena => (
+                    <SelectItem key={arena} value={arena.toString()}>
+                      Arena {arena}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Round (Optional)</Label>
+              <Input
+                value={newMatch.round}
+                onChange={(e) => handleInputChange('round', e.target.value)}
+                placeholder="e.g., Quarter-final"
+              />
+            </div>
+          </div>
+
+          <Button onClick={addManualMatch} className="w-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Match
           </Button>
         </CardContent>
       </Card>
 
-      {/* Filters and View Options */}
+      {/* Existing Matches */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">Filters:</span>
+        <CardHeader>
+          <CardTitle>Existing Matches</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {matches.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No matches created yet
             </div>
-            
-            <select
-              value={filterStage}
-              onChange={(e) => setFilterStage(e.target.value)}
-              className="p-2 border rounded text-sm"
-            >
-              <option value="all">All Stages</option>
-              {stages.map(stage => (
-                <option key={stage} value={stage}>
-                  {stage.charAt(0).toUpperCase() + stage.slice(1)}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={filterRound}
-              onChange={(e) => setFilterRound(e.target.value)}
-              className="p-2 border rounded text-sm"
-            >
-              <option value="all">All Rounds</option>
-              {rounds.map(round => (
-                <option key={round} value={round}>
-                  {round === 'unknown' ? 'No Round' : round}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex items-center gap-2 ml-auto">
-              <Button
-                onClick={() => setShowCompleted(!showCompleted)}
-                variant={showCompleted ? "default" : "outline"}
-                size="sm"
-              >
-                {showCompleted ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-                {showCompleted ? 'Show All' : 'Hide Completed'}
-              </Button>
-
-              <Button
-                onClick={() => setGroupByStage(!groupByStage)}
-                variant={groupByStage ? "default" : "outline"}
-                size="sm"
-              >
-                <Group className="w-4 h-4 mr-2" />
-                {groupByStage ? 'Grouped' : 'Ungrouped'}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Fixtures List */}
-      {fixtures.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold mb-2">No Fixtures Added</h3>
-            <p className="text-gray-600">Start by adding your first fixture above</p>
-          </CardContent>
-        </Card>
-      ) : groupByStage ? (
-        // Grouped View
-        Object.keys(groupedFixtures).map(stage => (
-          <Card key={stage}>
-            <CardHeader className={`border-b ${getStageColor(stage).split(' ')[0]}`}>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Badge className={getStageColor(stage)}>
-                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
-                  </Badge>
-                  <span>
-                    {stage.charAt(0).toUpperCase() + stage.slice(1)} Stage
-                    <span className="text-sm font-normal text-gray-600 ml-2">
-                      {Object.values(groupedFixtures[stage]).flat().length} matches
-                    </span>
-                  </span>
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {Object.keys(groupedFixtures[stage]).map(round => (
-                <div key={round} className="border-b last:border-b-0">
-                  <div className="p-4 bg-gray-50">
-                    <h3 className="font-semibold text-lg">
-                      {getRoundLabel(stage, round)}
-                      <span className="text-sm font-normal text-gray-600 ml-2">
-                        ({groupedFixtures[stage][round].length} matches)
-                      </span>
-                    </h3>
+          ) : (
+            <div className="space-y-4">
+              {matches.map(match => (
+                <div key={match.id} className="border rounded-lg p-4 flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="font-medium">{getTeamName(match.homeTeamId)}</span>
+                      <span className="text-gray-600">vs</span>
+                      <span className="font-medium">{getTeamName(match.awayTeamId)}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Day {match.day}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {match.timeSlot}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        Arena {match.arena}
+                      </div>
+                      <div className="capitalize">{match.stage}</div>
+                      {match.poolId && (
+                        <div>Pool {match.poolId}</div>
+                      )}
+                    </div>
+                    {match.homeScore !== undefined && match.awayScore !== undefined && (
+                      <div className="mt-2 text-lg font-bold">
+                        {match.homeScore} - {match.awayScore}
+                        {match.completed && (
+                          <span className="ml-2 text-sm text-green-600">Completed</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="p-4 space-y-3">
-                    {groupedFixtures[stage][round]
-                      .sort((a, b) => a.day - b.day || a.timeSlot.localeCompare(b.timeSlot))
-                      .map((fixture) => (
-                      <FixtureItem 
-                        key={fixture.id} 
-                        fixture={fixture} 
-                        onDelete={deleteFixture}
-                        getTeamName={getTeamName}
-                      />
-                    ))}
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteMatch(match.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        // Ungrouped View
-        <Card>
-          <CardHeader>
-            <CardTitle>All Fixtures ({filteredFixtures.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {filteredFixtures
-                .sort((a, b) => a.day - b.day || a.timeSlot.localeCompare(b.timeSlot))
-                .map((fixture) => (
-                <FixtureItem 
-                  key={fixture.id} 
-                  fixture={fixture} 
-                  onDelete={deleteFixture}
-                  getTeamName={getTeamName}
-                />
-              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-// Separate FixtureItem component for better organization
-function FixtureItem({ 
-  fixture, 
-  onDelete, 
-  getTeamName 
-}: { 
-  fixture: Fixture; 
-  onDelete: (id: string) => void;
-  getTeamName: (id: string) => string;
-}) {
-  const getStageColor = (stage: string): string => {
-    const colors: Record<string, string> = {
-      pool: 'bg-blue-100 text-blue-800 border-blue-200',
-      cup: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      plate: 'bg-green-100 text-green-800 border-green-200',
-      shield: 'bg-purple-100 text-purple-800 border-purple-200',
-      playoff: 'bg-red-100 text-red-800 border-red-200',
-      festival: 'bg-orange-100 text-orange-800 border-orange-200'
-    };
-    return colors[stage] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
-
-  const getRoundLabel = (stage: string, round?: string): string => {
-    if (!round || round === 'group') return 'Group Stage';
-    
-    const roundMap: Record<string, string> = {
-      'round-of-16': 'Round of 16',
-      'quarter-final': 'Quarter Final',
-      'semi-final': 'Semi Final',
-      'final': 'Final',
-      'third-place': 'Third Place',
-      'plate-round-of-16': 'Plate Round of 16',
-      'plate-quarter-final': 'Plate Quarter Final',
-      'plate-semi-final': 'Plate Semi Final',
-      'plate-final': 'Plate Final',
-      'plate-third-place': 'Plate Third Place',
-      'shield-quarter-final': 'Shield Quarter Final',
-      'shield-semi-final': 'Shield Semi Final',
-      'shield-final': 'Shield Final',
-      'shield-third-place': 'Shield Third Place',
-      'playoff-round-1': 'Playoff Round 1',
-      '13th-14th': '13th/14th Playoff',
-      '15th-16th': '15th/16th Playoff',
-      'friendly': 'Friendly Match',
-      'exhibition': 'Exhibition Match'
-    };
-    
-    return roundMap[round] || round;
-  };
-
-  return (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="flex flex-col items-center min-w-16">
-          <Badge variant="secondary" className="mb-1">
-            Day {fixture.day}
-          </Badge>
-          <span className="text-sm font-medium">{fixture.timeSlot}</span>
-        </div>
-        
-        <Badge variant="outline" className={fixture.arena === 1 ? 'text-blue-600' : 'text-green-600'}>
-          Arena {fixture.arena}
-        </Badge>
-
-        <Badge className={getStageColor(fixture.stage)}>
-          {fixture.stage}
-        </Badge>
-
-        {fixture.round && fixture.round !== 'group' && (
-          <Badge variant="outline" className="bg-white">
-            {getRoundLabel(fixture.stage, fixture.round)}
-          </Badge>
-        )}
-
-        {fixture.poolId && (
-          <Badge variant="outline">Pool {fixture.poolId}</Badge>
-        )}
-
-        {fixture.completed && (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Completed
-          </Badge>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-4 flex-1 justify-center">
-        <span className="font-medium text-sm">
-          {fixture.homeTeam?.schoolName || getTeamName(fixture.homeTeamId)}
-        </span>
-        <span className="text-gray-400">vs</span>
-        <span className="font-medium text-sm">
-          {fixture.awayTeam?.schoolName || getTeamName(fixture.awayTeamId)}
-        </span>
-        
-        {fixture.completed && fixture.homeScore !== undefined && fixture.awayScore !== undefined && (
-          <div className="flex items-center gap-2 ml-4">
-            <span className="text-lg font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">
-              {fixture.homeScore} - {fixture.awayScore}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <Button
-        onClick={() => onDelete(fixture.id)}
-        variant="ghost"
-        size="sm"
-        className="text-red-600 hover:text-red-700"
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
