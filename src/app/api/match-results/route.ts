@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { matchId, homeScore, awayScore, completed } = body;
+    const { matchId, homeTeamId, awayTeamId, homeScore, awayScore, completed } = body;
 
     // Check if result already exists
     const existingResult = await prisma.matchResult.findUnique({
@@ -23,10 +23,12 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      // Create new result - only include fields that exist in MatchResult model
+      // Create new result with all required fields
       result = await prisma.matchResult.create({
         data: {
           matchId,
+          homeTeamId,
+          awayTeamId,
           homeScore,
           awayScore,
           completed
@@ -57,7 +59,17 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await prisma.matchResult.findUnique({
-      where: { matchId }
+      where: { matchId },
+      include: {
+        match: {
+          include: {
+            homeTeam: true,
+            awayTeam: true
+          }
+        },
+        homeTeam: true,
+        awayTeam: true
+      }
     });
 
     return NextResponse.json(result);
