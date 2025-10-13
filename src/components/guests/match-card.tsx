@@ -3,11 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, Trophy, Target, Award, Users } from 'lucide-react';
 
-interface ScheduledMatch extends MatchWithTeams {
-  day?: number;
+// Use intersection type instead of extending to avoid property conflicts
+type ScheduledMatch = MatchWithTeams & {
   timeSlot?: string;
   arena?: 1 | 2;
-}
+};
 
 interface MatchCardProps {
   match: ScheduledMatch;
@@ -22,6 +22,7 @@ export default function MatchCard({
   size = 'normal',
   showProgression = false 
 }: MatchCardProps) {
+  // Safe destructuring with fallbacks
   const isCompleted = match?.completed || false;
   const homeScore = match?.homeScore;
   const awayScore = match?.awayScore;
@@ -30,16 +31,21 @@ export default function MatchCard({
   const stage = match?.stage || 'pool';
   const poolId = match?.poolId;
   const round = match?.round;
+  const day = match?.day || 1; // Default to day 1 if undefined
+  const timeSlot = match?.timeSlot;
+  const arena = match?.arena;
   
+  // Safe score comparisons
   const homeWon = homeScore !== undefined && awayScore !== undefined && homeScore > awayScore;
   const awayWon = homeScore !== undefined && awayScore !== undefined && awayScore > homeScore;
   const isDraw = homeScore !== undefined && awayScore !== undefined && homeScore === awayScore;
   
+  // Safe placeholder check
   const isPlaceholder = !homeTeam || !awayTeam || 
                        homeTeam.id === 'TBD' || awayTeam.id === 'TBD' ||
                        !homeTeam.schoolName || !awayTeam.schoolName;
   
-  const isScheduled = match?.day && match?.timeSlot && match?.arena;
+  const isScheduled = timeSlot && arena;
   
   const getStageInfo = () => {
     switch (stage) {
@@ -104,12 +110,14 @@ export default function MatchCard({
       'shield-final': 'Shield Final',
       'shield-third-place': 'Shield 3rd'
     };
-    return roundLabels[round] || round || 'Match';
+    
+    return roundLabels[round] || round.replace(/-/g, ' ') || 'Match';
   };
 
   const stageInfo = getStageInfo();
   const StageIcon = stageInfo.icon;
 
+  // Early return for invalid match
   if (!match) {
     return (
       <Card className="bg-gray-50 border-dashed">
@@ -120,53 +128,63 @@ export default function MatchCard({
     );
   }
 
+  // Safe player count calculation
+  const homePlayerCount = homeTeam?.players?.length || 0;
+  const awayPlayerCount = awayTeam?.players?.length || 0;
+
   return (
     <Card className={`
       ${isCompleted ? 'bg-gray-50' : 'bg-white'} 
-      ${isPlaceholder ? 'border-dashed border-gray-300' : ''}
-      ${stage !== 'pool' ? `${stageInfo.borderColor} ${stageInfo.bgColor}` : ''}
-      hover:shadow-md transition-shadow
+      ${isPlaceholder ? 'border-dashed border-gray-300' : 'border-gray-200'}
+      ${stage !== 'pool' ? `${stageInfo.borderColor} border-2` : 'border'}
+      hover:shadow-md transition-shadow duration-200
       ${size === 'small' ? 'text-xs sm:text-sm' : size === 'large' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}
     `}>
       <CardContent className={`
         ${size === 'small' ? 'p-2 sm:p-3' : size === 'large' ? 'p-4 sm:p-6' : 'p-3 sm:p-4'}
       `}>
-        {/* Header Section - Fixed overlapping */}
+        {/* Header Section */}
         <div className="flex flex-col gap-2 mb-3">
           {/* Top row - Stage, Pool, Arena badges */}
           <div className="flex items-center gap-1 flex-wrap min-h-6">
             {stage !== 'pool' && (
-              <Badge variant="outline" className={`text-xs ${stageInfo.color} flex items-center gap-1 flex-shrink-0`}>
+              <Badge 
+                variant="outline" 
+                className={`text-xs ${stageInfo.color} border ${stageInfo.borderColor} flex items-center gap-1 flex-shrink-0`}
+              >
                 <StageIcon className="w-3 h-3" />
                 <span>{stageInfo.label}</span>
               </Badge>
             )}
             
             {showPool && poolId && (
-              <Badge variant="outline" className="text-xs flex-shrink-0">
+              <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300">
                 Pool {poolId}
               </Badge>
             )}
             
-            {match.arena && (
-              <Badge variant="outline" className={`text-xs flex-shrink-0 ${match.arena === 1 ? 'text-blue-600' : 'text-green-600'}`}>
-                Arena {match.arena}
+            {arena && (
+              <Badge 
+                variant="outline" 
+                className={`text-xs flex-shrink-0 border ${arena === 1 ? 'text-blue-600 border-blue-300' : 'text-green-600 border-green-300'}`}
+              >
+                Arena {arena}
               </Badge>
             )}
             
             {isPlaceholder && (
-              <Badge variant="secondary" className="text-xs flex-shrink-0">
+              <Badge variant="secondary" className="text-xs flex-shrink-0 bg-gray-100 text-gray-600">
                 TBD
               </Badge>
             )}
           </div>
 
           {/* Bottom row - Schedule and Status */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 min-h-6">
             {isScheduled && (
-              <Badge variant="secondary" className="text-xs flex-shrink-0">
-                <span className="hidden sm:inline">Day {match.day} - {match.timeSlot}</span>
-                <span className="sm:hidden">D{match.day} {match.timeSlot}</span>
+              <Badge variant="secondary" className="text-xs flex-shrink-0 bg-gray-100 text-gray-700">
+                <span className="hidden sm:inline">Day {day} - {timeSlot}</span>
+                <span className="sm:hidden">D{day} {timeSlot}</span>
               </Badge>
             )}
             
@@ -174,39 +192,41 @@ export default function MatchCard({
               {isCompleted ? (
                 <>
                   <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
-                  <span className="text-green-600">Completed</span>
+                  <span className="text-green-600 whitespace-nowrap">Completed</span>
                 </>
               ) : isPlaceholder ? (
                 <>
                   <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-400 hidden xs:inline">Awaiting Teams</span>
-                  <span className="text-gray-400 xs:hidden">TBD</span>
+                  <span className="text-gray-400 hidden xs:inline whitespace-nowrap">Awaiting Teams</span>
+                  <span className="text-gray-400 xs:hidden whitespace-nowrap">TBD</span>
                 </>
               ) : (
                 <>
-                  <Clock className="w-3 h-3 flex-shrink-0" />
-                  <span>Pending</span>
+                  <Clock className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Pending</span>
                 </>
               )}
             </div>
           </div>
         </div>
         
-        {/* Teams and Score Section - Fixed overlapping */}
+        {/* Teams and Score Section */}
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Home Team */}
           <div className="flex-1 min-w-0 text-center">
-            <div className={`
-              font-medium break-words line-clamp-2
-              ${homeWon ? 'text-green-600 font-semibold' : ''}
-              ${isPlaceholder ? 'text-gray-400' : ''}
-              ${size === 'small' ? 'text-xs leading-tight' : 'text-sm leading-tight'}
-            `}>
+            <div 
+              className={`
+                font-medium break-words line-clamp-2 mb-1
+                ${homeWon ? 'text-green-600 font-semibold' : isPlaceholder ? 'text-gray-400' : 'text-gray-900'}
+                ${size === 'small' ? 'text-xs leading-tight' : 'text-sm leading-tight'}
+              `}
+              title={homeTeam?.schoolName || 'TBD'}
+            >
               {homeTeam?.schoolName || 'TBD'}
             </div>
-            {!isPlaceholder && homeTeam && (
-              <div className={`text-gray-500 mt-1 text-xs`}>
-                {homeTeam.players?.length || 0} players
+            {!isPlaceholder && homeTeam && homePlayerCount > 0 && (
+              <div className={`text-gray-500 text-xs`}>
+                {homePlayerCount} player{homePlayerCount !== 1 ? 's' : ''}
               </div>
             )}
           </div>
@@ -215,15 +235,16 @@ export default function MatchCard({
           <div className={`
             px-3 py-2 mx-1 sm:mx-2 bg-gray-100 rounded-lg text-center flex-shrink-0
             ${size === 'small' ? 'min-w-14' : size === 'large' ? 'min-w-20 sm:min-w-24' : 'min-w-16'}
+            ${isCompleted && !isPlaceholder ? 'bg-gray-200' : 'bg-gray-100'}
           `}>
             {isCompleted && !isPlaceholder ? (
               <div className={`font-bold ${size === 'small' ? 'text-sm' : size === 'large' ? 'text-xl' : 'text-base'}`}>
                 <span className={homeWon ? 'text-green-600' : awayWon ? 'text-red-600' : 'text-blue-600'}>
-                  {homeScore}
+                  {homeScore ?? 0}
                 </span>
                 <span className="text-gray-400 mx-1">-</span>
                 <span className={awayWon ? 'text-green-600' : homeWon ? 'text-red-600' : 'text-blue-600'}>
-                  {awayScore}
+                  {awayScore ?? 0}
                 </span>
               </div>
             ) : (
@@ -235,17 +256,19 @@ export default function MatchCard({
           
           {/* Away Team */}
           <div className="flex-1 min-w-0 text-center">
-            <div className={`
-              font-medium break-words line-clamp-2
-              ${awayWon ? 'text-green-600 font-semibold' : ''}
-              ${isPlaceholder ? 'text-gray-400' : ''}
-              ${size === 'small' ? 'text-xs leading-tight' : 'text-sm leading-tight'}
-            `}>
+            <div 
+              className={`
+                font-medium break-words line-clamp-2 mb-1
+                ${awayWon ? 'text-green-600 font-semibold' : isPlaceholder ? 'text-gray-400' : 'text-gray-900'}
+                ${size === 'small' ? 'text-xs leading-tight' : 'text-sm leading-tight'}
+              `}
+              title={awayTeam?.schoolName || 'TBD'}
+            >
               {awayTeam?.schoolName || 'TBD'}
             </div>
-            {!isPlaceholder && awayTeam && (
-              <div className={`text-gray-500 mt-1 text-xs`}>
-                {awayTeam.players?.length || 0} players
+            {!isPlaceholder && awayTeam && awayPlayerCount > 0 && (
+              <div className={`text-gray-500 text-xs`}>
+                {awayPlayerCount} player{awayPlayerCount !== 1 ? 's' : ''}
               </div>
             )}
           </div>
@@ -255,14 +278,14 @@ export default function MatchCard({
         {showProgression && stage !== 'pool' && stage !== 'festival' && isCompleted && (
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1 text-xs text-gray-600">
-              <span>Winner advances:</span>
-              <span className="font-medium">
+              <span className="whitespace-nowrap">Winner advances:</span>
+              <span className="font-medium text-gray-800">
                 {getNextRoundLabel(stage, round)}
               </span>
             </div>
             {stage === 'cup' && round === 'round-of-16' && (
               <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1 text-xs text-gray-600 mt-1">
-                <span>Loser advances:</span>
+                <span className="whitespace-nowrap">Loser advances:</span>
                 <span className="font-medium text-blue-600">Plate R1</span>
               </div>
             )}
@@ -281,7 +304,10 @@ function getNextRoundLabel(stage: string, currentRound?: string): string {
     'plate-round-1': 'Plate QF',
     'plate-quarter-final': 'Plate SF',
     'plate-semi-final': 'Plate Final',
-    'shield-semi-final': 'Shield Final'
+    'shield-semi-final': 'Shield Final',
+    'final': 'Champion',
+    'plate-final': 'Plate Champion',
+    'shield-final': 'Shield Champion'
   };
   
   const key = currentRound || '';
