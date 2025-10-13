@@ -1,30 +1,18 @@
-// Update the existing AdminPortal component - add logout button and auth check
+// app/admin/admin-portal/page.tsx
 "use client"
 
 import { useState, useEffect } from 'react';
-import ScoreInput from "../scorecard/page"
-import TeamRegistration from "../teams/page"
+import ScoreInput from "../scorecard/page";
+import TeamRegistration from "../teams/page";
 import { tournamentUtils } from '@/utils/tournament-logic';
 import { storageUtils } from '@/utils/storage';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/auth-context';
 import { 
-  Shield, 
-  Users, 
-  Trophy, 
-  Settings, 
-  CalendarDays, 
-  RefreshCw, 
-  Trash2, 
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Target,
+  Trophy,
   Award,
-  Database,
   LogOut
 } from 'lucide-react';
 import ManualFixtureEntry from '@/components/admin/fixtures-form';
@@ -48,11 +36,11 @@ export default function AdminPortal() {
         loadTournamentData();
     }, []);
 
-    const loadTournamentData = async () => {
+    const loadTournamentData = () => {
         try {
             const teams = storageUtils.getTeams();
             const allocated = tournamentUtils.arePoolsAllocated();
-            const poolMatchesGenerated = await tournamentUtils.arePoolMatchesGenerated();
+            const poolMatchesGenerated = tournamentUtils.arePoolMatchesGenerated();
             const scheduleGenerated = localStorage.getItem('water-polo-tournament-schedule-generated') === 'true';
             const matchesReady = poolMatchesGenerated && scheduleGenerated;
 
@@ -68,101 +56,16 @@ export default function AdminPortal() {
                     return result?.completed || false;
                 });
 
-                const poolStageComplete = await tournamentUtils.isPoolStageComplete();
-                const knockoutGenerated = await tournamentUtils.areKnockoutBracketsGenerated();
-
                 setTournamentStats({
                     totalMatches: allMatches.length,
                     completedMatches: completedMatches.length,
                     pendingMatches: allMatches.length - completedMatches.length,
-                    poolStageComplete,
-                    knockoutGenerated
+                    poolStageComplete: tournamentUtils.isPoolStageComplete(),
+                    knockoutGenerated: tournamentUtils.areKnockoutBracketsGenerated()
                 });
             }
         } catch (error) {
             console.error('Error loading tournament data:', error);
-        }
-    };
-
-    const handleGenerateMatches = async () => {
-        setIsGenerating(true);
-        
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            tournamentUtils.generatePoolMatches();
-            
-            loadTournamentData();
-        } catch (error) {
-            console.error('Error generating matches:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleGenerateKnockout = async () => {
-        const poolStageComplete = await tournamentUtils.isPoolStageComplete();
-        if (!poolStageComplete) {
-            alert('Pool stage must be completed before generating knockout brackets');
-            return;
-        }
-
-        setIsGenerating(true);
-        
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            tournamentUtils.generateCupBracket();
-            
-            loadTournamentData();
-        } catch (error) {
-            console.error('Error generating knockout brackets:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleClearMatches = async () => {
-        if (!confirm('Are you sure you want to clear all matches and results? This action cannot be undone.')) {
-            return;
-        }
-        
-        setIsGenerating(true);
-        
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            tournamentUtils.clearPoolMatches();
-            tournamentUtils.clearKnockoutAndFestivalMatches();
-            
-            localStorage.removeItem('water-polo-tournament-scheduled-matches');
-            localStorage.removeItem('water-polo-tournament-schedule-generated');
-            
-            loadTournamentData();
-        } catch (error) {
-            console.error('Error clearing matches:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    const handleClearResults = async () => {
-        if (!confirm('Are you sure you want to clear all saved match results and scorecards? Matches will remain but all scores will be reset. This action cannot be undone.')) {
-            return;
-        }
-        
-        setIsGenerating(true);
-        
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            storageUtils.clearPoolMatchResults();
-            
-            loadTournamentData();
-        } catch (error) {
-            console.error('Error clearing results:', error);
-        } finally {
-            setIsGenerating(false);
         }
     };
 
@@ -177,7 +80,7 @@ export default function AdminPortal() {
     const currentPhase = getTournamentPhase();
 
     return (
-        <div>
+        <div className="container mx-auto p-6">
             <div className="text-center">
                 <div className="flex items-center justify-between mb-4">
                     <div></div> {/* Spacer for alignment */}
@@ -202,7 +105,7 @@ export default function AdminPortal() {
                 </div>
             </div>
 
-            <Tabs defaultValue="scorecard" className="w-full">
+            <Tabs defaultValue="scorecard" className="w-full mt-8">
                 <TabsList className="grid w-full grid-cols-3 h-12">
                     <TabsTrigger value="scorecard" className="flex items-center gap-2 text-base">
                         <Trophy className="w-5 h-5" />

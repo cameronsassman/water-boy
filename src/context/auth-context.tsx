@@ -11,7 +11,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple password - in production, use proper authentication
+// Simple password - you can change this or make it configurable
 const ADMIN_PASSWORD = 'admin123';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
