@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Calendar, Clock, MapPin } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, MapPin, AlertCircle, Loader2, Filter, Group, Eye, EyeOff } from 'lucide-react';
 import { Team, Match } from '@/types/team';
 import { matchService } from '@/utils/storage';
 import { teamService } from '@/utils/storage';
 import { tournamentLogic } from '@/utils/tournament-logic';
-
-interface Player {
-  id: string;
-  name: string;
-  capNumber: number;
-}
 
 interface FixturesFormProps {
   onMatchesUpdate?: () => void;
@@ -23,18 +18,27 @@ interface FixturesFormProps {
 export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [groupByStage, setGroupByStage] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [filterStage, setFilterStage] = useState<string>('all');
+  const [filterRound, setFilterRound] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('pool');
+  
   const [newMatch, setNewMatch] = useState({
     homeTeamId: '',
     awayTeamId: '',
-    poolId: '',
+    poolId: 'A',
     stage: 'pool',
     day: 1,
-    timeSlot: '09:00',
+    timeSlot: '09:20',
     arena: 1,
-    round: ''
+    round: 'group'
   });
+
+  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
+  const [isFilteringTeams, setIsFilteringTeams] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -42,7 +46,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const [teamsData, matchesData] = await Promise.all([
         teamService.getTeams(),
         matchService.getMatches()
@@ -52,9 +56,41 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
+
+  // Update filtered teams based on stage and pool
+  useEffect(() => {
+    const updateFilteredTeams = () => {
+      if (teams.length === 0) {
+        setFilteredTeams([]);
+        setIsFilteringTeams(false);
+        return;
+      }
+      
+      setIsFilteringTeams(true);
+      
+      let filtered: Team[] = [];
+      
+      switch (newMatch.stage) {
+        case 'pool':
+          filtered = teams.filter(team => 
+            team.poolAllocation === newMatch.poolId
+          );
+          break;
+        default:
+          // For knockout stages, show all teams for now
+          // You can implement qualification logic here
+          filtered = teams;
+      }
+      
+      setFilteredTeams(filtered);
+      setIsFilteringTeams(false);
+    };
+    
+    updateFilteredTeams();
+  }, [newMatch.stage, newMatch.poolId, teams]);
 
   const handleInputChange = (field: string, value: any) => {
     setNewMatch(prev => ({
@@ -63,34 +99,18 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }));
   };
 
-  const generatePoolFixtures = async () => {
-    try {
-      setLoading(true);
-      const generatedMatches = await tournamentLogic.generatePoolMatches(teams);
-      
-      // Create matches via API
-      for (const match of generatedMatches) {
-        await matchService.createMatch({
-          homeTeamId: match.homeTeamId,
-          awayTeamId: match.awayTeamId,
-          poolId: match.poolId,
-          stage: match.stage,
-          day: match.day,
-          timeSlot: match.timeSlot,
-          arena: match.arena,
-          round: match.round
-        });
-      }
-
-      alert(`Successfully generated ${generatedMatches.length} pool matches`);
-      loadData();
-      onMatchesUpdate?.();
-    } catch (error) {
-      console.error('Error generating pool fixtures:', error);
-      alert('Error generating pool fixtures. Please check console for details.');
-    } finally {
-      setLoading(false);
-    }
+  const handleStageChange = (newStage: string) => {
+    const roundOptions = getRoundOptions(newStage);
+    const newRound = roundOptions[0]?.value || 'group';
+    
+    setNewMatch({ 
+      ...newMatch, 
+      stage: newStage,
+      round: newRound,
+      homeTeamId: '',
+      awayTeamId: '',
+      poolId: newStage === 'pool' ? newMatch.poolId : 'A'
+    });
   };
 
   const generateKnockoutFixtures = async () => {
@@ -100,39 +120,25 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }
 
     try {
-      setLoading(true);
+      setIsLoading(true);
       const pools = ['A', 'B', 'C', 'D'];
       const allStandingsData: { [poolId: string]: any[] } = {};
 
-      // Calculate standings for each pool
       for (const poolId of pools) {
         try {
-          // Get all teams and matches first
           const allTeams = await teamService.getTeams();
           const allMatches = await matchService.getMatches();
-
-          // Calculate standings for all pools
           const allStandings = tournamentLogic.calculateStandings(allTeams, allMatches);
-
-          // Get standings for the specific pool
           const standings = allStandings[poolId] || [];
-          
           allStandingsData[poolId] = standings;
-          console.log(`Pool ${poolId} standings:`, standings.map(s => ({
-            team: s.team.schoolName,
-            points: s.points,
-            goalDifference: s.goalDifference
-          })));
         } catch (error) {
           console.error(`Error getting standings for pool ${poolId}:`, error);
           allStandingsData[poolId] = [];
         }
       }
 
-      // Generate knockout matches based on standings
       const knockoutMatches = tournamentLogic.generateKnockoutMatches(allStandingsData, selectedStage);
       
-      // Create the matches via API
       for (const match of knockoutMatches) {
         await matchService.createMatch({
           homeTeamId: match.homeTeamId,
@@ -154,27 +160,21 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       console.error('Error generating knockout fixtures:', error);
       alert('Error generating knockout fixtures. Please check console for details.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const generateFestivalFixtures = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const pools = ['A', 'B', 'C', 'D'];
       const allStandingsData: { [poolId: string]: any[] } = {};
 
-      // Calculate standings for each pool
       for (const poolId of pools) {
         try {
-          // Get all teams and matches first
           const allTeams = await teamService.getTeams();
           const allMatches = await matchService.getMatches();
-
-          // Calculate standings for all pools
           const allStandings = tournamentLogic.calculateStandings(allTeams, allMatches);
-
-          // Get standings for the specific pool
           const standings = allStandings[poolId] || [];
           allStandingsData[poolId] = standings;
         } catch (error) {
@@ -183,10 +183,8 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
         }
       }
 
-      // Generate festival matches
       const festivalMatches = tournamentLogic.generateFestivalMatches(allStandingsData);
       
-      // Create the matches via API
       for (const match of festivalMatches) {
         await matchService.createMatch({
           homeTeamId: match.homeTeamId,
@@ -208,7 +206,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       console.error('Error generating festival fixtures:', error);
       alert('Error generating festival fixtures. Please check console for details.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -224,19 +222,18 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }
 
     try {
-      setLoading(true);
+      setIsSaving(true);
       await matchService.createMatch(newMatch);
       
-      // Reset form
       setNewMatch({
         homeTeamId: '',
         awayTeamId: '',
-        poolId: '',
+        poolId: 'A',
         stage: 'pool',
         day: 1,
         timeSlot: '09:00',
         arena: 1,
-        round: ''
+        round: 'group'
       });
       
       alert('Match created successfully');
@@ -246,7 +243,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       console.error('Error creating match:', error);
       alert(error.message || 'Error creating match');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -256,7 +253,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }
 
     try {
-      setLoading(true);
+      setIsLoading(true);
       await matchService.deleteMatch(matchId);
       alert('Match deleted successfully');
       loadData();
@@ -265,8 +262,35 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       console.error('Error deleting match:', error);
       alert('Error deleting match');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  const clearAllMatches = async () => {
+    if (!confirm('Are you sure you want to clear all matches? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      for (const match of matches) {
+        await matchService.deleteMatch(match.id);
+      }
+      setMatches([]);
+      alert('All matches cleared successfully');
+    } catch (error: any) {
+      console.error('Error clearing matches:', error);
+      alert(error.message || 'Failed to clear matches');
+    }
+  };
+
+  const exportMatches = () => {
+    const dataStr = JSON.stringify(matches, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'matches.json';
+    link.click();
   };
 
   const getTeamName = (teamId: string) => {
@@ -274,191 +298,202 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     return team ? team.schoolName : 'Unknown Team';
   };
 
-  const filteredTeams = teams.filter(team => 
-    !newMatch.poolId || team.poolAllocation === newMatch.poolId
-  );
+  // Predefined time slots for each day
+  const getTimeSlots = (day: number): string[] => {
+    switch (day) {
+      case 1:
+        return [
+          '16:20', '16:40', '17:00', '17:20', '17:40', 
+          '18:00', '18:20', '18:40', '19:00'
+        ];
+      case 2:
+        return [
+          '08:00', '08:20', '08:40', '09:00', '09:20', '09:40',
+          '10:00', '10:20', '10:40', '11:00', '11:20', '11:40',
+          '12:00', '12:20',
+          '13:30', '13:50',
+          '14:00', '14:20', '14:40', '15:00', '15:20', '15:40',
+          '16:00', '16:20', '16:40', '17:00', '17:20', '17:40',
+          '18:00', '18:20', '18:40', '19:00'
+        ];
+      case 3:
+        return [
+          '08:00', '08:20', '08:40', '09:00', '09:20', '09:40',
+          '10:30', '10:50',
+          '11:00', '11:20', '11:40', '12:00', '12:20', '12:40',
+          '13:00', '13:20', '13:40', '14:00', '14:20', '14:40',
+          '15:00', '15:20', '15:40', '16:00', '16:20', '16:40',
+          '17:00', '17:20', '17:40', '18:00', '18:20', '18:40', '19:00'
+        ];
+      case 4:
+        return [
+          '07:00', '07:20', '07:40', '08:00', '08:20', '08:40',
+          '09:00', '09:20', '09:40', '10:00', '10:20', '10:40',
+          '11:00', '11:20', '11:40', '12:00', '12:20', '12:40',
+          '13:00', '13:20', '13:40', '14:00', '14:20', '14:40', '15:00'
+        ];
+      default:
+        return ['08:00'];
+    }
+  };
 
-  const timeSlots = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30'];
-  const arenas = [1, 2, 3, 4];
-  const days = [1, 2, 3, 4];
+  // Round options based on stage
+  const getRoundOptions = (stage: string): { value: string; label: string }[] => {
+    switch (stage) {
+      case 'pool':
+        return [
+          { value: 'group', label: 'Group Stage' }
+        ];
+      case 'cup':
+        return [
+          { value: 'round-of-16', label: 'Round of 16' },
+          { value: 'quarter-final', label: 'Quarter Final' },
+          { value: 'semi-final', label: 'Semi Final' },
+          { value: 'final', label: 'Final' },
+          { value: 'third-place', label: 'Third Place' }
+        ];
+      case 'plate':
+        return [
+          { value: 'round-of-16', label: 'Plate Round of 16' },
+          { value: 'quarter-final', label: 'Plate Quarter Final' },
+          { value: 'semi-final', label: 'Plate Semi Final' },
+          { value: 'final', label: 'Plate Final' },
+          { value: 'third-place', label: 'Plate Third Place' }
+        ];
+      case 'shield':
+        return [
+          { value: 'quarter-final', label: 'Shield Quarter Final' },
+          { value: 'semi-final', label: 'Shield Semi Final' },
+          { value: 'final', label: 'Shield Final' },
+          { value: 'third-place', label: 'Shield Third Place' }
+        ];
+      case 'playoff':
+        return [
+          { value: 'playoff-round-1', label: 'Playoff Round 1' },
+          { value: '13th-14th', label: '13th/14th Playoff' },
+          { value: '15th-16th', label: '15th/16th Playoff' }
+        ];
+      case 'festival':
+        return [
+          { value: 'friendly', label: 'Friendly Match' },
+          { value: 'exhibition', label: 'Exhibition Match' }
+        ];
+      default:
+        return [{ value: 'group', label: 'Group Stage' }];
+    }
+  };
 
-  if (loading) {
+  // Group matches by stage and round
+  const groupedMatches = matches.reduce((acc, match) => {
+    if (!showCompleted && match.completed) return acc;
+    
+    const stage = match.stage;
+    const round = match.round || 'unknown';
+    
+    if (!acc[stage]) acc[stage] = {};
+    if (!acc[stage][round]) acc[stage][round] = [];
+    
+    acc[stage][round].push(match);
+    return acc;
+  }, {} as Record<string, Record<string, Match[]>>);
+
+  // Get unique stages and rounds for filtering
+  const stages = Array.from(new Set(matches.map(m => m.stage))).sort();
+  const rounds = Array.from(new Set(matches.map(m => m.round || 'unknown'))).sort();
+
+  // Filter matches based on stage and round
+  const filteredMatches = matches.filter(match => {
+    if (!showCompleted && match.completed) return false;
+    if (filterStage !== 'all' && match.stage !== filterStage) return false;
+    if (filterRound !== 'all' && (match.round || 'unknown') !== filterRound) return false;
+    return true;
+  });
+
+  const getStageColor = (stage: string): string => {
+    const colors: Record<string, string> = {
+      pool: 'bg-blue-100 text-blue-800 border-blue-200',
+      cup: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      plate: 'bg-green-100 text-green-800 border-green-200',
+      shield: 'bg-purple-100 text-purple-800 border-purple-200',
+      playoff: 'bg-red-100 text-red-800 border-red-200',
+      festival: 'bg-orange-100 text-orange-800 border-orange-200'
+    };
+    return colors[stage] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getRoundLabel = (stage: string, round: string): string => {
+    const roundOptions = getRoundOptions(stage);
+    const option = roundOptions.find(opt => opt.value === round);
+    return option ? option.label : round;
+  };
+
+  if (isLoading) {
     return (
-      <div className="p-6 flex justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="max-w-6xl mx-auto p-6 flex justify-center items-center h-64">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-gray-400 animate-spin" />
+          <p>Loading matches...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Match Fixtures</h2>
-        <div className="text-sm text-gray-600">
-          {matches.length} matches total
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            Tournament Fixtures
+          </h1>
+          <p className="text-gray-600 mt-2">Create and manage tournament fixtures and brackets</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={exportMatches} variant="outline" size="sm">
+            Export
+          </Button>
+          <Button onClick={clearAllMatches} variant="destructive" size="sm">
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear All
+          </Button>
         </div>
       </div>
-
-      {/* Automatic Generation Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Automatic Fixture Generation</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <Button
-                onClick={generatePoolFixtures}
-                disabled={teams.length === 0}
-                className="w-full"
-              >
-                Generate Pool Matches
-              </Button>
-              <p className="text-sm text-gray-600">
-                Generates round-robin matches for all pools
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Select value={selectedStage} onValueChange={setSelectedStage}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select stage" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cup">Cup</SelectItem>
-                    <SelectItem value="plate">Plate</SelectItem>
-                    <SelectItem value="shield">Shield</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={generateKnockoutFixtures}
-                  disabled={teams.length === 0}
-                >
-                  Generate Knockout
-                </Button>
-              </div>
-              <p className="text-sm text-gray-600">
-                Generates knockout matches based on pool standings
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Button
-              onClick={generateFestivalFixtures}
-              disabled={teams.length === 0}
-              variant="outline"
-              className="w-full"
-            >
-              Generate Festival Matches
-            </Button>
-            <p className="text-sm text-gray-600">
-              Generates friendly matches for lower-ranked teams
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Manual Match Creation */}
       <Card>
         <CardHeader>
-          <CardTitle>Add Manual Match</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add New Match
+            {!isFilteringTeams && filteredTeams.length > 0 && (
+              <Badge variant="outline" className="ml-2">
+                {filteredTeams.length} qualified teams
+              </Badge>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label>Home Team</Label>
-              <Select
-                value={newMatch.homeTeamId}
-                onValueChange={(value) => handleInputChange('homeTeamId', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select home team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredTeams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.schoolName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Away Team</Label>
-              <Select
-                value={newMatch.awayTeamId}
-                onValueChange={(value) => handleInputChange('awayTeamId', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select away team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredTeams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.schoolName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Stage</Label>
-              <Select
-                value={newMatch.stage}
-                onValueChange={(value) => handleInputChange('stage', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pool">Pool</SelectItem>
-                  <SelectItem value="cup">Cup</SelectItem>
-                  <SelectItem value="plate">Plate</SelectItem>
-                  <SelectItem value="shield">Shield</SelectItem>
-                  <SelectItem value="festival">Festival</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Pool</Label>
-              <Select
-                value={newMatch.poolId}
-                onValueChange={(value) => handleInputChange('poolId', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pool" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">Pool A</SelectItem>
-                  <SelectItem value="B">Pool B</SelectItem>
-                  <SelectItem value="C">Pool C</SelectItem>
-                  <SelectItem value="D">Pool D</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
             <div className="space-y-2">
               <Label>Day</Label>
               <Select
                 value={newMatch.day.toString()}
-                onValueChange={(value) => handleInputChange('day', parseInt(value))}
+                onValueChange={(value) => {
+                  const selectedDay = parseInt(value);
+                  setNewMatch({ 
+                    ...newMatch, 
+                    day: selectedDay,
+                    timeSlot: getTimeSlots(selectedDay)[0]
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {days.map(day => (
-                    <SelectItem key={day} value={day.toString()}>
-                      Day {day}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="1">Day 1</SelectItem>
+                  <SelectItem value="2">Day 2</SelectItem>
+                  <SelectItem value="3">Day 3</SelectItem>
+                  <SelectItem value="4">Day 4</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -473,7 +508,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map(slot => (
+                  {getTimeSlots(newMatch.day).map(slot => (
                     <SelectItem key={slot} value={slot}>
                       {slot}
                     </SelectItem>
@@ -492,93 +527,429 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {arenas.map(arena => (
-                    <SelectItem key={arena} value={arena.toString()}>
-                      Arena {arena}
+                  <SelectItem value="1">Aquatic Centre</SelectItem>
+                  <SelectItem value="2">High School Pool</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Stage</Label>
+              <Select
+                value={newMatch.stage}
+                onValueChange={(value) => handleStageChange(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pool">Pool</SelectItem>
+                  <SelectItem value="cup">Cup</SelectItem>
+                  <SelectItem value="plate">Plate</SelectItem>
+                  <SelectItem value="shield">Shield</SelectItem>
+                  <SelectItem value="playoff">Playoff</SelectItem>
+                  <SelectItem value="festival">Festival</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newMatch.stage === 'pool' && (
+              <div className="space-y-2">
+                <Label>Pool</Label>
+                <Select
+                  value={newMatch.poolId}
+                  onValueChange={(value) => {
+                    setNewMatch({ 
+                      ...newMatch, 
+                      poolId: value,
+                      homeTeamId: '',
+                      awayTeamId: ''
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Pool A</SelectItem>
+                    <SelectItem value="B">Pool B</SelectItem>
+                    <SelectItem value="C">Pool C</SelectItem>
+                    <SelectItem value="D">Pool D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Round</Label>
+              <Select
+                value={newMatch.round}
+                onValueChange={(value) => handleInputChange('round', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getRoundOptions(newMatch.stage).map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Round (Optional)</Label>
-              <Input
-                value={newMatch.round}
-                onChange={(e) => handleInputChange('round', e.target.value)}
-                placeholder="e.g., Quarter-final"
-              />
+            <div className={newMatch.stage === 'pool' ? 'md:col-span-2' : 'md:col-span-3'}>
+              <div className="space-y-2">
+                <Label>
+                  Home Team
+                  {!isFilteringTeams && filteredTeams.length > 0 && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({filteredTeams.length} qualified)
+                    </span>
+                  )}
+                </Label>
+                <Select
+                  value={newMatch.homeTeamId}
+                  onValueChange={(value) => handleInputChange('homeTeamId', value)}
+                  disabled={isFilteringTeams}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      isFilteringTeams ? 'Loading teams...' : 
+                      filteredTeams.length === 0 ? 'No teams available' : 'Select team...'
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredTeams.map(team => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.schoolName}
+                        {team.poolAllocation && ` (Pool ${team.poolAllocation})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!isFilteringTeams && filteredTeams.length === 0 && newMatch.stage === 'pool' && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    No teams found in Pool {newMatch.poolId}. Allocate teams to pools first.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className={newMatch.stage === 'pool' ? 'md:col-span-2' : 'md:col-span-3'}>
+              <div className="space-y-2">
+                <Label>
+                  Away Team
+                  {!isFilteringTeams && filteredTeams.length > 0 && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({filteredTeams.length} qualified)
+                    </span>
+                  )}
+                </Label>
+                <Select
+                  value={newMatch.awayTeamId}
+                  onValueChange={(value) => handleInputChange('awayTeamId', value)}
+                  disabled={isFilteringTeams}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      isFilteringTeams ? 'Loading teams...' : 
+                      filteredTeams.length === 0 ? 'No teams available' : 'Select team...'
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredTeams.map(team => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.schoolName}
+                        {team.poolAllocation && ` (Pool ${team.poolAllocation})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <Button onClick={addManualMatch} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Match
+          <Button 
+            onClick={addManualMatch} 
+            disabled={isSaving || isFilteringTeams || filteredTeams.length === 0}
+            className="w-full"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : isFilteringTeams ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading Teams...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Match
+                {filteredTeams.length === 0 && ' (No teams available)'}
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Existing Matches */}
+      {/* Filters and View Options */}
       <Card>
-        <CardHeader>
-          <CardTitle>Existing Matches</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {matches.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No matches created yet
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters:</span>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {matches.map(match => (
-                <div key={match.id} className="border rounded-lg p-4 flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className="font-medium">{getTeamName(match.homeTeamId)}</span>
-                      <span className="text-gray-600">vs</span>
-                      <span className="font-medium">{getTeamName(match.awayTeamId)}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        Day {match.day}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {match.timeSlot}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        Arena {match.arena}
-                      </div>
-                      <div className="capitalize">{match.stage}</div>
-                      {match.poolId && (
-                        <div>Pool {match.poolId}</div>
-                      )}
-                    </div>
-                    {match.homeScore !== undefined && match.awayScore !== undefined && (
-                      <div className="mt-2 text-lg font-bold">
-                        {match.homeScore} - {match.awayScore}
-                        {match.completed && (
-                          <span className="ml-2 text-sm text-green-600">Completed</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteMatch(match.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+            
+            <Select value={filterStage} onValueChange={setFilterStage}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Stages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stages</SelectItem>
+                {stages.map(stage => (
+                  <SelectItem key={stage} value={stage}>
+                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filterRound} onValueChange={setFilterRound}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Rounds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Rounds</SelectItem>
+                {rounds.map(round => (
+                  <SelectItem key={round} value={round}>
+                    {round === 'unknown' ? 'No Round' : round}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                onClick={() => setShowCompleted(!showCompleted)}
+                variant={showCompleted ? "default" : "outline"}
+                size="sm"
+              >
+                {showCompleted ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                {showCompleted ? 'Show All' : 'Hide Completed'}
+              </Button>
+
+              <Button
+                onClick={() => setGroupByStage(!groupByStage)}
+                variant={groupByStage ? "default" : "outline"}
+                size="sm"
+              >
+                <Group className="w-4 h-4 mr-2" />
+                {groupByStage ? 'Grouped' : 'Ungrouped'}
+              </Button>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Matches List */}
+      {matches.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-xl font-semibold mb-2">No Matches Added</h3>
+            <p className="text-gray-600">Start by adding your first match above</p>
+          </CardContent>
+        </Card>
+      ) : groupByStage ? (
+        // Grouped View
+        Object.keys(groupedMatches).map(stage => (
+          <Card key={stage}>
+            <CardHeader className={`border-b ${getStageColor(stage).split(' ')[0]}`}>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Badge className={getStageColor(stage)}>
+                    {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                  </Badge>
+                  <span>
+                    {stage.charAt(0).toUpperCase() + stage.slice(1)} Stage
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      {Object.values(groupedMatches[stage]).flat().length} matches
+                    </span>
+                  </span>
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {Object.keys(groupedMatches[stage]).map(round => (
+                <div key={round} className="border-b last:border-b-0">
+                  <div className="p-4 bg-gray-50">
+                    <h3 className="font-semibold text-lg">
+                      {getRoundLabel(stage, round)}
+                      <span className="text-sm font-normal text-gray-600 ml-2">
+                        ({groupedMatches[stage][round].length} matches)
+                      </span>
+                    </h3>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {groupedMatches[stage][round]
+                      .sort((a, b) => a.day - b.day || a.timeSlot.localeCompare(b.timeSlot))
+                      .map((match) => (
+                      <MatchItem 
+                        key={match.id} 
+                        match={match} 
+                        onDelete={deleteMatch}
+                        getTeamName={getTeamName}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        // Ungrouped View
+        <Card>
+          <CardHeader>
+            <CardTitle>All Matches ({filteredMatches.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {filteredMatches
+                .sort((a, b) => a.day - b.day || a.timeSlot.localeCompare(b.timeSlot))
+                .map((match) => (
+                <MatchItem 
+                  key={match.id} 
+                  match={match} 
+                  onDelete={deleteMatch}
+                  getTeamName={getTeamName}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// Separate MatchItem component for better organization
+function MatchItem({ 
+  match, 
+  onDelete, 
+  getTeamName 
+}: { 
+  match: Match; 
+  onDelete: (id: string) => void;
+  getTeamName: (id: string) => string;
+}) {
+  const getStageColor = (stage: string): string => {
+    const colors: Record<string, string> = {
+      pool: 'bg-blue-100 text-blue-800 border-blue-200',
+      cup: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      plate: 'bg-green-100 text-green-800 border-green-200',
+      shield: 'bg-purple-100 text-purple-800 border-purple-200',
+      playoff: 'bg-red-100 text-red-800 border-red-200',
+      festival: 'bg-orange-100 text-orange-800 border-orange-200'
+    };
+    return colors[stage] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getRoundLabel = (stage: string, round?: string): string => {
+    if (!round || round === 'group') return 'Group Stage';
+    
+    const roundMap: Record<string, string> = {
+      'round-of-16': 'Round of 16',
+      'quarter-final': 'Quarter Final',
+      'semi-final': 'Semi Final',
+      'final': 'Final',
+      'third-place': 'Third Place',
+      'plate-round-of-16': 'Plate Round of 16',
+      'plate-quarter-final': 'Plate Quarter Final',
+      'plate-semi-final': 'Plate Semi Final',
+      'plate-final': 'Plate Final',
+      'plate-third-place': 'Plate Third Place',
+      'shield-quarter-final': 'Shield Quarter Final',
+      'shield-semi-final': 'Shield Semi Final',
+      'shield-final': 'Shield Final',
+      'shield-third-place': 'Shield Third Place',
+      'playoff-round-1': 'Playoff Round 1',
+      '13th-14th': '13th/14th Playoff',
+      '15th-16th': '15th/16th Playoff',
+      'friendly': 'Friendly Match',
+      'exhibition': 'Exhibition Match'
+    };
+    
+    return roundMap[round] || round;
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+      <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col items-center min-w-16">
+          <Badge variant="secondary" className="mb-1">
+            Day {match.day}
+          </Badge>
+          <span className="text-sm font-medium">{match.timeSlot}</span>
+        </div>
+        
+        <Badge variant="outline" className={match.arena === 1 ? 'text-blue-600' : 'text-green-600'}>
+          Arena {match.arena}
+        </Badge>
+
+        <Badge className={getStageColor(match.stage)}>
+          {match.stage}
+        </Badge>
+
+        {match.round && match.round !== 'group' && (
+          <Badge variant="outline" className="bg-white">
+            {getRoundLabel(match.stage, match.round)}
+          </Badge>
+        )}
+
+        {match.poolId && (
+          <Badge variant="outline">Pool {match.poolId}</Badge>
+        )}
+
+        {match.completed && (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            Completed
+          </Badge>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-4 flex-1 justify-center">
+        <span className="font-medium text-sm">
+          {getTeamName(match.homeTeamId)}
+        </span>
+        <span className="text-gray-400">vs</span>
+        <span className="font-medium text-sm">
+          {getTeamName(match.awayTeamId)}
+        </span>
+        
+        {match.completed && match.homeScore !== undefined && match.awayScore !== undefined && (
+          <div className="flex items-center gap-2 ml-4">
+            <span className="text-lg font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">
+              {match.homeScore} - {match.awayScore}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <Button
+        onClick={() => onDelete(match.id)}
+        variant="ghost"
+        size="sm"
+        className="text-red-600 hover:text-red-700"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 }

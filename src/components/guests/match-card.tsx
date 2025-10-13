@@ -34,7 +34,7 @@ export default function MatchCard({
   const awayScore = match?.awayScore;
   const homeTeam = match?.homeTeam;
   const awayTeam = match?.awayTeam;
-  const stage = match?.stage || 'pool';
+  const stage = match?.stage || 'group';
   const poolId = match?.poolId;
   const round = match?.round;
   const day = match?.day || 1; // Default to day 1 if undefined
@@ -93,13 +93,13 @@ export default function MatchCard({
           bgColor: 'bg-gray-50',
           borderColor: 'border-gray-200',
           icon: Users,
-          label: 'Pool'
+          label: 'Group'
         };
     }
   };
 
   const getRoundLabel = (round?: string): string => {
-    if (!round) return stage === 'pool' ? 'Pool' : 'Match';
+    if (!round) return stage === 'group' ? 'Group' : 'Match';
     
     const roundLabels: { [key: string]: string } = {
       'round-of-16': 'R16',
@@ -142,7 +142,7 @@ export default function MatchCard({
     <Card className={`
       ${isCompleted ? 'bg-gray-50' : 'bg-white'} 
       ${isPlaceholder ? 'border-dashed border-gray-300' : 'border-gray-200'}
-      ${stage !== 'pool' ? `${stageInfo.borderColor} border-2` : 'border'}
+      ${stage !== 'group' ? `${stageInfo.borderColor} border-2` : 'border'}
       hover:shadow-md transition-shadow duration-200
       ${size === 'small' ? 'text-xs sm:text-sm' : size === 'large' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}
     `}>
