@@ -30,7 +30,7 @@ const videoMessages = [
     description: "A message about sportsmanship and excellence",
     placeholder: "Headmaster Welcome Video",
     content: "Welcome to our annual U14 Water Polo Tournament. We wish all teams the very best of luck!",
-    videoSrc: "/videos/headmaster-welcome.mp4"
+    videoSrc: "/videos/GS-Welcoming.mp4"
   },
   {
     title: "From the Team Captains",
@@ -127,9 +127,6 @@ export default function HomePage() {
                   <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
                     {message.title}
                   </h3>
-                  <p className="text-gray-600 text-sm md:text-base">
-                    {message.description}
-                  </p>
                 </div>
                 
                 {/* Video Player */}
@@ -143,10 +140,6 @@ export default function HomePage() {
                     <source src={message.videoSrc} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
-                </div>
-                
-                <div className="text-center text-gray-500 text-sm mt-2">
-                  {message.content}
                 </div>
               </div>
             ))}
@@ -196,7 +189,6 @@ export default function HomePage() {
                       download={`${file.name.replace(/\s+/g, '-')}.png`}
                       className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                     >
-                      <span>📥</span>
                       Download
                     </a>
                   </div>

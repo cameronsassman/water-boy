@@ -172,7 +172,7 @@ export default function PoolsPage() {
                 mobileSelectedTab === poolId ? 'bg-blue-100 text-blue-800 font-semibold' : 'text-gray-700'
               }`}
             >
-              Pool {poolId}
+              Group {poolId}
             </button>
           ))}
         </div>
@@ -214,9 +214,8 @@ export default function PoolsPage() {
       {/* Header Section */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <Trophy className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-            Tournament Pools
+            Tournament Groups
           </h1>
         </div>
         <p className="text-gray-600 text-base sm:text-lg">Track team progress and pool standings</p>
@@ -234,14 +233,11 @@ export default function PoolsPage() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-            {totalTeams} Teams Total
-          </Badge>
         </div>
         
         {allPoolsComplete && (
           <Badge className="bg-green-100 text-green-700 border-green-200">
-            All Pools Complete
+            All Groups Complete
           </Badge>
         )}
       </div>
@@ -253,7 +249,7 @@ export default function PoolsPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3 flex-1">
                 <div className="flex-1">
-                  <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-1">Pool Stage Complete!</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-1">Group Stage Complete!</h3>
                   <p className="text-green-700 text-xs sm:text-sm">All pool matches have been played. Ready for knockout stage.</p>
                 </div>
               </div>
@@ -295,12 +291,7 @@ export default function PoolsPage() {
                 value={poolId} 
                 className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
               >
-                Pool {poolId}
-                {poolTeamCounts[poolId] > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs bg-white text-blue-600">
-                    {poolTeamCounts[poolId]}
-                  </Badge>
-                )}
+                Group {poolId}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -326,17 +317,7 @@ export default function PoolsPage() {
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
                             {poolId}
                           </div>
-                          <CardTitle className="text-base sm:text-lg text-blue-800">Pool {poolId}</CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isComplete && (
-                            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                              Complete
-                            </Badge>
-                          )}
-                          <Badge variant="outline" className="bg-white text-blue-700 border-blue-200 text-xs">
-                            {teamCount} teams
-                          </Badge>
+                          <CardTitle className="text-base sm:text-lg text-blue-800">Group {poolId}</CardTitle>
                         </div>
                       </div>
                     </CardHeader>

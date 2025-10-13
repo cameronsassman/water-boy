@@ -169,50 +169,11 @@ export default function MatchCard({
               </Badge>
             )}
             
-            {arena && (
-              <Badge 
-                variant="outline" 
-                className={`text-xs flex-shrink-0 border ${arena === 1 ? 'text-blue-600 border-blue-300' : 'text-green-600 border-green-300'}`}
-              >
-                Arena {arena}
-              </Badge>
-            )}
-            
             {isPlaceholder && (
               <Badge variant="secondary" className="text-xs flex-shrink-0 bg-gray-100 text-gray-600">
                 TBD
               </Badge>
             )}
-          </div>
-
-          {/* Bottom row - Schedule and Status */}
-          <div className="flex items-center justify-between gap-2 min-h-6">
-            {isScheduled && (
-              <Badge variant="secondary" className="text-xs flex-shrink-0 bg-gray-100 text-gray-700">
-                <span className="hidden sm:inline">Day {day} - {timeSlot}</span>
-                <span className="sm:hidden">D{day} {timeSlot}</span>
-              </Badge>
-            )}
-            
-            <div className="flex items-center gap-1 text-xs text-gray-500 ml-auto">
-              {isCompleted ? (
-                <>
-                  <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
-                  <span className="text-green-600 whitespace-nowrap">Completed</span>
-                </>
-              ) : isPlaceholder ? (
-                <>
-                  <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-400 hidden xs:inline whitespace-nowrap">Awaiting Teams</span>
-                  <span className="text-gray-400 xs:hidden whitespace-nowrap">TBD</span>
-                </>
-              ) : (
-                <>
-                  <Clock className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Pending</span>
-                </>
-              )}
-            </div>
           </div>
         </div>
         
@@ -230,11 +191,6 @@ export default function MatchCard({
             >
               {homeTeam?.schoolName || 'TBD'}
             </div>
-            {!isPlaceholder && homeTeam && homePlayerCount > 0 && (
-              <div className={`text-gray-500 text-xs`}>
-                {homePlayerCount} player{homePlayerCount !== 1 ? 's' : ''}
-              </div>
-            )}
           </div>
           
           {/* Score Box */}
@@ -272,11 +228,6 @@ export default function MatchCard({
             >
               {awayTeam?.schoolName || 'TBD'}
             </div>
-            {!isPlaceholder && awayTeam && awayPlayerCount > 0 && (
-              <div className={`text-gray-500 text-xs`}>
-                {awayPlayerCount} player{awayPlayerCount !== 1 ? 's' : ''}
-              </div>
-            )}
           </div>
         </div>
 
