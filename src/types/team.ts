@@ -1,7 +1,11 @@
+// types/team.ts
 export interface Player {
   id: string;
   name: string;
   capNumber: number;
+  teamId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Team {
@@ -9,34 +13,62 @@ export interface Team {
   schoolName: string;
   coachName: string;
   managerName: string;
+  poolAllocation?: string;
+  poolId?: string;
+  teamLogo?: string;
   players: Player[];
-  poolId?: string; // Will be assigned during pool allocation
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Pool {
   id: string;
-  name: string; // A, B, C, D
-  teams: string[]; // team IDs
+  name: string;
+  teams: string[];
+}
+
+export interface Tournament {
+  id?: string;
+  name?: string;
+  teams: Team[];
+  pools: Pool[];
+  matches: Match[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Match {
   id: string;
   homeTeamId: string;
   awayTeamId: string;
+  homeTeam?: Team;
+  awayTeam?: Team;
   poolId?: string;
-  stage: 'pool' | 'cup' | 'plate' | 'shield' | "playoff" | 'festival';
+  stage: string;
+  day: number;
+  timeSlot: string;
+  arena: number;
+  completed: boolean;
   homeScore?: number;
   awayScore?: number;
-  completed: boolean;
-  // New knockout-specific properties
-  round?: string; // 'round-of-16', 'quarter-final', 'semi-final', 'final', 'third-place'
-  bracketPosition?: number; // Position in bracket for ordering
-  parentMatch1?: string; // ID of first parent match (for knockout progression)
-  parentMatch2?: string; // ID of second parent match (for knockout progression)
+  round?: string;
+  bracketPosition?: number;
+  parentMatch1?: string;
+  parentMatch2?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface Tournament {
-  teams: Team[];
-  pools: Pool[];
-  matches: Match[];
+export interface PlayerFormData {
+  name: string;
+  capNumber: number;
+}
+
+export interface TeamFormData {
+  schoolName: string;
+  coachName: string;
+  managerName: string;
+  poolAllocation: string;
+  teamLogo?: string;
+  players: PlayerFormData[];
 }

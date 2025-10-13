@@ -1,26 +1,139 @@
-import { TeamStanding } from '@/utils/tournament-logic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+
+interface Player {
+  id: string;
+  name: string;
+  capNumber: number;
+}
+
+interface Team {
+  id: string;
+  schoolName: string;
+  coachName: string;
+  managerName: string;
+  poolAllocation: string;
+  teamLogo?: string;
+  players: Player[];
+}
+
+interface TeamStanding {
+  team: Team;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
 
 interface PoolStandingsProps {
   poolId: string;
   poolName: string;
-  standings: TeamStanding[];
+  standings?: TeamStanding[]; // Make it optional since we'll fetch data
 }
 
-export default function PoolStandings({ poolId, poolName, standings }: PoolStandingsProps) {
+export default function PoolStandings({ poolId, poolName, standings: initialStandings }: PoolStandingsProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [standings, setStandings] = useState<TeamStanding[]>(initialStandings || []);
+  const [isLoading, setIsLoading] = useState(!initialStandings);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    
+    // Fetch standings if not provided via props
+    if (!initialStandings) {
+      fetchPoolStandings();
+    }
+    
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [poolId, initialStandings]);
 
   const checkMobile = () => {
     setIsMobile(window.innerWidth < 768);
   };
+
+  const fetchPoolStandings = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/standings?pool=${poolId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pool standings');
+      }
+      
+      const data = await response.json();
+      setStandings(data.standings || []);
+    } catch (error) {
+      console.error('Error fetching pool standings:', error);
+      setError('Failed to load standings data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border-2 border-blue-200 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50">
+        <CardHeader className="pb-3 border-b border-blue-200 bg-white/50">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-blue-800">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
+                {poolId}
+              </div>
+              {poolName}
+            </span>
+            <Badge variant="outline" className="bg-white border-blue-200 text-blue-700">
+              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              Loading...
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-blue-500">
+            <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin" />
+            <p>Loading standings...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-2 border-red-200 shadow-lg bg-gradient-to-br from-red-50 to-orange-50">
+        <CardHeader className="pb-3 border-b border-red-200 bg-white/50">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-red-800">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
+                {poolId}
+              </div>
+              {poolName}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-red-500">
+            <p className="mb-2">{error}</p>
+            <button 
+              onClick={fetchPoolStandings}
+              className="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-md transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (standings.length === 0) {
     return (
@@ -39,6 +152,12 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
         <CardContent>
           <div className="text-center py-8 text-blue-500">
             <p>No teams allocated to this pool yet</p>
+            <button 
+              onClick={fetchPoolStandings}
+              className="text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md mt-2 transition-colors"
+            >
+              Refresh
+            </button>
           </div>
         </CardContent>
       </Card>
@@ -58,6 +177,9 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
               </div>
               {poolName}
             </span>
+            <Badge variant="outline" className="bg-white border-blue-200 text-blue-700">
+              {standings.length} teams
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -147,6 +269,18 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
                         {standing.goalDifference > 0 ? '+' : ''}{standing.goalDifference}
                       </div>
                     </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">Status</div>
+                      <div className={`text-xs font-semibold ${
+                        isQualifying && hasMatchResults ? 'text-green-600' : 
+                        isFestival && hasMatchResults ? 'text-blue-600' : 
+                        'text-gray-500'
+                      }`}>
+                        {isQualifying && hasMatchResults ? 'Qualifying' : 
+                         isFestival && hasMatchResults ? 'Festival' : 
+                         'Pending'}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -168,6 +302,9 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
             </div>
             {poolName}
           </span>
+          <Badge variant="outline" className="bg-white border-blue-200 text-blue-700">
+            {standings.length} teams
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -175,6 +312,7 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
           <table className="w-full">
             <thead>
               <tr className="border-b border-blue-200 bg-blue-500 text-white">
+                <th className="text-left p-3 sm:p-4 font-semibold text-xs sm:text-sm">Position</th>
                 <th className="text-left p-3 sm:p-4 font-semibold text-xs sm:text-sm">Team</th>
                 <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-12">Played</th>
                 <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-12">Won</th>
@@ -184,6 +322,7 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
                 <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-16">G/A</th>
                 <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-16">G/D</th>
                 <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-16">Points</th>
+                <th className="text-center p-3 sm:p-4 font-semibold text-xs sm:text-sm w-20">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -201,24 +340,22 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
                       index % 2 === 0 ? 'bg-white' : 'bg-blue-50/30'
                     }`}
                   >
+                    <td className="p-3 sm:p-4 text-center">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 mx-auto ${
+                        isQualifying && hasMatchResults ? 'bg-green-600 text-white border-green-700' :
+                        isFestival && hasMatchResults ? 'bg-blue-600 text-white border-blue-700' :
+                        'bg-gray-200 text-gray-600 border-gray-300'
+                      }`}>
+                        {position}
+                      </span>
+                    </td>
                     <td className="p-3 sm:p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-center">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
-                            isQualifying && hasMatchResults ? 'bg-green-600 text-white border-green-700' :
-                            isFestival && hasMatchResults ? 'bg-blue-600 text-white border-blue-700' :
-                            'bg-gray-200 text-gray-600 border-gray-300'
-                          }`}>
-                            {position}
-                          </span>
+                      <div>
+                        <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                          {standing.team.schoolName}
                         </div>
-                        <div>
-                          <div className="font-semibold text-gray-900 text-sm sm:text-base flex items-center gap-2">
-                            {standing.team.schoolName}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {standing.team.players.length} players
-                          </div>
+                        <div className="text-xs text-gray-500">
+                          {standing.team.coachName} • {standing.team.players.length} players
                         </div>
                       </div>
                     </td>
@@ -243,6 +380,17 @@ export default function PoolStandings({ poolId, poolName, standings }: PoolStand
                         'bg-gray-100 text-gray-600 border border-gray-200'
                       }`}>
                         {standing.points}
+                      </span>
+                    </td>
+                    <td className="text-center p-3 sm:p-4">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        isQualifying && hasMatchResults ? 'bg-green-100 text-green-700' : 
+                        isFestival && hasMatchResults ? 'bg-blue-100 text-blue-700' : 
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {isQualifying && hasMatchResults ? 'Qualifying' : 
+                         isFestival && hasMatchResults ? 'Festival' : 
+                         'Pending'}
                       </span>
                     </td>
                   </tr>

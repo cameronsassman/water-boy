@@ -1,27 +1,51 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { tournamentUtils, TeamStanding } from '@/utils/tournament-logic';
-import { storageUtils } from '@/utils/storage';
 import PoolStandings from '@/components/guests/pool-standings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Users, RefreshCw, Trophy, ChevronDown, ChevronUp
+  Users, RefreshCw, Trophy, ChevronDown, ChevronUp, Loader2
 } from 'lucide-react';
 
+interface Team {
+  id: string;
+  schoolName: string;
+  coachName: string;
+  managerName: string;
+  poolAllocation: string;
+  teamLogo?: string;
+  players: any[];
+}
+
+interface TeamStanding {
+  team: Team;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
+interface PoolData {
+  [key: string]: TeamStanding[];
+}
+
 export default function PoolsPage() {
-  const [isAllocated, setIsAllocated] = useState(false);
-  const [isAllocating, setIsAllocating] = useState(false);
-  const [poolStandings, setPoolStandings] = useState<{[key: string]: TeamStanding[]}>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [poolStandings, setPoolStandings] = useState<PoolData>({});
   const [totalTeams, setTotalTeams] = useState(0);
-  const [allPoolsComplete, setAllPoolsComplete] = useState(false);
+  const [poolTeamCounts, setPoolTeamCounts] = useState<{[key: string]: number}>({});
   const [poolCompletionStatus, setPoolCompletionStatus] = useState<{[key: string]: boolean}>({});
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSelectedTab, setMobileSelectedTab] = useState('overview');
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPoolData();
@@ -34,65 +58,78 @@ export default function PoolsPage() {
     setIsMobile(window.innerWidth < 768);
   };
 
-  const loadPoolData = () => {
+  const loadPoolData = async () => {
     try {
-      const allocated = tournamentUtils.arePoolsAllocated();
-      const teams = storageUtils.getTeams();
-      
-      setIsAllocated(allocated);
-      setTotalTeams(teams.length);
+      setIsLoading(true);
+      setError(null);
 
-      if (allocated) {
-        const standings = tournamentUtils.getAllPoolStandings();
-        setPoolStandings(standings);
-        
-        const completionStatus: {[key: string]: boolean} = {};
-        const poolIds = ['A', 'B', 'C', 'D'];
-        
-        poolIds.forEach(poolId => {
-          completionStatus[poolId] = tournamentUtils.isPoolStageComplete(poolId);
-        });
-        
-        setPoolCompletionStatus(completionStatus);
-        setAllPoolsComplete(tournamentUtils.isPoolStageComplete());
+      // Fetch all pool standings
+      const response = await fetch('/api/standings');
+      
+      if (!response.ok) {
+        throw new Error('Failed to load pool data');
       }
+
+      const data = await response.json();
+      
+      // Process the data for each pool
+      const standings: PoolData = {};
+      const teamCounts: {[key: string]: number} = {};
+      const completionStatus: {[key: string]: boolean} = {};
+
+      const poolIds = ['A', 'B', 'C', 'D'];
+      let totalTeamsCount = 0;
+
+      for (const poolId of poolIds) {
+        const poolResponse = await fetch(`/api/standings?pool=${poolId}`);
+        if (poolResponse.ok) {
+          const poolData = await poolResponse.json();
+          standings[poolId] = poolData.standings || [];
+          teamCounts[poolId] = standings[poolId].length;
+          totalTeamsCount += standings[poolId].length;
+          
+          // Check if pool stage is complete (all matches played)
+          completionStatus[poolId] = await checkPoolCompletion(poolId);
+        }
+      }
+
+      setPoolStandings(standings);
+      setPoolTeamCounts(teamCounts);
+      setTotalTeams(totalTeamsCount);
+      setPoolCompletionStatus(completionStatus);
+
     } catch (error) {
       console.error('Error loading pool data:', error);
+      setError('Failed to load pool data. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAllocatePools = async () => {
-    setIsAllocating(true);
-    
+  const checkPoolCompletion = async (poolId: string): Promise<boolean> => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await fetch(`/api/matches?poolId=${poolId}&stage=pool`);
       
-      tournamentUtils.allocateTeamsToPools();
-      loadPoolData();
+      if (!response.ok) {
+        return false;
+      }
+
+      const matches = await response.json();
+      
+      if (matches.length === 0) {
+        return false;
+      }
+
+      // Check if all pool matches are completed
+      return matches.every((match: any) => match.completed);
     } catch (error) {
-      console.error('Error allocating pools:', error);
-    } finally {
-      setIsAllocating(false);
+      console.error('Error checking pool completion:', error);
+      return false;
     }
   };
 
-  const handleResetPools = async () => {
-    if (!confirm('Are you sure you want to reset pool allocation? This will clear all pools and matches.')) {
-      return;
-    }
-    
-    setIsAllocating(true);
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      tournamentUtils.resetPools();
-      loadPoolData();
-    } catch (error) {
-      console.error('Error resetting pools:', error);
-    } finally {
-      setIsAllocating(false);
-    }
+  const getAllPoolsComplete = (): boolean => {
+    return Object.values(poolCompletionStatus).every(status => status);
   };
 
   const MobileDropdown = () => (
@@ -143,22 +180,41 @@ export default function PoolsPage() {
     </div>
   );
 
-  if (totalTeams === 0) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-600" />
           <p className="text-lg">Loading tournament data...</p>
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+            <p className="text-red-800 mb-4">{error}</p>
+            <Button onClick={loadPoolData} variant="outline" className="border-red-300 text-red-700">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const allPoolsComplete = getAllPoolsComplete();
+
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Header Section */}
       <div className="mb-8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
+          <Trophy className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
             Tournament Pools
           </h1>
@@ -166,6 +222,7 @@ export default function PoolsPage() {
         <p className="text-gray-600 text-base sm:text-lg">Track team progress and pool standings</p>
       </div>
 
+      {/* Controls */}
       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-8">
         <div className="flex items-center gap-4">
           <Button
@@ -177,164 +234,165 @@ export default function PoolsPage() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+            {totalTeams} Teams Total
+          </Badge>
         </div>
+        
+        {allPoolsComplete && (
+          <Badge className="bg-green-100 text-green-700 border-green-200">
+            All Pools Complete
+          </Badge>
+        )}
       </div>
 
-      {!isAllocated && (
-        <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-          <CardContent className="text-center py-8 sm:py-12 px-4">
-            <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-blue-400" />
-            <h3 className="text-lg sm:text-xl font-semibold mb-2 text-blue-800">Ready for Pool Allocation</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto text-sm sm:text-base">
-              {totalTeams} teams are registered and ready to be randomly allocated into pools.
-            </p>
-            {totalTeams !== 28 && (
-              <div className="flex items-center justify-center gap-2 text-orange-700 bg-orange-50 p-3 sm:p-4 rounded-lg max-w-md mx-auto border border-orange-200">
-                <span className="text-xs sm:text-sm">
-                  {totalTeams < 28 
-                    ? `${28 - totalTeams} more teams needed for optimal allocation`
-                    : `${totalTeams - 28} extra teams will be distributed evenly`
-                  }
-                </span>
+      {/* Completion Banner */}
+      {allPoolsComplete && (
+        <Card className="mb-6 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-1">Pool Stage Complete!</h3>
+                  <p className="text-green-700 text-xs sm:text-sm">All pool matches have been played. Ready for knockout stage.</p>
+                </div>
               </div>
-            )}
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
+                <div className="text-center xs:text-right text-xs sm:text-sm mb-2 xs:mb-0 xs:mr-4">
+                  <div className="text-green-800 font-medium">Top 4 advance to Cup</div>
+                  <div className="text-blue-800 font-medium">Bottom 3 advance to Festival</div>
+                </div>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full xs:w-auto text-white text-xs sm:text-sm">
+                  View Brackets
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {isAllocated && (
-        <>
-          {/* Completion Banner */}
-          {allPoolsComplete && (
-            <Card className="mb-6 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="flex-1">
-                      <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-1">Pool Stage Complete!</h3>
-                      <p className="text-green-700 text-xs sm:text-sm">All pool matches have been played. Ready for knockout stage.</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
-                    <div className="text-center xs:text-right text-xs sm:text-sm mb-2 xs:mb-0 xs:mr-4">
-                      <div className="text-green-800 font-medium">Top 4 advance to Cup</div>
-                      <div className="text-blue-800 font-medium">Bottom 3 advance to Festival</div>
-                    </div>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full xs:w-auto text-white text-xs sm:text-sm">
-                      View Brackets
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+      {/* Mobile Dropdown */}
+      {isMobile && <MobileDropdown />}
 
-          {/* Mobile Dropdown */}
-          {isMobile && <MobileDropdown />}
-
-          {/* Tabs Section */}
-          <Tabs 
-            defaultValue="overview" 
-            value={isMobile ? mobileSelectedTab : undefined}
-            onValueChange={isMobile ? setMobileSelectedTab : undefined}
-            className="w-full"
-          >
-            {!isMobile && (
-              <TabsList className="w-full grid grid-cols-3 sm:grid-cols-5 gap-1 p-1 bg-blue-100 rounded-xl border border-blue-200">
-                <TabsTrigger 
-                  value="overview" 
-                  className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
-                >
-                  Overview
-                </TabsTrigger>
-                {['A', 'B', 'C', 'D'].map(poolId => (
-                  <TabsTrigger 
-                    key={poolId}
-                    value={poolId} 
-                    className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
-                  >
-                    Pool {poolId}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            )}
-            
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="mt-4 sm:mt-6 focus:outline-none">
-              <div className="space-y-6">
-                {/* Pool Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {['A', 'B', 'C', 'D'].map(poolId => {
-                    const standings = poolStandings[poolId] || [];
-                    const isComplete = poolCompletionStatus[poolId] || false;
-                    
-                    return (
-                      <Card key={poolId} className={`border-2 shadow-lg ${
-                        isComplete ? 'border-green-200 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50'
-                      }`}>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
-                                {poolId}
-                              </div>
-                              <CardTitle className="text-base sm:text-lg text-blue-800">Pool {poolId}</CardTitle>
-                            </div>
-                            {isComplete && (
-                              <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                                Complete
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {standings.slice(0, 4).map((standing, index) => (
-                              <div key={standing.team.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-blue-100">
-                                <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                                    index < 4 ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
-                                  }`}>
-                                    {index + 1}
-                                  </span>
-                                  <span className="truncate text-sm font-medium text-gray-900" title={standing.team.schoolName}>
-                                    {standing.team.schoolName}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm flex-shrink-0 ml-2">
-                                  <span className="font-bold text-blue-600">{standing.points}</span>
-                                  <span className="text-xs text-gray-500">pts</span>
-                                </div>
-                              </div>
-                            ))}
-                            
-                            {standings.length > 4 && (
-                              <div className="text-center text-xs text-gray-500 pt-2 border-t border-blue-100">
-                                +{standings.length - 4} more teams
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Individual Pool Tabs */}
+      {/* Tabs Section */}
+      <Tabs 
+        defaultValue="overview" 
+        value={isMobile ? mobileSelectedTab : undefined}
+        onValueChange={isMobile ? setMobileSelectedTab : undefined}
+        className="w-full"
+      >
+        {!isMobile && (
+          <TabsList className="w-full grid grid-cols-3 sm:grid-cols-5 gap-1 p-1 bg-blue-100 rounded-xl border border-blue-200">
+            <TabsTrigger 
+              value="overview" 
+              className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
+            >
+              Overview
+            </TabsTrigger>
             {['A', 'B', 'C', 'D'].map(poolId => (
-              <TabsContent key={poolId} value={poolId} className="mt-4 sm:mt-6 focus:outline-none">
-                <PoolStandings 
-                  poolId={poolId}
-                  poolName={`Pool ${poolId}`}
-                  standings={poolStandings[poolId] || []}
-                />
-              </TabsContent>
+              <TabsTrigger 
+                key={poolId}
+                value={poolId} 
+                className="text-xs sm:text-sm py-2 px-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg transition-all"
+              >
+                Pool {poolId}
+                {poolTeamCounts[poolId] > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 w-4 p-0 text-xs bg-white text-blue-600">
+                    {poolTeamCounts[poolId]}
+                  </Badge>
+                )}
+              </TabsTrigger>
             ))}
-          </Tabs>
-        </>
-      )}
+          </TabsList>
+        )}
+        
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="mt-4 sm:mt-6 focus:outline-none">
+          <div className="space-y-6">
+            {/* Pool Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              {['A', 'B', 'C', 'D'].map(poolId => {
+                const standings = poolStandings[poolId] || [];
+                const isComplete = poolCompletionStatus[poolId] || false;
+                const teamCount = poolTeamCounts[poolId] || 0;
+                
+                return (
+                  <Card key={poolId} className={`border-2 shadow-lg ${
+                    isComplete ? 'border-green-200 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50'
+                  }`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${getPoolColor(poolId)}`}>
+                            {poolId}
+                          </div>
+                          <CardTitle className="text-base sm:text-lg text-blue-800">Pool {poolId}</CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isComplete && (
+                            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                              Complete
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="bg-white text-blue-700 border-blue-200 text-xs">
+                            {teamCount} teams
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {teamCount === 0 ? (
+                        <div className="text-center py-6 text-blue-500">
+                          <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No teams allocated</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {standings.slice(0, 4).map((standing, index) => (
+                            <div key={standing.team.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-blue-100">
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
+                                  index < 4 ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
+                                }`}>
+                                  {index + 1}
+                                </span>
+                                <span className="truncate text-sm font-medium text-gray-900" title={standing.team.schoolName}>
+                                  {standing.team.schoolName}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-sm flex-shrink-0 ml-2">
+                                <span className="font-bold text-blue-600">{standing.points}</span>
+                                <span className="text-xs text-gray-500">pts</span>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {standings.length > 4 && (
+                            <div className="text-center text-xs text-gray-500 pt-2 border-t border-blue-100">
+                              +{standings.length - 4} more teams
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Individual Pool Tabs */}
+        {['A', 'B', 'C', 'D'].map(poolId => (
+          <TabsContent key={poolId} value={poolId} className="mt-4 sm:mt-6 focus:outline-none">
+            <PoolStandings 
+              poolId={poolId}
+              poolName={`Pool ${poolId}`}
+              standings={poolStandings[poolId] || []}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }
