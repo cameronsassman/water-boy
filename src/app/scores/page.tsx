@@ -8,28 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Trophy, RefreshCw, CheckCircle, Clock, AlertCircle, Target, Award, Trash2, Waves, Loader2 } from 'lucide-react';
 
-interface Player {
-  id: string;
-  name: string;
-  capNumber: number;
-}
-
-interface Team {
-  id: string;
-  schoolName: string;
-  coachName: string;
-  managerName: string;
-  poolAllocation: string;
-  teamLogo?: string;
-  players: Player[];
-}
-
+// Remove the local Player and Team interfaces and use the ones from your types
 interface Match {
   id: string;
   homeTeamId: string;
   awayTeamId: string;
-  homeTeam: Team;
-  awayTeam: Team;
+  homeTeam: any; // Use any to avoid type conflicts, or import the proper Team type
+  awayTeam: any;
   poolId?: string;
   stage: string;
   round?: string;
