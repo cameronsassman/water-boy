@@ -41,10 +41,11 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
   const [isFilteringTeams, setIsFilteringTeams] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
-  const loadData = async () => {
+  // Load data only once on component mount
+  const loadInitialData = async () => {
     try {
       setIsLoading(true);
       const [teamsData, matchesData] = await Promise.all([
@@ -54,9 +55,19 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       setTeams(teamsData);
       setMatches(matchesData);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading initial data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Refresh only matches when needed (for complex operations)
+  const refreshMatchesOnly = async () => {
+    try {
+      const matchesData = await matchService.getMatches();
+      setMatches(matchesData);
+    } catch (error) {
+      console.error('Error refreshing matches:', error);
     }
   };
 
@@ -139,8 +150,10 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
 
       const knockoutMatches = tournamentLogic.generateKnockoutMatches(allStandingsData, selectedStage);
       
+      // Optimistically add all matches to state
+      const newMatchesWithIds: Match[] = [];
       for (const match of knockoutMatches) {
-        await matchService.createMatch({
+        const createdMatch = await matchService.createMatch({
           homeTeamId: match.homeTeamId,
           awayTeamId: match.awayTeamId,
           poolId: match.poolId,
@@ -150,15 +163,20 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
           arena: match.arena,
           round: match.round
         });
+        newMatchesWithIds.push(createdMatch);
       }
 
+      // Update state with all new matches
+      setMatches(prev => [...prev, ...newMatchesWithIds]);
+
       alert(`Successfully generated ${knockoutMatches.length} ${selectedStage} stage matches`);
-      loadData();
       onMatchesUpdate?.();
       
     } catch (error) {
       console.error('Error generating knockout fixtures:', error);
       alert('Error generating knockout fixtures. Please check console for details.');
+      // Fallback to refresh if optimistic update fails
+      refreshMatchesOnly();
     } finally {
       setIsLoading(false);
     }
@@ -185,8 +203,10 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
 
       const festivalMatches = tournamentLogic.generateFestivalMatches(allStandingsData);
       
+      // Optimistically add all matches to state
+      const newMatchesWithIds: Match[] = [];
       for (const match of festivalMatches) {
-        await matchService.createMatch({
+        const createdMatch = await matchService.createMatch({
           homeTeamId: match.homeTeamId,
           awayTeamId: match.awayTeamId,
           poolId: match.poolId,
@@ -196,15 +216,20 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
           arena: match.arena,
           round: match.round
         });
+        newMatchesWithIds.push(createdMatch);
       }
 
+      // Update state with all new matches
+      setMatches(prev => [...prev, ...newMatchesWithIds]);
+
       alert(`Successfully generated ${festivalMatches.length} festival matches`);
-      loadData();
       onMatchesUpdate?.();
       
     } catch (error) {
       console.error('Error generating festival fixtures:', error);
       alert('Error generating festival fixtures. Please check console for details.');
+      // Fallback to refresh if optimistic update fails
+      refreshMatchesOnly();
     } finally {
       setIsLoading(false);
     }
@@ -223,8 +248,14 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
 
     try {
       setIsSaving(true);
-      await matchService.createMatch(newMatch);
       
+      // Create match in database and get the full match object with ID
+      const createdMatch = await matchService.createMatch(newMatch);
+      
+      // Optimistically update the UI with the new match
+      setMatches(prev => [...prev, createdMatch]);
+      
+      // Reset form
       setNewMatch({
         homeTeamId: '',
         awayTeamId: '',
@@ -237,11 +268,12 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
       });
       
       alert('Match created successfully');
-      loadData();
       onMatchesUpdate?.();
     } catch (error: any) {
       console.error('Error creating match:', error);
       alert(error.message || 'Error creating match');
+      // Fallback to refresh if optimistic update fails
+      refreshMatchesOnly();
     } finally {
       setIsSaving(false);
     }
@@ -253,16 +285,18 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }
 
     try {
-      setIsLoading(true);
+      // Optimistically remove from UI first
+      setMatches(prev => prev.filter(match => match.id !== matchId));
+      
+      // Then delete from database
       await matchService.deleteMatch(matchId);
-      alert('Match deleted successfully');
-      loadData();
+      
       onMatchesUpdate?.();
     } catch (error) {
       console.error('Error deleting match:', error);
       alert('Error deleting match');
-    } finally {
-      setIsLoading(false);
+      // If deletion fails, refresh to sync with server
+      refreshMatchesOnly();
     }
   };
 
@@ -272,14 +306,20 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     }
 
     try {
+      // Optimistically clear all matches from UI
+      setMatches([]);
+      
+      // Delete all matches from database
       for (const match of matches) {
         await matchService.deleteMatch(match.id);
       }
-      setMatches([]);
+      
       alert('All matches cleared successfully');
     } catch (error: any) {
       console.error('Error clearing matches:', error);
       alert(error.message || 'Failed to clear matches');
+      // If clear fails, refresh to sync with server
+      refreshMatchesOnly();
     }
   };
 
@@ -690,6 +730,65 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
               </>
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Generation Options */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Bulk Fixture Generation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Generate Knockout Stage</Label>
+              <Select value={selectedStage} onValueChange={setSelectedStage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cup">Cup</SelectItem>
+                  <SelectItem value="plate">Plate</SelectItem>
+                  <SelectItem value="shield">Shield</SelectItem>
+                  <SelectItem value="playoff">Playoff</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                onClick={generateKnockoutFixtures} 
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  `Generate ${selectedStage} Fixtures`
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Festival Matches</Label>
+              <p className="text-sm text-gray-600">Generate friendly matches for non-advancing teams</p>
+              <Button 
+                onClick={generateFestivalFixtures} 
+                disabled={isLoading}
+                className="w-full"
+                variant="outline"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Festival Matches'
+                )}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
