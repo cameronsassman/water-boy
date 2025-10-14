@@ -257,22 +257,6 @@ export default function ScoresPage() {
               </div>
             )}
           </div>
-          
-          {/* Match Statistics */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
-              <span>{matches.filter(m => m.completed).length} completed</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
-              <span>{matches.filter(m => !m.completed).length} upcoming</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500" />
-              <span>{totalTeams} teams</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -323,11 +307,6 @@ export default function ScoresPage() {
               >
                 <span className="flex items-center gap-2">
                   <span>Day {day}</span>
-                  {scheduledMatches[day] && (
-                    <Badge variant="secondary" className="bg-white text-blue-600 px-1.5 py-0 h-4 text-xs">
-                      {scheduledMatches[day].length}
-                    </Badge>
-                  )}
                 </span>
               </TabsTrigger>
             ))}
@@ -345,18 +324,6 @@ export default function ScoresPage() {
                   <span className="text-center sm:text-left">
                     {getDayDisplayName(day)}
                   </span>
-                  {scheduledMatches[day] && (
-                    <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm font-normal">
-                      <span className="text-green-600 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        {scheduledMatches[day].filter(m => m.completed).length} completed
-                      </span>
-                      <span className="text-blue-600 flex items-center gap-1">
-                        <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                        {scheduledMatches[day].filter(m => !m.completed).length} upcoming
-                      </span>
-                    </div>
-                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 sm:p-4 md:p-6">
