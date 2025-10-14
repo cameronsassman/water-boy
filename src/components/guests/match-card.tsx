@@ -60,7 +60,6 @@ export default function MatchCard({
           color: 'text-yellow-600',
           bgColor: 'bg-yellow-50',
           borderColor: 'border-yellow-200',
-          icon: Trophy,
           label: getRoundLabel(round)
         };
       case 'plate':
@@ -68,7 +67,6 @@ export default function MatchCard({
           color: 'text-blue-600',
           bgColor: 'bg-blue-50',
           borderColor: 'border-blue-200',
-          icon: Target,
           label: getRoundLabel(round)
         };
       case 'shield':
@@ -76,7 +74,6 @@ export default function MatchCard({
           color: 'text-purple-600',
           bgColor: 'bg-purple-50',
           borderColor: 'border-purple-200',
-          icon: Award,
           label: getRoundLabel(round)
         };
       case 'festival':
@@ -84,7 +81,6 @@ export default function MatchCard({
           color: 'text-orange-600',
           bgColor: 'bg-orange-50',
           borderColor: 'border-orange-200',
-          icon: Users,
           label: 'Festival'
         };
       default:
@@ -92,7 +88,6 @@ export default function MatchCard({
           color: 'text-gray-600',
           bgColor: 'bg-gray-50',
           borderColor: 'border-gray-200',
-          icon: Users,
           label: 'Group'
         };
     }
@@ -121,7 +116,6 @@ export default function MatchCard({
   };
 
   const stageInfo = getStageInfo();
-  const StageIcon = stageInfo.icon;
 
   // Early return for invalid match
   if (!match) {
@@ -158,7 +152,6 @@ export default function MatchCard({
                 variant="outline" 
                 className={`text-xs ${stageInfo.color} border ${stageInfo.borderColor} flex items-center gap-1 flex-shrink-0`}
               >
-                <StageIcon className="w-3 h-3" />
                 <span>{stageInfo.label}</span>
               </Badge>
             )}
