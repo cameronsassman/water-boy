@@ -24,7 +24,7 @@ export default function AdminPortal() {
   const totalTeams = 0; // Placeholder
 
   return (
-    <div className="container mx-auto p-6">
+    <div className=" mx-auto p-6">
       <div className="text-center">
         <div className="flex items-center justify-between mb-4">
           <div></div>

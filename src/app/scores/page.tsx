@@ -199,12 +199,6 @@ export default function ScoresPage() {
         <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
           <CardContent className="text-center py-8 sm:py-12">
             <h3 className="text-lg sm:text-xl font-semibold mb-2 text-blue-800">No Fixtures Available</h3>
-            <p className="text-gray-600 mb-4 text-sm sm:text-base">
-              {totalTeams > 0 
-                ? `${totalTeams} teams are registered but no fixtures have been created yet.`
-                : 'No teams are registered yet.'
-              }
-            </p>
             <p className="text-xs sm:text-sm text-gray-500">
               Fixtures need to be created in the admin section first.
             </p>
@@ -270,11 +264,6 @@ export default function ScoresPage() {
             <SelectTrigger id="day-select" className="w-full">
               <SelectValue>
                 {getDayDisplayName(parseInt(selectedDay.replace('day', '')))}
-                {scheduledMatches[parseInt(selectedDay.replace('day', ''))] && (
-                  <span className="text-gray-500 ml-2">
-                    ({scheduledMatches[parseInt(selectedDay.replace('day', ''))].length} matches)
-                  </span>
-                )}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -282,11 +271,6 @@ export default function ScoresPage() {
                 <SelectItem key={day} value={`day${day}`}>
                   <div className="flex items-center justify-between w-full">
                     <span>{getDayDisplayName(day)}</span>
-                    {scheduledMatches[day] && (
-                      <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-600">
-                        {scheduledMatches[day].length}
-                      </Badge>
-                    )}
                   </div>
                 </SelectItem>
               ))}

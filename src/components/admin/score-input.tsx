@@ -53,10 +53,18 @@ export default function ScoreInput() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     loadMatches();
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 1024); // Tablet and mobile
+  };
 
   const loadMatches = async () => {
     try {
@@ -285,25 +293,26 @@ export default function ScoreInput() {
     team: "home" | "away"
   ) => {
     const statTypes = ["goals", "kickOuts", "yellowCards", "redCards"] as const;
+    const teamColor = team === "home" ? "from-blue-500 to-blue-600" : "from-emerald-500 to-emerald-600";
     
     return (
-      <div className="overflow-x-hidden">
-        <table className="w-full text-sm" dir={team === "home" ? "rtl" : "ltr"}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className={`py-3 px-4 font-semibold text-gray-700 sticky top-0 bg-gray-50 w-1/4 ${team === "home" ? "text-right" : "text-left"}`}>
+              <th className="py-3 px-2 font-semibold text-gray-700 sticky top-0 bg-gray-50 text-left w-[30%] min-w-[120px]">
                 Player
               </th>
-              <th className="py-3 px-4 font-semibold text-gray-700 text-center w-3/16 sticky top-0 bg-gray-50">
+              <th className="py-3 px-1 font-semibold text-gray-700 text-center sticky top-0 bg-gray-50 w-[17.5%]">
                 Goals
               </th>
-              <th className="py-3 px-4 font-semibold text-gray-700 text-center w-3/16 sticky top-0 bg-gray-50">
+              <th className="py-3 px-1 font-semibold text-gray-700 text-center sticky top-0 bg-gray-50 w-[17.5%]">
                 Fouls
               </th>
-              <th className="py-3 px-4 font-semibold text-gray-700 text-center w-3/16 sticky top-0 bg-gray-50">
+              <th className="py-3 px-1 font-semibold text-gray-700 text-center sticky top-0 bg-gray-50 w-[17.5%]">
                 Yellow
               </th>
-              <th className="py-3 px-4 font-semibold text-gray-700 text-center w-3/16 sticky top-0 bg-gray-50">
+              <th className="py-3 px-1 font-semibold text-gray-700 text-center sticky top-0 bg-gray-50 w-[17.5%]">
                 Red
               </th>
             </tr>
@@ -318,27 +327,27 @@ export default function ScoreInput() {
                   key={player.id}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-3 px-4">
+                  <td className="py-2 px-2 text-left">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-7 h-7 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm flex-shrink-0 ${
-                          team === "home"
-                            ? "bg-gradient-to-br from-blue-500 to-blue-600"
-                            : "bg-gradient-to-br from-emerald-500 to-emerald-600"
-                        }`}
+                        className={`w-7 h-7 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm flex-shrink-0 bg-gradient-to-br ${teamColor}`}
                       >
                         {player.capNumber}
                       </div>
-                      <span className="font-medium text-gray-900 truncate">{player.name}</span>
+                      {!isMobile && (
+                        <span className="font-medium text-gray-900 truncate text-xs">
+                          {player.name}
+                        </span>
+                      )}
                     </div>
                   </td>
   
                   {statTypes.map((statType) => (
                     <td
                       key={statType}
-                      className="py-3 px-4 text-center"
+                      className="py-2 px-1 text-center"
                     >
-                      <div className="flex items-center justify-center gap-1.5">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() =>
                             updatePlayerStat(
@@ -348,12 +357,12 @@ export default function ScoreInput() {
                               stats[statType] - 1
                             )
                           }
-                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 font-bold transition-colors flex-shrink-0"
+                          className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 font-bold transition-colors flex-shrink-0 text-xs"
                         >
                           −
                         </button>
   
-                        <span className="w-8 text-center font-semibold text-gray-900 text-base">
+                        <span className="w-6 text-center font-semibold text-gray-900 text-sm">
                           {stats[statType]}
                         </span>
   
@@ -366,12 +375,10 @@ export default function ScoreInput() {
                               stats[statType] + 1
                             )
                           }
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold transition-all shadow-sm hover:shadow flex-shrink-0
+                          className={`w-6 h-6 rounded flex items-center justify-center text-white font-bold transition-all shadow-sm hover:shadow flex-shrink-0 text-xs
                             ${
                               statType === "goals"
-                                ? team === "home"
-                                  ? "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                                  : "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                                ? `bg-gradient-to-br ${teamColor} hover:brightness-110`
                                 : statType === "kickOuts"
                                 ? "bg-gradient-to-br from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600"
                                 : statType === "yellowCards"
@@ -406,39 +413,41 @@ export default function ScoreInput() {
 
   if (!selectedMatch) {
     return (
-      <div className="w-full p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+      <div className="w-full p-0">
+        <div className="mb-6 p-4">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
             <Trophy className="text-blue-600" />
             Match Scorecard
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-1 text-sm">
             Select a match to enter scores and player statistics
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          <div className="mx-4 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
             {error}
           </div>
         )}
 
         {availableMatches.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Target className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-xl font-semibold mb-2">No Pending Matches Available</h3>
-              <p className="text-gray-600">
-                Either all matches are completed, or no fixtures have been created yet.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="mx-4">
+            <Card>
+              <CardContent className="text-center py-8">
+                <Target className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-1">No Pending Matches Available</h3>
+                <p className="text-gray-600 text-sm">
+                  Either all matches are completed, or no fixtures have been created yet.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-4">
             {availableMatches.map(match => (
               <Card key={match.id} className="hover:shadow-md cursor-pointer transition-shadow" onClick={() => selectMatch(match)}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline" className="text-xs">
                       {match.stage === 'pool'
                         ? `Pool ${match.poolId}`
@@ -451,16 +460,16 @@ export default function ScoreInput() {
                     </Badge>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium text-sm truncate">{match.homeTeam.schoolName}</span>
+                      <span className="font-medium text-xs truncate">{match.homeTeam.schoolName}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium text-sm truncate">{match.awayTeam.schoolName}</span>
+                      <span className="font-medium text-xs truncate">{match.awayTeam.schoolName}</span>
                     </div>
                   </div>
 
-                  <div className="mt-3 text-xs text-gray-500">
+                  <div className="mt-2 text-xs text-gray-500">
                     Day {match.day} • {match.timeSlot} • Arena {match.arena}
                   </div>
                 </CardContent>
@@ -477,108 +486,108 @@ export default function ScoreInput() {
 
   return (
     <div className="w-full h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
-      <div className="w-full px-4 pt-4 pb-3 flex-shrink-0">
-        <div className="w-full">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="grid grid-cols-3 gap-4 items-center">
-              <div className="text-center">
-                <div className="text-xs font-medium text-gray-500 mb-1">HOME</div>
-                <div className="font-semibold text-gray-900 text-base truncate">
-                  {selectedMatch.homeTeam.schoolName}
-                </div>
+      {/* Header with match info */}
+      <div className="w-full px-0 pt-0 pb-2 flex-shrink-0">
+        <div className="bg-white rounded-none shadow-sm border-b border-gray-200 p-4">
+          <div className="grid grid-cols-3 gap-3 items-center">
+            <div className="text-center">
+              <div className="text-xs font-medium text-gray-500 mb-1">HOME</div>
+              <div className="font-semibold text-gray-900 text-sm truncate">
+                {selectedMatch.homeTeam.schoolName}
               </div>
+            </div>
 
-              <div className="text-center">
-                <div className="flex justify-center items-center gap-3">
-                  <div className="text-4xl font-bold text-blue-600">{homeScore}</div>
-                  <div className="text-2xl font-light text-gray-400">-</div>
-                  <div className="text-4xl font-bold text-emerald-600">{awayScore}</div>
-                </div>
+            <div className="text-center">
+              <div className="flex justify-center items-center gap-2">
+                <div className="text-2xl font-bold text-blue-600">{homeScore}</div>
+                <div className="text-xl font-light text-gray-400">-</div>
+                <div className="text-2xl font-bold text-emerald-600">{awayScore}</div>
               </div>
+            </div>
 
-              <div className="text-center">
-                <div className="text-xs font-medium text-gray-500 mb-1">AWAY</div>
-                <div className="font-semibold text-gray-900 text-base truncate">
-                  {selectedMatch.awayTeam.schoolName}
-                </div>
+            <div className="text-center">
+              <div className="text-xs font-medium text-gray-500 mb-1">AWAY</div>
+              <div className="font-semibold text-gray-900 text-sm truncate">
+                {selectedMatch.awayTeam.schoolName}
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Error and Success Messages */}
       {error && (
-        <div className="w-full px-4 pb-2 flex-shrink-0">
-          <div className="w-full">
-            <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
+        <div className="w-full px-0 pb-1 flex-shrink-0">
+          <div className="mx-4 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
+            {error}
           </div>
         </div>
       )}
 
       {saveSuccess && (
-        <div className="w-full px-4 pb-2 flex-shrink-0">
-          <div className="w-full">
-            <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              <span>Match result saved successfully</span>
-            </div>
+        <div className="w-full px-0 pb-1 flex-shrink-0">
+          <div className="mx-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-xs flex items-center gap-2">
+            <CheckCircle className="w-3 h-3" />
+            <span>Match result saved successfully</span>
           </div>
         </div>
       )}
 
-      <div className="w-full grid grid-cols-2 gap-4 flex-1 px-4 pb-4 min-h-0">
-        <div className="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 px-4 flex-shrink-0">
-            <div className="text-sm font-medium opacity-90">Home Team</div>
-            <div className="text-lg font-bold">{selectedMatch.homeTeam.schoolName}</div>
+      {/* Teams Scorecards */}
+      <div className="w-full grid grid-cols-2 gap-0 flex-1 px-0 pb-0 min-h-0">
+        {/* Home Team */}
+        <div className="flex flex-col bg-white rounded-none shadow-sm border-r border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-2 px-3 flex-shrink-0">
+            <div className="text-xs font-medium opacity-90">Home Team</div>
+            <div className="text-sm font-bold truncate">{selectedMatch.homeTeam.schoolName}</div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {renderPlayerTable(selectedMatch.homeTeam.players, homeTeamStats, 'home')}
           </div>
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm space-y-1 flex-shrink-0">
-            <p className="text-gray-600"><span className="font-medium text-gray-700">Coach:</span> {selectedMatch.homeTeam.coachName || 'N/A'}</p>
-            <p className="text-gray-600"><span className="font-medium text-gray-700">Manager:</span> {selectedMatch.homeTeam.managerName || 'N/A'}</p>
+          <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 text-xs space-y-1 flex-shrink-0">
+            <p className="text-gray-600 truncate"><span className="font-medium text-gray-700">Coach:</span> {selectedMatch.homeTeam.coachName || 'N/A'}</p>
+            <p className="text-gray-600 truncate"><span className="font-medium text-gray-700">Manager:</span> {selectedMatch.homeTeam.managerName || 'N/A'}</p>
           </div>
         </div>
 
-        <div className="flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-center py-3 px-4 flex-shrink-0">
-            <div className="text-sm font-medium opacity-90">Away Team</div>
-            <div className="text-lg font-bold">{selectedMatch.awayTeam.schoolName}</div>
+        {/* Away Team */}
+        <div className="flex flex-col bg-white rounded-none shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-center py-2 px-3 flex-shrink-0">
+            <div className="text-xs font-medium opacity-90">Away Team</div>
+            <div className="text-sm font-bold truncate">{selectedMatch.awayTeam.schoolName}</div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {renderPlayerTable(selectedMatch.awayTeam.players, awayTeamStats, 'away')}
           </div>
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm space-y-1 flex-shrink-0">
-            <p className="text-gray-600"><span className="font-medium text-gray-700">Coach:</span> {selectedMatch.awayTeam.coachName || 'N/A'}</p>
-            <p className="text-gray-600"><span className="font-medium text-gray-700">Manager:</span> {selectedMatch.awayTeam.managerName || 'N/A'}</p>
+          <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 text-xs space-y-1 flex-shrink-0">
+            <p className="text-gray-600 truncate"><span className="font-medium text-gray-700">Coach:</span> {selectedMatch.awayTeam.coachName || 'N/A'}</p>
+            <p className="text-gray-600 truncate"><span className="font-medium text-gray-700">Manager:</span> {selectedMatch.awayTeam.managerName || 'N/A'}</p>
           </div>
         </div>
       </div>
 
-      <div className="fixed bottom-6 right-6 flex gap-3">
+      {/* Action Buttons */}
+      <div className="fixed bottom-4 right-4 flex gap-2">
         <Button 
           onClick={clearMatch} 
           variant="outline" 
-          size="lg"
-          className="shadow-lg hover:shadow-xl transition-shadow bg-white"
+          size="sm"
+          className="shadow-lg hover:shadow-xl transition-shadow bg-white text-xs"
         >
-          <X className="w-4 h-4 mr-2" /> Back
+          <X className="w-3 h-3 mr-1" /> Back
         </Button>
         <Button 
           onClick={saveMatchResult} 
           disabled={isSaving} 
-          size="lg" 
-          className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all"
+          size="sm" 
+          className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all text-xs"
         >
           {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
           ) : (
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="w-3 h-3 mr-1" />
           )}
-          {isSaving ? 'Saving...' : 'Save Result'}
+          {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </div>
