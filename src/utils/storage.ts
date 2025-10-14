@@ -309,7 +309,7 @@ const API_BASE = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 export const teamService = {
   // Create a new team
   async createTeam(teamData: Omit<Team, 'id'>): Promise<Team> {
-    const response = await fetch(`${API_BASE}/api/teams`, {
+    const response = await fetch('/api/teams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ export const teamService = {
 
   // Get all teams
   async getTeams(): Promise<Team[]> {
-    const response = await fetch(`${API_BASE}/api/teams`);
+    const response = await fetch('/api/teams');
     
     if (!response.ok) {
       throw new Error('Failed to fetch teams');
@@ -338,7 +338,7 @@ export const teamService = {
 
   // Get team by ID
   async getTeam(id: string): Promise<Team> {
-    const response = await fetch(`${API_BASE}/api/teams/${id}`);
+    const response = await fetch(`/api/teams/${id}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch team');
@@ -349,7 +349,7 @@ export const teamService = {
 
   // Delete team
   async deleteTeam(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/teams/${id}`, {
+    const response = await fetch(`/api/teams/${id}`, {
       method: 'DELETE',
     });
 
@@ -366,7 +366,7 @@ export type { Player, Team };
 export const matchService = {
   // Create a new match
   async createMatch(matchData: any): Promise<any> {
-    const response = await fetch(`${API_BASE}/api/matches`, {
+    const response = await fetch('/api/matches', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(matchData),
@@ -388,7 +388,7 @@ export const matchService = {
     if (filters?.poolId) params.append('poolId', filters.poolId);
     if (filters?.completed !== undefined) params.append('completed', filters.completed.toString());
 
-    const url = `${API_BASE}/api/matches${params.toString() ? `?${params.toString()}` : ''}`;
+    const url = `/api/matches${params.toString() ? `?${params.toString()}` : ''}`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -400,7 +400,7 @@ export const matchService = {
 
   // Delete match
   async deleteMatch(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/matches/${id}`, {
+    const response = await fetch(`/api/matches/${id}`, {
       method: 'DELETE',
     });
 
