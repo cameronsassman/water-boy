@@ -303,7 +303,7 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
     switch (day) {
       case 1:
         return [
-          '15:00', '16:00', '16:20', '16:40', '17:00', '17:20', '17:40', 
+          '15:40', '16:00', '16:20', '16:40', '17:00', '17:20', '17:40', 
           '18:00', '18:20', '18:40', '19:00'
         ];
       case 2:
