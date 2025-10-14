@@ -21,7 +21,7 @@ export default function Loading() {
           
           {/* Subtitle */}
           <div className="text-sm text-blue-600">
-            U14 Water Polo Tournament
+            SACS Water Polo Tournament
           </div>
         </div>
       </div>
