@@ -391,7 +391,7 @@ export default function ScoresPage() {
                       {arena1Match ? (
                         <MatchCard 
                           match={arena1Match} 
-                          showPool={arena1Match.stage === 'group'} 
+                          showPool={arena1Match.stage === 'pool'} 
                           showProgression={true}
                           size="small"
                         />
@@ -413,7 +413,7 @@ export default function ScoresPage() {
                       {arena2Match ? (
                         <MatchCard 
                           match={arena2Match} 
-                          showPool={arena2Match.stage === 'group'} 
+                          showPool={arena2Match.stage === 'pool'} 
                           showProgression={true}
                           size="small"
                         />
