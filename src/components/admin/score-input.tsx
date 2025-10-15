@@ -450,7 +450,7 @@ export default function ScoreInput() {
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline" className="text-xs">
                       {match.stage === 'pool'
-                        ? `Pool ${match.poolId}`
+                        ? `Group ${match.poolId}`
                         : match.round
                           ? `${match.stage.charAt(0).toUpperCase() + match.stage.slice(1)} ${match.round}`
                           : match.stage.charAt(0).toUpperCase() + match.stage.slice(1)}

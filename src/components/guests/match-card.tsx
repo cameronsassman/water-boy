@@ -158,7 +158,7 @@ export default function MatchCard({
             
             {showPool && poolId && (
               <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300">
-                Pool {poolId}
+                Group {poolId}
               </Badge>
             )}
             
