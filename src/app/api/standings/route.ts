@@ -1,4 +1,3 @@
-// app/api/standings/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
@@ -7,27 +6,54 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const pool = searchParams.get('pool');
 
-    // Get all teams in the specified pool
+    // Get teams with optimized query
     const teams = await prisma.team.findMany({
       where: pool ? { poolAllocation: pool } : {},
-      include: {
+      select: {
+        id: true,
+        schoolName: true,
+        coachName: true,
+        managerName: true,
+        poolAllocation: true,
+        teamLogo: true,
         players: {
-          orderBy: { capNumber: 'asc' }
+          orderBy: { capNumber: 'asc' },
+          select: {
+            id: true,
+            name: true,
+            capNumber: true,
+          }
         },
         homeMatches: {
-          include: {
-            matchResult: true
+          where: {
+            matchResult: { completed: true }
+          },
+          select: {
+            matchResult: {
+              select: {
+                homeScore: true,
+                awayScore: true
+              }
+            }
           }
         },
         awayMatches: {
-          include: {
-            matchResult: true
+          where: {
+            matchResult: { completed: true }
+          },
+          select: {
+            matchResult: {
+              select: {
+                homeScore: true,
+                awayScore: true
+              }
+            }
           }
         }
       }
     });
 
-    // Calculate standings for each team
+    // Calculate standings
     const standings = teams.map(team => {
       let played = 0;
       let won = 0;
@@ -37,15 +63,15 @@ export async function GET(request: NextRequest) {
       let goalsAgainst = 0;
 
       // Process home matches
-      team.homeMatches.forEach(match => {
-        if (match.matchResult && match.matchResult.completed) {
+      team.homeMatches.forEach(({ matchResult }) => {
+        if (matchResult) {
           played++;
-          goalsFor += match.matchResult.homeScore;
-          goalsAgainst += match.matchResult.awayScore;
+          goalsFor += matchResult.homeScore;
+          goalsAgainst += matchResult.awayScore;
 
-          if (match.matchResult.homeScore > match.matchResult.awayScore) {
+          if (matchResult.homeScore > matchResult.awayScore) {
             won++;
-          } else if (match.matchResult.homeScore === match.matchResult.awayScore) {
+          } else if (matchResult.homeScore === matchResult.awayScore) {
             drawn++;
           } else {
             lost++;
@@ -54,15 +80,15 @@ export async function GET(request: NextRequest) {
       });
 
       // Process away matches
-      team.awayMatches.forEach(match => {
-        if (match.matchResult && match.matchResult.completed) {
+      team.awayMatches.forEach(({ matchResult }) => {
+        if (matchResult) {
           played++;
-          goalsFor += match.matchResult.awayScore;
-          goalsAgainst += match.matchResult.homeScore;
+          goalsFor += matchResult.awayScore;
+          goalsAgainst += matchResult.homeScore;
 
-          if (match.matchResult.awayScore > match.matchResult.homeScore) {
+          if (matchResult.awayScore > matchResult.homeScore) {
             won++;
-          } else if (match.matchResult.awayScore === match.matchResult.homeScore) {
+          } else if (matchResult.awayScore === matchResult.homeScore) {
             drawn++;
           } else {
             lost++;
@@ -86,7 +112,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Sort standings by points, then goal difference, then goals for
+    // Sort standings
     standings.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;

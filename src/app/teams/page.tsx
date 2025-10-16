@@ -384,7 +384,6 @@ export default function TeamsPage() {
                     </thead>
                     <tbody>
                       {Object.values(teamStats.playerStats)
-                        .sort((a, b) => b.totalGoals - a.totalGoals)
                         .map((player, index) => (
                         <tr 
                           key={player.playerId} 
