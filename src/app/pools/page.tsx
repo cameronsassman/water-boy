@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PoolStandings from '@/components/guests/pool-standings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Users, RefreshCw, Trophy, ChevronDown, ChevronUp, Loader2
+  Users, RefreshCw, ChevronDown, ChevronUp, Loader2
 } from 'lucide-react';
 
 interface Team {
@@ -36,6 +36,21 @@ interface PoolData {
   [key: string]: TeamStanding[];
 }
 
+interface ApiResponse {
+  standings: PoolData;
+  completionStatus: { [key: string]: boolean };
+  teamCounts: { [key: string]: number };
+  totalTeams: number;
+  timestamp: string;
+}
+
+// Simple cache implementation
+const cache = {
+  data: null as ApiResponse | null,
+  timestamp: 0,
+  duration: 30000, // 30 seconds cache
+};
+
 export default function PoolsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [poolStandings, setPoolStandings] = useState<PoolData>({});
@@ -47,99 +62,85 @@ export default function PoolsPage() {
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPoolData();
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+  const checkMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < 768);
   }, []);
 
-  const checkMobile = () => {
-    setIsMobile(window.innerWidth < 768);
-  };
+  const getAllPoolsComplete = useCallback((): boolean => {
+    return Object.values(poolCompletionStatus).every(status => status);
+  }, [poolCompletionStatus]);
 
-  const loadPoolData = async () => {
+  const loadPoolData = useCallback(async () => {
+    // Check cache first
+    const now = Date.now();
+    if (cache.data && (now - cache.timestamp) < cache.duration) {
+      const cachedData = cache.data;
+      setPoolStandings(cachedData.standings);
+      setPoolTeamCounts(cachedData.teamCounts);
+      setTotalTeams(cachedData.totalTeams);
+      setPoolCompletionStatus(cachedData.completionStatus);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // Fetch all pool standings
-      const response = await fetch('/api/standings');
-      
+      // Single API call to get all standings data
+      const response = await fetch('/api/standings/all', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to load pool data');
+        throw new Error(`Failed to load standings data: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
       
-      // Process the data for each pool
-      const standings: PoolData = {};
-      const teamCounts: {[key: string]: number} = {};
-      const completionStatus: {[key: string]: boolean} = {};
+      // Cache the response
+      cache.data = data;
+      cache.timestamp = Date.now();
 
-      const poolIds = ['A', 'B', 'C', 'D'];
-      let totalTeamsCount = 0;
-
-      for (const poolId of poolIds) {
-        const poolResponse = await fetch(`/api/standings?pool=${poolId}`);
-        if (poolResponse.ok) {
-          const poolData = await poolResponse.json();
-          standings[poolId] = poolData.standings || [];
-          teamCounts[poolId] = standings[poolId].length;
-          totalTeamsCount += standings[poolId].length;
-          
-          // Check if pool stage is complete (all matches played)
-          completionStatus[poolId] = await checkPoolCompletion(poolId);
-        }
-      }
-
-      setPoolStandings(standings);
-      setPoolTeamCounts(teamCounts);
-      setTotalTeams(totalTeamsCount);
-      setPoolCompletionStatus(completionStatus);
+      setPoolStandings(data.standings);
+      setPoolTeamCounts(data.teamCounts);
+      setTotalTeams(data.totalTeams);
+      setPoolCompletionStatus(data.completionStatus);
 
     } catch (error) {
-      console.error('Error loading pool data:', error);
-      setError('Failed to load pool data. Please try again.');
+      console.error('Error loading standings data:', error);
+      setError('Failed to load standings data. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const checkPoolCompletion = async (poolId: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/matches?poolId=${poolId}&stage=pool`);
-      
-      if (!response.ok) {
-        return false;
-      }
+  useEffect(() => {
+    loadPoolData();
+    
+    const handleResize = () => {
+      checkMobile();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    checkMobile();
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [loadPoolData, checkMobile]);
 
-      const matches = await response.json();
-      
-      if (matches.length === 0) {
-        return false;
-      }
-
-      // Check if all pool matches are completed
-      return matches.every((match: any) => match.completed);
-    } catch (error) {
-      console.error('Error checking pool completion:', error);
-      return false;
-    }
-  };
-
-  const getAllPoolsComplete = (): boolean => {
-    return Object.values(poolCompletionStatus).every(status => status);
-  };
-
-  const MobileDropdown = () => (
+  const MobileDropdown = useCallback(() => (
     <div className="relative w-full mb-4">
       <button
         onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
         className="w-full flex items-center justify-between p-4 bg-white border-2 border-blue-200 rounded-lg shadow-sm hover:bg-blue-50 transition-colors"
       >
         <span className="font-semibold text-blue-800">
-          {mobileSelectedTab === 'overview' ? 'Overview' : `Pool ${mobileSelectedTab}`}
+          {mobileSelectedTab === 'overview' ? 'Overview' : `Group ${mobileSelectedTab}`}
         </span>
         {isMobileDropdownOpen ? (
           <ChevronUp className="w-5 h-5 text-blue-600" />
@@ -178,7 +179,17 @@ export default function PoolsPage() {
         </div>
       )}
     </div>
-  );
+  ), [isMobileDropdownOpen, mobileSelectedTab]);
+
+  const getPoolColor = useCallback((poolId: string): string => {
+    const colors = {
+      'A': 'bg-blue-600',
+      'B': 'bg-green-600', 
+      'C': 'bg-orange-600',
+      'D': 'bg-purple-600'
+    };
+    return colors[poolId as keyof typeof colors] || 'bg-gray-600';
+  }, []);
 
   if (isLoading) {
     return (
@@ -218,7 +229,7 @@ export default function PoolsPage() {
             Tournament Groups
           </h1>
         </div>
-        <p className="text-gray-600 text-base sm:text-lg">Track team progress and pool standings</p>
+        <p className="text-gray-600 text-base sm:text-lg">Track team progress and group standings</p>
       </div>
 
       {/* Controls */}
@@ -229,10 +240,14 @@ export default function PoolsPage() {
             variant="outline"
             size="sm"
             className="border-blue-300 text-blue-700 hover:bg-blue-50"
+            disabled={isLoading}
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </Button>
+          <div className="text-sm text-gray-500">
+            {totalTeams} teams total
+          </div>
         </div>
         
         {allPoolsComplete && (
@@ -250,7 +265,7 @@ export default function PoolsPage() {
               <div className="flex items-start gap-3 flex-1">
                 <div className="flex-1">
                   <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-1">Group Stage Complete!</h3>
-                  <p className="text-green-700 text-xs sm:text-sm">All pool matches have been played. Ready for knockout stage.</p>
+                  <p className="text-green-700 text-xs sm:text-sm">All group matches have been played. Ready for knockout stage.</p>
                 </div>
               </div>
               <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-3 w-full sm:w-auto">
@@ -300,7 +315,7 @@ export default function PoolsPage() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="mt-4 sm:mt-6 focus:outline-none">
           <div className="space-y-6">
-            {/* Pool Cards Grid */}
+            {/* Group Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {['A', 'B', 'C', 'D'].map(poolId => {
                 const standings = poolStandings[poolId] || [];
@@ -319,6 +334,9 @@ export default function PoolsPage() {
                           </div>
                           <CardTitle className="text-base sm:text-lg text-blue-800">Group {poolId}</CardTitle>
                         </div>
+                        <Badge variant="outline" className={isComplete ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}>
+                          {teamCount} teams
+                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -363,12 +381,12 @@ export default function PoolsPage() {
           </div>
         </TabsContent>
         
-        {/* Individual Pool Tabs */}
+        {/* Individual Group Tabs */}
         {['A', 'B', 'C', 'D'].map(poolId => (
           <TabsContent key={poolId} value={poolId} className="mt-4 sm:mt-6 focus:outline-none">
             <PoolStandings 
               poolId={poolId}
-              poolName={`Pool ${poolId}`}
+              poolName={`Group ${poolId}`}
               standings={poolStandings[poolId] || []}
             />
           </TabsContent>
@@ -376,14 +394,4 @@ export default function PoolsPage() {
       </Tabs>
     </div>
   );
-}
-
-function getPoolColor(poolId: string): string {
-  const colors = {
-    'A': 'bg-blue-600',
-    'B': 'bg-green-600', 
-    'C': 'bg-orange-600',
-    'D': 'bg-purple-600'
-  };
-  return colors[poolId as keyof typeof colors] || 'bg-gray-600';
 }

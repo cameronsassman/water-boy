@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Target, Save, X, CheckCircle, Loader2 } from 'lucide-react';
+import { Trophy, Target, Save, X, CheckCircle, Loader2, Edit2, History } from 'lucide-react';
 
 interface Player {
   id: string;
@@ -44,8 +44,16 @@ interface PlayerStats {
   redCards: number;
 }
 
+interface MatchResult {
+  id: string;
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+}
+
 export default function ScoreInput() {
   const [availableMatches, setAvailableMatches] = useState<Match[]>([]);
+  const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [homeTeamStats, setHomeTeamStats] = useState<PlayerStats[]>([]);
   const [awayTeamStats, setAwayTeamStats] = useState<PlayerStats[]>([]);
@@ -54,6 +62,8 @@ export default function ScoreInput() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showPending, setShowPending] = useState(true);
+  const [matchResultId, setMatchResultId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMatches();
@@ -63,30 +73,34 @@ export default function ScoreInput() {
   }, []);
 
   const checkMobile = () => {
-    setIsMobile(window.innerWidth < 1024); // Tablet and mobile
+    setIsMobile(window.innerWidth < 1024);
   };
 
   const loadMatches = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/matches?completed=false');
+      
+      const response = await fetch('/api/matches');
       
       if (!response.ok) {
         throw new Error('Failed to load matches');
       }
       
-      const matches: Match[] = await response.json();
+      const allMatches: Match[] = await response.json();
       
-      // Filter matches that have both teams loaded
-      const validMatches = matches.filter(match => 
+      const validMatches = allMatches.filter(match => 
         match.homeTeam && 
         match.awayTeam && 
         match.homeTeam.players && 
         match.awayTeam.players
       );
       
-      setAvailableMatches(validMatches);
+      const pending = validMatches.filter(m => !m.completed);
+      const completed = validMatches.filter(m => m.completed);
+      
+      setAvailableMatches(pending);
+      setCompletedMatches(completed);
     } catch (error) {
       console.error('Error loading matches:', error);
       setError('Failed to load matches. Please try again.');
@@ -95,25 +109,24 @@ export default function ScoreInput() {
     }
   };
 
-  const selectMatch = async (match: Match) => {
+  const selectMatch = async (match: Match, isCompleted: boolean = false) => {
     setSelectedMatch(match);
+    setMatchResultId(null);
     setError(null);
 
     try {
-      // Check if there's an existing result
       const response = await fetch(`/api/match-results?matchId=${match.id}`);
       
       if (response.ok) {
         const existingResult = await response.json();
         
         if (existingResult) {
-          // Load existing player stats
+          setMatchResultId(existingResult.id);
           const statsResponse = await fetch(`/api/player-stats?matchResultId=${existingResult.id}`);
           
           if (statsResponse.ok) {
             const playerStats = await statsResponse.json();
             
-            // Separate home and away team stats
             const homeStats: PlayerStats[] = [];
             const awayStats: PlayerStats[] = [];
             
@@ -141,7 +154,6 @@ export default function ScoreInput() {
         }
       }
       
-      // Initialize new stats if no existing result
       const homeStats = match.homeTeam.players.map(player => ({
         playerId: player.id,
         capNumber: player.capNumber,
@@ -199,7 +211,7 @@ export default function ScoreInput() {
       const homeScore = calculateTeamScore(homeTeamStats);
       const awayScore = calculateTeamScore(awayTeamStats);
 
-      // Create match result
+      // Save or update match result (POST handles both create and update)
       const resultResponse = await fetch('/api/match-results', {
         method: 'POST',
         headers: {
@@ -216,11 +228,24 @@ export default function ScoreInput() {
       });
 
       if (!resultResponse.ok) {
-        const errorData = await resultResponse.json();
-        throw new Error(errorData.error || 'Failed to save match result');
+        const text = await resultResponse.text();
+        console.error('Match result response:', text);
+        throw new Error(`Failed to save match result (${resultResponse.status})`);
       }
 
       const matchResult = await resultResponse.json();
+      const resultId = matchResult.id;
+
+      // Delete existing player stats if editing
+      if (matchResultId) {
+        const deleteResponse = await fetch(`/api/player-stats?matchResultId=${matchResultId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!deleteResponse.ok) {
+          console.warn('Failed to delete old player stats, continuing anyway');
+        }
+      }
 
       // Save player stats
       const allStats = [...homeTeamStats, ...awayTeamStats];
@@ -232,7 +257,7 @@ export default function ScoreInput() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            matchResultId: matchResult.id,
+            matchResultId: resultId,
             playerId: stat.playerId,
             capNumber: stat.capNumber,
             goals: stat.goals,
@@ -243,8 +268,9 @@ export default function ScoreInput() {
         });
 
         if (!statResponse.ok) {
-          const errorData = await statResponse.json();
-          throw new Error(errorData.error || 'Failed to save player stats');
+          const text = await statResponse.text();
+          console.error('Player stats response:', text);
+          throw new Error(`Failed to save player stats (${statResponse.status})`);
         }
       }
 
@@ -262,8 +288,9 @@ export default function ScoreInput() {
       });
 
       if (!matchResponse.ok) {
-        const errorData = await matchResponse.json();
-        throw new Error(errorData.error || 'Failed to update match status');
+        const text = await matchResponse.text();
+        console.error('Match update response:', text);
+        throw new Error(`Failed to update match status (${matchResponse.status})`);
       }
 
       // Reload matches
@@ -284,6 +311,7 @@ export default function ScoreInput() {
     setSelectedMatch(null);
     setHomeTeamStats([]);
     setAwayTeamStats([]);
+    setMatchResultId(null);
     setError(null);
   };
 
@@ -412,6 +440,9 @@ export default function ScoreInput() {
   }
 
   if (!selectedMatch) {
+    const matchesToDisplay = showPending ? availableMatches : completedMatches;
+    const matchType = showPending ? "Pending" : "Completed";
+    
     return (
       <div className="w-full p-0">
         <div className="mb-6 p-4">
@@ -420,8 +451,29 @@ export default function ScoreInput() {
             Match Scorecard
           </h1>
           <p className="text-gray-600 mt-1 text-sm">
-            Select a match to enter scores and player statistics
+            {showPending 
+              ? 'Select a match to enter scores and player statistics'
+              : 'Select a match to edit scores and player statistics'}
           </p>
+        </div>
+
+        <div className="mb-4 px-4 flex gap-2">
+          <Button
+            onClick={() => setShowPending(true)}
+            variant={showPending ? "default" : "outline"}
+            size="sm"
+            className="text-xs"
+          >
+            <Target className="w-3 h-3 mr-1" /> Pending
+          </Button>
+          <Button
+            onClick={() => setShowPending(false)}
+            variant={!showPending ? "default" : "outline"}
+            size="sm"
+            className="text-xs"
+          >
+            <History className="w-3 h-3 mr-1" /> Completed
+          </Button>
         </div>
 
         {error && (
@@ -430,22 +482,24 @@ export default function ScoreInput() {
           </div>
         )}
 
-        {availableMatches.length === 0 ? (
+        {matchesToDisplay.length === 0 ? (
           <div className="mx-4">
             <Card>
               <CardContent className="text-center py-8">
                 <Target className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-1">No Pending Matches Available</h3>
+                <h3 className="text-lg font-semibold mb-1">No {matchType} Matches</h3>
                 <p className="text-gray-600 text-sm">
-                  Either all matches are completed, or no fixtures have been created yet.
+                  {showPending 
+                    ? 'All matches are completed, or no fixtures have been created yet.'
+                    : 'No completed matches available.'}
                 </p>
               </CardContent>
             </Card>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-4">
-            {availableMatches.map(match => (
-              <Card key={match.id} className="hover:shadow-md cursor-pointer transition-shadow" onClick={() => selectMatch(match)}>
+            {matchesToDisplay.map(match => (
+              <Card key={match.id} className="hover:shadow-md cursor-pointer transition-shadow" onClick={() => selectMatch(match, !showPending)}>
                 <CardContent className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline" className="text-xs">
@@ -455,17 +509,23 @@ export default function ScoreInput() {
                           ? `${match.stage.charAt(0).toUpperCase() + match.stage.slice(1)} ${match.round}`
                           : match.stage.charAt(0).toUpperCase() + match.stage.slice(1)}
                     </Badge>
-                    <Badge variant="secondary" className="text-xs">
-                      Pending
+                    <Badge variant={showPending ? "secondary" : "default"} className="text-xs">
+                      {showPending ? 'Pending' : 'Completed'}
                     </Badge>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-xs truncate">{match.homeTeam.schoolName}</span>
+                      {match.homeScore !== undefined && (
+                        <span className="font-bold text-xs text-blue-600">{match.homeScore}</span>
+                      )}
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-xs truncate">{match.awayTeam.schoolName}</span>
+                      {match.awayScore !== undefined && (
+                        <span className="font-bold text-xs text-emerald-600">{match.awayScore}</span>
+                      )}
                     </div>
                   </div>
 
@@ -503,6 +563,11 @@ export default function ScoreInput() {
                 <div className="text-xl font-light text-gray-400">-</div>
                 <div className="text-2xl font-bold text-emerald-600">{awayScore}</div>
               </div>
+              {matchResultId && (
+                <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1">
+                  <Edit2 className="w-2.5 h-2.5" /> Editing
+                </div>
+              )}
             </div>
 
             <div className="text-center">

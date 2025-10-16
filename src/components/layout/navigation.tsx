@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const navigationItems = [
   { name: 'Home', href: '/' },
-  // { name: 'Rules', href: '/rules' },
+  { name: 'Rules', href: '/rules' },
   // { name: 'Sponsors', href: '/sponsors' },
   { name: 'Results', href: '/scores' },
   { name: 'Teams', href: '/teams' },
   { name: 'Groups', href: '/pools' },
+,
   // { name: 'Knockout Bracket', href: '/brackets' },
 ];
 
