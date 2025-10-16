@@ -10,7 +10,6 @@ const navigationItems = [
   { name: 'Results', href: '/scores' },
   { name: 'Teams', href: '/teams' },
   { name: 'Groups', href: '/pools' },
-,
   // { name: 'Knockout Bracket', href: '/brackets' },
 ];
 
