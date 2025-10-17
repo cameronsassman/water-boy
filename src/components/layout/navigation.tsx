@@ -9,7 +9,7 @@ const navigationItems = [
   // { name: 'Sponsors', href: '/sponsors' },
   { name: 'Results', href: '/scores' },
   { name: 'Teams', href: '/teams' },
-  { name: 'Groups', href: '/pools' },
+  // { name: 'Groups', href: '/pools' },
   // { name: 'Knockout Bracket', href: '/brackets' },
 ];
 
