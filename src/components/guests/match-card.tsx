@@ -52,67 +52,146 @@ export default function MatchCard({
                        !homeTeam.schoolName || !awayTeam.schoolName;
   
   const isScheduled = timeSlot && arena;
-  
+
   const getStageInfo = () => {
+    const baseInfo = {
+      color: '',
+      bgColor: '',
+      borderColor: '',
+      label: '',
+      description: '',
+      priority: 0
+    };
+
     switch (stage) {
       case 'cup':
         return {
-          color: 'text-yellow-600',
+          ...baseInfo,
+          color: 'text-yellow-700',
           bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-yellow-300',
+          label: getRoundLabel(round),
+          description: 'Championship Bracket',
+          priority: 6
         };
       case 'plate':
         return {
-          color: 'text-blue-600',
+          ...baseInfo,
+          color: 'text-blue-700',
           bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-blue-300',
+          label: getRoundLabel(round),
+          description: 'Plate Competition',
+          priority: 5
         };
       case 'shield':
         return {
-          color: 'text-purple-600',
+          ...baseInfo,
+          color: 'text-purple-700',
           bgColor: 'bg-purple-50',
-          borderColor: 'border-purple-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-purple-300',
+          label: getRoundLabel(round),
+          description: 'Shield Competition',
+          priority: 4
         };
       case 'festival':
         return {
-          color: 'text-orange-600',
+          ...baseInfo,
+          color: 'text-orange-700',
           bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
-          label: 'Festival'
+          borderColor: 'border-orange-300',
+          label: getRoundLabel(round),
+          description: 'Festival Games',
+          priority: 3
         };
+      case 'playoff':
+        return {
+          ...baseInfo,
+          color: 'text-red-700',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-300',
+          label: getRoundLabel(round),
+          description: 'Placement Playoffs',
+          priority: 2
+        };
+      case 'pool':
       default:
         return {
-          color: 'text-gray-600',
+          ...baseInfo,
+          color: 'text-gray-700',
           bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
-          label: 'Group'
+          borderColor: 'border-gray-300',
+          label: poolId ? `Pool ${poolId}` : 'Group Stage',
+          description: 'Group Stage',
+          priority: 1
         };
     }
   };
 
   const getRoundLabel = (round?: string): string => {
-    if (!round) return stage === 'group' ? 'Group' : 'Match';
+    if (!round) return stage === 'pool' ? 'Group' : 'Match';
     
+    // Handle stage-specific rounds first
+    if (stage === 'shield') {
+      switch (round) {
+        case 'quarter-final': return 'Shield QF';
+        case 'semi-final': return 'Shield Semi';
+        case 'final': return 'Shield Final';
+        case 'third-place': return 'Shield 3rd';
+      }
+    }
+    
+    if (stage === 'plate') {
+      switch (round) {
+        case 'semi-final': return 'Plate Semi';
+        case 'final': return 'Plate Final';
+        case 'third-place': return 'Plate 3rd';
+      }
+    }
+    
+    if (stage === 'festival') {
+      switch (round) {
+        case 'festival-tier-one': return 'Festival Tier 1';
+        case 'festival-tier-two': return 'Festival Tier 2';
+        case 'festival-tier-three': return 'Festival Tier 3';
+        case 'festival-tier-four': return 'Festival Tier 4';
+        case '1st-2nd': return '1st/2nd Playoff';
+        case '3rd-4th': return '3rd/4th Playoff';
+        case '5th-6th': return '5th/6th Playoff';
+        case '7th-8th': return '7th/8th Playoff';
+        case '9th-10th': return '9th/10th Playoff';
+        case '11th-12th': return '11th/12th Playoff';
+        case '13th-14th': return '13th/14th Playoff';
+        case '15th-16th': return '15th/16th Playoff';
+      }
+    }
+    
+    // Generic round labels
     const roundLabels: { [key: string]: string } = {
-      'round-of-16': 'R16',
-      'quarter-final': 'QF',
-      'semi-final': 'SF',
+      // Cup rounds
+      'round-of-16': 'Round of 16',
+      'quarter-final': 'Quarter Final',
+      'semi-final': 'Semi Final',
       'final': 'Final',
-      'third-place': '3rd',
-      'plate-round-1': 'Plate R1',
-      'plate-quarter-final': 'Plate QF',
-      'plate-semi-final': 'Plate SF',
-      'plate-final': 'Plate Final',
-      'plate-third-place': 'Plate 3rd',
-      'shield-semi-final': 'Shield SF',
-      'shield-final': 'Shield Final',
-      'shield-third-place': 'Shield 3rd'
+      'third-place': '3rd Place',
+      
+      // Playoff rounds
+      'playoff-round-1': 'Playoff R1',
+      '13th-14th': '13th/14th Playoff',
+      '15th-16th': '15th/16th Playoff',
+      
+      // Friendly matches
+      'friendly': 'Friendly',
+      'exhibition': 'Exhibition'
     };
     
-    return roundLabels[round] || round.replace(/-/g, ' ') || 'Match';
+    // Check if we have a direct match
+    if (roundLabels[round]) {
+      return roundLabels[round];
+    }
+    
+    // Fallback: format the round name nicely
+    return round.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Match';
   };
 
   const stageInfo = getStageInfo();
@@ -147,17 +226,19 @@ export default function MatchCard({
         <div className="flex flex-col gap-2 mb-3">
           {/* Top row - Stage, Pool, Arena badges */}
           <div className="flex items-center gap-1 flex-wrap min-h-6">
-            {stage !== 'pool' && (
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${stageInfo.color} border ${stageInfo.borderColor} flex items-center gap-1 flex-shrink-0`}
-              >
-                <span>{stageInfo.label}</span>
-              </Badge>
-            )}
+            <Badge 
+              variant="outline" 
+              className={`
+                text-xs flex items-center gap-1 flex-shrink-0
+                ${stageInfo.color} border ${stageInfo.borderColor} ${stageInfo.bgColor}
+              `}
+            >
+              <span>{stageInfo.label}</span>
+            </Badge>
             
-            {showPool && poolId && (
-              <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300">
+            {/* Only show pool badge if it's different from stage label */}
+            {stage === 'pool' && poolId && (
+              <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300 bg-white">
                 Group {poolId}
               </Badge>
             )}

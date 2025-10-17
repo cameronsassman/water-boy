@@ -390,16 +390,16 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
         ];
       case 'plate':
         return [
-          { value: 'semi-final', label: 'Plate Semi Final' },
-          { value: 'final', label: 'Plate Final' },
-          { value: 'third-place', label: 'Plate Third Place' }
+          { value: 'plate-semi-final', label: 'Plate Semi Final' },
+          { value: 'plate-final', label: 'Plate Final' },
+          { value: 'plate-third-place', label: 'Plate Third Place' }
         ];
       case 'shield':
         return [
-          { value: 'quarter-final', label: 'Shield Quarter Final' },
-          { value: 'semi-final', label: 'Shield Semi Final' },
-          { value: 'final', label: 'Shield Final' },
-          { value: 'third-place', label: 'Shield Third Place' }
+          { value: 'shield-quarter-final', label: 'Shield Quarter Final' },
+          { value: 'shield-semi-final', label: 'Shield Semi Final' },
+          { value: 'shield-final', label: 'Shield Final' },
+          { value: 'shield-third-place', label: 'Shield Third Place' }
         ];
       case 'playoff':
         return [
