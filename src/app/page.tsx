@@ -9,21 +9,11 @@ import fnb from "../../public/images/Sponsors Logos/FNB.png"
 import zapmed from "../../public/images/Sponsors Logos/ZAPMED.png"
 import Image from 'next/image';
 
-<<<<<<< Updated upstream
 // Import fixture images
 import day1Fixture from "../../public/images/fixtures/Wednesday.png";
 import day2Fixture from "../../public/images/fixtures/Thursday.png";
 import day3Fixture from "../../public/images/fixtures/Friday.png";
 import poolsFixture from "../../public/images/fixtures/Saturday.png";
-=======
-import ScoreInput from '@/components/admin/score-input';
-import TeamRegistration from '@/components/admin/team-registration';
-import PoolsView from '@/components/guests/pool-view';
-import TournamentDashboard from '@/components/guests/tournament-dashboard';
-import BracketsPage from './brackets/page';
-// import MatchDisplay from './scores/page';
-import TeamsPage from './teams/page';
->>>>>>> Stashed changes
 
 const sponsors = [
   { image: investments, alt: "MnG Investments" },
@@ -81,7 +71,6 @@ const fixtureFiles = [
 
 export default function HomePage() {
   return (
-<<<<<<< Updated upstream
     <div>
       {/* Hero Section with Background */}
       <section className="relative text-white pt-20 pb-40 overflow-hidden">
@@ -127,19 +116,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-=======
-    <>
-      <TeamRegistration />
-      {/* <PoolsView /> */}
-      {/* <MatchDisplay /> */}
-      <ScoreInput />
-      <TournamentDashboard />
-      {/* <BracketsPage /> */}
-      <TeamsPage />
-    </>
-  )
-}
->>>>>>> Stashed changes
 
       {/* Tournament Messages Section */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
