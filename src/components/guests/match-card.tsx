@@ -130,42 +130,68 @@ export default function MatchCard({
 
   const getRoundLabel = (round?: string): string => {
     if (!round) return stage === 'pool' ? 'Group' : 'Match';
-      const roundLabels: { [key: string]: string } = {
-        // Cup rounds
-        'round-of-16': 'Round of 16',
-        'quarter-final': 'Quarter Final',
-        'semi-final': 'Semi Final',
-        'final': 'Final',
-        'third-place': '3rd Place',
-        
-        // Plate rounds
-        'semi-final': stage === 'plate' ? 'Plate Semi' : 'Semi Final',
-        'final': stage === 'plate' ? 'Plate Final' : 'Final',
-        'third-place': stage === 'plate' ? 'Plate 3rd' : '3rd Place',
-        
-        // Shield rounds  
-        'quarter-final': stage === 'shield' ? 'Shield QF' : 'Quarter Final',
-        'semi-final': stage === 'shield' ? 'Shield Semi' : 'Semi Final',
-        'final': stage === 'shield' ? 'Shield Final' : 'Final',
-        'third-place': stage === 'shield' ? 'Shield 3rd' : '3rd Place',
-        
-        // Playoff rounds
-        'playoff-round-1': 'Playoff R1',
-        '13th-14th': '13th/14th',
-        '15th-16th': '15th/16th',
-        
-        // Festival tiers
-        'festival-tier-one': 'Tier 1',
-        'festival-tier-two': 'Tier 2', 
-        'festival-tier-three': 'Tier 3',
-        'festival-tier-four': 'Tier 4',
-        
-        // Friendly matches
-        'friendly': 'Friendly',
-        'exhibition': 'Exhibition'
-      };
     
-    return roundLabels[round] || round.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Match';
+    // Handle stage-specific rounds first
+    if (stage === 'shield') {
+      switch (round) {
+        case 'quarter-final': return 'Shield QF';
+        case 'semi-final': return 'Shield Semi';
+        case 'final': return 'Shield Final';
+        case 'third-place': return 'Shield 3rd';
+      }
+    }
+    
+    if (stage === 'plate') {
+      switch (round) {
+        case 'semi-final': return 'Plate Semi';
+        case 'final': return 'Plate Final';
+        case 'third-place': return 'Plate 3rd';
+      }
+    }
+    
+    if (stage === 'festival') {
+      switch (round) {
+        case 'festival-tier-one': return 'Festival Tier 1';
+        case 'festival-tier-two': return 'Festival Tier 2';
+        case 'festival-tier-three': return 'Festival Tier 3';
+        case 'festival-tier-four': return 'Festival Tier 4';
+        case '1st-2nd': return '1st/2nd Playoff';
+        case '3rd-4th': return '3rd/4th Playoff';
+        case '5th-6th': return '5th/6th Playoff';
+        case '7th-8th': return '7th/8th Playoff';
+        case '9th-10th': return '9th/10th Playoff';
+        case '11th-12th': return '11th/12th Playoff';
+        case '13th-14th': return '13th/14th Playoff';
+        case '15th-16th': return '15th/16th Playoff';
+      }
+    }
+    
+    // Generic round labels
+    const roundLabels: { [key: string]: string } = {
+      // Cup rounds
+      'round-of-16': 'Round of 16',
+      'quarter-final': 'Quarter Final',
+      'semi-final': 'Semi Final',
+      'final': 'Final',
+      'third-place': '3rd Place',
+      
+      // Playoff rounds
+      'playoff-round-1': 'Playoff R1',
+      '13th-14th': '13th/14th Playoff',
+      '15th-16th': '15th/16th Playoff',
+      
+      // Friendly matches
+      'friendly': 'Friendly',
+      'exhibition': 'Exhibition'
+    };
+    
+    // Check if we have a direct match
+    if (roundLabels[round]) {
+      return roundLabels[round];
+    }
+    
+    // Fallback: format the round name nicely
+    return round.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Match';
   };
 
   const stageInfo = getStageInfo();
