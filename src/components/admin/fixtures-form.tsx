@@ -390,8 +390,6 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
         ];
       case 'plate':
         return [
-          { value: 'round-of-16', label: 'Plate Round of 16' },
-          { value: 'quarter-final', label: 'Plate Quarter Final' },
           { value: 'semi-final', label: 'Plate Semi Final' },
           { value: 'final', label: 'Plate Final' },
           { value: 'third-place', label: 'Plate Third Place' }
@@ -411,8 +409,18 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
         ];
       case 'festival':
         return [
-          { value: 'friendly', label: 'Friendly Match' },
-          { value: 'exhibition', label: 'Exhibition Match' }
+          { value: 'festival-tier-one', label: 'Festival Tier One' },
+          { value: 'festival-tier-two', label: 'Festival Tier Two' },
+          { value: 'festival-tier-three', label: 'Festival Tier Three' },
+          { value: 'festival-tier-four', label: 'Festival Tier Four' },
+          { value: '15th-16th', label: '15th/16th Playoff' },
+          { value: '13th-14th', label: '13th/14th Playoff' },
+          { value: '11th-12th', label: '11th/12th Playoff' },
+          { value: '9th-10th', label: '9th/10th Playoff' },
+          { value: '7th-8th', label: '7th/8th Playoff' },
+          { value: '5th-6th', label: '5th/6th Playoff' },
+          { value: '3rd-4th', label: '3rd/4th Playoff' },
+          { value: '1st-2nd', label: '1st/2nd Playoff' },
         ];
       default:
         return [{ value: 'group', label: 'Group Stage' }];
@@ -730,65 +738,6 @@ export default function FixturesForm({ onMatchesUpdate }: FixturesFormProps) {
               </>
             )}
           </Button>
-        </CardContent>
-      </Card>
-
-      {/* Bulk Generation Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Bulk Fixture Generation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Generate Knockout Stage</Label>
-              <Select value={selectedStage} onValueChange={setSelectedStage}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cup">Cup</SelectItem>
-                  <SelectItem value="plate">Plate</SelectItem>
-                  <SelectItem value="shield">Shield</SelectItem>
-                  <SelectItem value="playoff">Playoff</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button 
-                onClick={generateKnockoutFixtures} 
-                disabled={isLoading}
-                className="w-full"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  `Generate ${selectedStage} Fixtures`
-                )}
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Festival Matches</Label>
-              <p className="text-sm text-gray-600">Generate friendly matches for non-advancing teams</p>
-              <Button 
-                onClick={generateFestivalFixtures} 
-                disabled={isLoading}
-                className="w-full"
-                variant="outline"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Festival Matches'
-                )}
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
