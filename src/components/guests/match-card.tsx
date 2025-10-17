@@ -52,67 +52,121 @@ export default function MatchCard({
                        !homeTeam.schoolName || !awayTeam.schoolName;
   
   const isScheduled = timeSlot && arena;
-  
+
   const getStageInfo = () => {
+    const baseInfo = {
+      color: '',
+      bgColor: '',
+      borderColor: '',
+      label: '',
+      description: '',
+      priority: 0
+    };
+
     switch (stage) {
       case 'cup':
         return {
-          color: 'text-yellow-600',
+          ...baseInfo,
+          color: 'text-yellow-700',
           bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-yellow-300',
+          label: getRoundLabel(round),
+          description: 'Championship Bracket',
+          priority: 6
         };
       case 'plate':
         return {
-          color: 'text-blue-600',
+          ...baseInfo,
+          color: 'text-blue-700',
           bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-blue-300',
+          label: getRoundLabel(round),
+          description: 'Plate Competition',
+          priority: 5
         };
       case 'shield':
         return {
-          color: 'text-purple-600',
+          ...baseInfo,
+          color: 'text-purple-700',
           bgColor: 'bg-purple-50',
-          borderColor: 'border-purple-200',
-          label: getRoundLabel(round)
+          borderColor: 'border-purple-300',
+          label: getRoundLabel(round),
+          description: 'Shield Competition',
+          priority: 4
         };
       case 'festival':
         return {
-          color: 'text-orange-600',
+          ...baseInfo,
+          color: 'text-orange-700',
           bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
-          label: 'Festival'
+          borderColor: 'border-orange-300',
+          label: getRoundLabel(round),
+          description: 'Festival Games',
+          priority: 3
         };
+      case 'playoff':
+        return {
+          ...baseInfo,
+          color: 'text-red-700',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-300',
+          label: getRoundLabel(round),
+          description: 'Placement Playoffs',
+          priority: 2
+        };
+      case 'pool':
       default:
         return {
-          color: 'text-gray-600',
+          ...baseInfo,
+          color: 'text-gray-700',
           bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
-          label: 'Group'
+          borderColor: 'border-gray-300',
+          label: poolId ? `Pool ${poolId}` : 'Group Stage',
+          description: 'Group Stage',
+          priority: 1
         };
     }
   };
 
   const getRoundLabel = (round?: string): string => {
-    if (!round) return stage === 'group' ? 'Group' : 'Match';
+    if (!round) return stage === 'pool' ? 'Group' : 'Match';
     
     const roundLabels: { [key: string]: string } = {
-      'round-of-16': 'R16',
-      'quarter-final': 'QF',
-      'semi-final': 'SF',
+      // Cup rounds
+      'round-of-16': 'Round of 16',
+      'quarter-final': 'Quarter Final',
+      'semi-final': 'Semi Final',
       'final': 'Final',
-      'third-place': '3rd',
-      'plate-round-1': 'Plate R1',
-      'plate-quarter-final': 'Plate QF',
-      'plate-semi-final': 'Plate SF',
+      'third-place': '3rd Place',
+      
+      // Plate rounds
+      'plate-semi-final': 'Plate Semi',
       'plate-final': 'Plate Final',
       'plate-third-place': 'Plate 3rd',
-      'shield-semi-final': 'Shield SF',
+      
+      // Shield rounds  
+      'shield-quarter-final': 'Shield QF',
+      'shield-semi-final': 'Shield Semi',
       'shield-final': 'Shield Final',
-      'shield-third-place': 'Shield 3rd'
+      'shield-third-place': 'Shield 3rd',
+      
+      // Playoff rounds
+      'playoff-round-1': 'Playoff R1',
+      '13th-14th': '13th/14th',
+      '15th-16th': '15th/16th',
+      
+      // Festival tiers
+      'festival-tier-one': 'Tier 1',
+      'festival-tier-two': 'Tier 2', 
+      'festival-tier-three': 'Tier 3',
+      'festival-tier-four': 'Tier 4',
+      
+      // Friendly matches
+      'friendly': 'Friendly',
+      'exhibition': 'Exhibition'
     };
     
-    return roundLabels[round] || round.replace(/-/g, ' ') || 'Match';
+    return roundLabels[round] || round.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Match';
   };
 
   const stageInfo = getStageInfo();
@@ -147,17 +201,19 @@ export default function MatchCard({
         <div className="flex flex-col gap-2 mb-3">
           {/* Top row - Stage, Pool, Arena badges */}
           <div className="flex items-center gap-1 flex-wrap min-h-6">
-            {stage !== 'pool' && (
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${stageInfo.color} border ${stageInfo.borderColor} flex items-center gap-1 flex-shrink-0`}
-              >
-                <span>{stageInfo.label}</span>
-              </Badge>
-            )}
+            <Badge 
+              variant="outline" 
+              className={`
+                text-xs flex items-center gap-1 flex-shrink-0
+                ${stageInfo.color} border ${stageInfo.borderColor} ${stageInfo.bgColor}
+              `}
+            >
+              <span>{stageInfo.label}</span>
+            </Badge>
             
-            {showPool && poolId && (
-              <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300">
+            {/* Only show pool badge if it's different from stage label */}
+            {stage === 'pool' && poolId && (
+              <Badge variant="outline" className="text-xs flex-shrink-0 border-gray-300 bg-white">
                 Group {poolId}
               </Badge>
             )}
