@@ -223,24 +223,6 @@ export default function MatchCard({
             </div>
           </div>
         </div>
-
-        {/* Progression Section */}
-        {showProgression && stage !== 'pool' && stage !== 'festival' && isCompleted && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1 text-xs text-gray-600">
-              <span className="whitespace-nowrap">Winner advances:</span>
-              <span className="font-medium text-gray-800">
-                {getNextRoundLabel(stage, round)}
-              </span>
-            </div>
-            {stage === 'cup' && round === 'round-of-16' && (
-              <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-1 text-xs text-gray-600 mt-1">
-                <span className="whitespace-nowrap">Loser advances:</span>
-                <span className="font-medium text-blue-600">Plate R1</span>
-              </div>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );
