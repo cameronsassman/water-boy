@@ -130,41 +130,40 @@ export default function MatchCard({
 
   const getRoundLabel = (round?: string): string => {
     if (!round) return stage === 'pool' ? 'Group' : 'Match';
-    
-    const roundLabels: { [key: string]: string } = {
-      // Cup rounds
-      'round-of-16': 'Round of 16',
-      'quarter-final': 'Quarter Final',
-      'semi-final': 'Semi Final',
-      'final': 'Final',
-      'third-place': '3rd Place',
-      
-      // Plate rounds
-      'plate-semi-final': 'Plate Semi',
-      'plate-final': 'Plate Final',
-      'plate-third-place': 'Plate 3rd',
-      
-      // Shield rounds  
-      'shield-quarter-final': 'Shield QF',
-      'shield-semi-final': 'Shield Semi',
-      'shield-final': 'Shield Final',
-      'shield-third-place': 'Shield 3rd',
-      
-      // Playoff rounds
-      'playoff-round-1': 'Playoff R1',
-      '13th-14th': '13th/14th',
-      '15th-16th': '15th/16th',
-      
-      // Festival tiers
-      'festival-tier-one': 'Tier 1',
-      'festival-tier-two': 'Tier 2', 
-      'festival-tier-three': 'Tier 3',
-      'festival-tier-four': 'Tier 4',
-      
-      // Friendly matches
-      'friendly': 'Friendly',
-      'exhibition': 'Exhibition'
-    };
+      const roundLabels: { [key: string]: string } = {
+        // Cup rounds
+        'round-of-16': 'Round of 16',
+        'quarter-final': 'Quarter Final',
+        'semi-final': 'Semi Final',
+        'final': 'Final',
+        'third-place': '3rd Place',
+        
+        // Plate rounds
+        'semi-final': stage === 'plate' ? 'Plate Semi' : 'Semi Final',
+        'final': stage === 'plate' ? 'Plate Final' : 'Final',
+        'third-place': stage === 'plate' ? 'Plate 3rd' : '3rd Place',
+        
+        // Shield rounds  
+        'quarter-final': stage === 'shield' ? 'Shield QF' : 'Quarter Final',
+        'semi-final': stage === 'shield' ? 'Shield Semi' : 'Semi Final',
+        'final': stage === 'shield' ? 'Shield Final' : 'Final',
+        'third-place': stage === 'shield' ? 'Shield 3rd' : '3rd Place',
+        
+        // Playoff rounds
+        'playoff-round-1': 'Playoff R1',
+        '13th-14th': '13th/14th',
+        '15th-16th': '15th/16th',
+        
+        // Festival tiers
+        'festival-tier-one': 'Tier 1',
+        'festival-tier-two': 'Tier 2', 
+        'festival-tier-three': 'Tier 3',
+        'festival-tier-four': 'Tier 4',
+        
+        // Friendly matches
+        'friendly': 'Friendly',
+        'exhibition': 'Exhibition'
+      };
     
     return roundLabels[round] || round.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Match';
   };
