@@ -14,6 +14,7 @@ import day1Fixture from "../../public/images/fixtures/Wednesday.png";
 import day2Fixture from "../../public/images/fixtures/Thursday.png";
 import day3Fixture from "../../public/images/fixtures/Friday.png";
 import poolsFixture from "../../public/images/fixtures/Saturday.png";
+import TopScorers from '@/components/guests/top-scorers';
 
 const sponsors = [
   { image: investments, alt: "MnG Investments" },
@@ -71,7 +72,7 @@ const fixtureFiles = [
 
 export default function HomePage() {
   return (
-    <div>
+    <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section with Background */}
       <section className="relative text-white pt-20 pb-40 overflow-hidden">
         {/* Background Image */}
@@ -117,32 +118,78 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tournament Messages Section */}
+      {/* Tournament Messages Section with Top Scorers */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
-            {videoMessages.map((message, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-2 border-blue-100 hover:border-blue-300 transition-all duration-300">
-                <div className="text-center mb-4 md:mb-6">
-                  <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
-                    {message.title}
-                  </h3>
-                </div>
-                
-                {/* Video Player */}
-                <div className="rounded-lg aspect-video mb-4 overflow-hidden bg-black">
-                  <video
-                    controls
-                    className="w-full h-full object-cover"
-                    preload="metadata"
-                    playsInline
-                  >
-                    <source src={message.videoSrc} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
+          {/* Mobile: Top Scorers above messages */}
+          <div className="lg:hidden mb-8">
+            <div className="max-w-md mx-auto">
+              <TopScorers limit={5} />
+            </div>
+          </div>
+
+          {/* Desktop: Grid layout with messages and top scorers side by side */}
+          <div className="hidden lg:grid lg:grid-cols-4 lg:gap-8 items-start">
+            {/* Messages - 3 columns */}
+            <div className="lg:col-span-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                {videoMessages.map((message, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-2 border-blue-100 hover:border-blue-300 transition-all duration-300">
+                    <div className="text-center mb-4 md:mb-6">
+                      <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
+                        {message.title}
+                      </h3>
+                    </div>
+                    
+                    {/* Video Player */}
+                    <div className="rounded-lg aspect-video mb-4 overflow-hidden bg-black">
+                      <video
+                        controls
+                        className="w-full h-full object-cover"
+                        preload="metadata"
+                        playsInline
+                      >
+                        <source src={message.videoSrc} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Top Scorers - 1 column */}
+            <div className="lg:col-span-1">
+              <TopScorers limit={5} />
+            </div>
+          </div>
+
+          {/* Mobile: Messages only (top scorers already shown above) */}
+          <div className="lg:hidden">
+            <div className="grid grid-cols-1 gap-6 md:gap-8 max-w-4xl mx-auto">
+              {videoMessages.map((message, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-2 border-blue-100 hover:border-blue-300 transition-all duration-300">
+                  <div className="text-center mb-4 md:mb-6">
+                    <h3 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
+                      {message.title}
+                    </h3>
+                  </div>
+                  
+                  {/* Video Player */}
+                  <div className="rounded-lg aspect-video mb-4 overflow-hidden bg-black">
+                    <video
+                      controls
+                      className="w-full h-full object-cover"
+                      preload="metadata"
+                      playsInline
+                    >
+                      <source src={message.videoSrc} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
