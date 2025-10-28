@@ -1,0 +1,2546 @@
+[
+  {
+    "id": "cmgmiurnh0001sm7i5xahwunt",
+    "name": "Aston Johnson",
+    "capNumber": 1,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0002sm7idhl365p7",
+    "name": "Sam Ash",
+    "capNumber": 2,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0003sm7ijt1nq769",
+    "name": "Thomy Sweeney",
+    "capNumber": 3,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0004sm7iq56xdpwa",
+    "name": "Benjamin Raubenheimer",
+    "capNumber": 4,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0005sm7iry6c0176",
+    "name": "Evan Halstead",
+    "capNumber": 5,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0006sm7ihhpjzu25",
+    "name": "Sloan Brouard",
+    "capNumber": 6,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0007sm7itz1xdece",
+    "name": "Noah Deeb",
+    "capNumber": 7,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0008sm7imiof7hzu",
+    "name": "Benji Russell",
+    "capNumber": 9,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh0009sm7ijpo72xa9",
+    "name": "Mpilo Khomo",
+    "capNumber": 11,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmiurnh000asm7i3r2ugsu9",
+    "name": "Quade Strydom",
+    "capNumber": 10,
+    "teamId": "cmgmiurng0000sm7id8hnv9tf",
+    "createdAt": "2025-10-11T15:00:51.960Z",
+    "updatedAt": "2025-10-11T15:00:51.960Z"
+  },
+  {
+    "id": "cmgmjlsic000vsm7iaxmmbyl5",
+    "name": "Noah Hinchley",
+    "capNumber": 1,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic000wsm7istw487pn",
+    "name": "Dax Henn",
+    "capNumber": 2,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic000xsm7izwtn3izj",
+    "name": "Ben Murray",
+    "capNumber": 3,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic000ysm7ibqpamdwh",
+    "name": "Marko Germenis",
+    "capNumber": 5,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic000zsm7itiqcbyl7",
+    "name": "Timothy Du Plooy",
+    "capNumber": 6,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic0010sm7ionvnt2wu",
+    "name": "Sam Dekker",
+    "capNumber": 7,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic0011sm7i4p1bvssk",
+    "name": "William Kennedy",
+    "capNumber": 8,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic0012sm7i9k783qs8",
+    "name": "Patrick Geraghty",
+    "capNumber": 9,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic0013sm7in27nzahc",
+    "name": "Christian Kotze",
+    "capNumber": 10,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgmjlsic0014sm7i8fa3jqif",
+    "name": "Tyler Van Gesselleen",
+    "capNumber": 11,
+    "teamId": "cmgmjlsic000usm7i7e90dh87",
+    "createdAt": "2025-10-11T15:21:52.788Z",
+    "updatedAt": "2025-10-11T15:21:52.788Z"
+  },
+  {
+    "id": "cmgml18f60016sm7ir6mlnptp",
+    "name": "Phoenix Barbour",
+    "capNumber": 1,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f60017sm7iozwtpobl",
+    "name": "Jake Pentolfe",
+    "capNumber": 2,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f60018sm7iy1jj4wqm",
+    "name": "Carter Bomford",
+    "capNumber": 3,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f70019sm7ic8je6ot4",
+    "name": "Luke Myburg",
+    "capNumber": 4,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001asm7iju0t09ap",
+    "name": "Gary Sparrow",
+    "capNumber": 5,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001bsm7i5angchtp",
+    "name": "Slade Maartens",
+    "capNumber": 6,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001csm7i6u6b7xv5",
+    "name": "Banele Gumede",
+    "capNumber": 7,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001dsm7ibifwm2bs",
+    "name": "Hosea Lewis",
+    "capNumber": 8,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001esm7i5a3cm6as",
+    "name": "Charles Marwick",
+    "capNumber": 9,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgml18f7001fsm7iy97dswap",
+    "name": "Kethelo Ndlovu",
+    "capNumber": 10,
+    "teamId": "cmgml18f60015sm7incf4czcy",
+    "createdAt": "2025-10-11T16:01:52.866Z",
+    "updatedAt": "2025-10-11T16:01:52.866Z"
+  },
+  {
+    "id": "cmgmmz07o001ssm7ibkoxeuc5",
+    "name": "Joshu Nosworthy",
+    "capNumber": 1,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001tsm7ie9b59ljy",
+    "name": "Dylan Mackay",
+    "capNumber": 2,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001usm7io89ts94l",
+    "name": "Rupert Devine",
+    "capNumber": 6,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001vsm7iq2dsx02x",
+    "name": "Spencer Bouwer",
+    "capNumber": 7,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001wsm7iduxioqma",
+    "name": "Jake Smith",
+    "capNumber": 8,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001xsm7isfuzn5wf",
+    "name": "James Moffat",
+    "capNumber": 9,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001ysm7ir7fpljm9",
+    "name": "Daniel Wilson",
+    "capNumber": 10,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o001zsm7i33cg26xj",
+    "name": "James Mundell",
+    "capNumber": 11,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o0020sm7i5vag1onu",
+    "name": "Matthew Moseley",
+    "capNumber": 12,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgmmz07o0021sm7igt0xtosd",
+    "name": "Samuele Stravino",
+    "capNumber": 13,
+    "teamId": "cmgmmz07n001rsm7i3q4ez8xs",
+    "createdAt": "2025-10-11T16:56:08.147Z",
+    "updatedAt": "2025-10-11T16:56:08.147Z"
+  },
+  {
+    "id": "cmgneb0ry0001sm3oc446lrfk",
+    "name": "James Ahearne",
+    "capNumber": 1,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0002sm3oqiga28ti",
+    "name": "Troy Botha",
+    "capNumber": 2,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0003sm3ol5dy32iy",
+    "name": "Brody Jackson",
+    "capNumber": 4,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0004sm3o4ijmwf5v",
+    "name": "Joel Keary",
+    "capNumber": 5,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0005sm3oj7kqhgkb",
+    "name": "Elvis Peltz",
+    "capNumber": 6,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0006sm3oskd6xjcl",
+    "name": "Milan Garach",
+    "capNumber": 7,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0007sm3oja0djijp",
+    "name": "Benjamin Pellandini",
+    "capNumber": 8,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0008sm3o3a7ql0zh",
+    "name": "Bjorn Laatz",
+    "capNumber": 9,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry0009sm3oor5bd7fy",
+    "name": "Hudson Mun-Gavin",
+    "capNumber": 10,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgneb0ry000asm3ogclh05ds",
+    "name": "Matthew Pomakov",
+    "capNumber": 13,
+    "teamId": "cmgneb0rv0000sm3ounyllq69",
+    "createdAt": "2025-10-12T05:41:18.377Z",
+    "updatedAt": "2025-10-12T05:41:18.377Z"
+  },
+  {
+    "id": "cmgnego4e000csm3obgbn8xvl",
+    "name": "Alwaba Ntantala",
+    "capNumber": 1,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000dsm3ovfwqbrz8",
+    "name": "Connor Barry",
+    "capNumber": 2,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000esm3ogs941oub",
+    "name": "Carter Palmer",
+    "capNumber": 3,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000fsm3ooonim0z1",
+    "name": "James Wiltshire",
+    "capNumber": 4,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000gsm3oei1y0czh",
+    "name": "Murray Rance",
+    "capNumber": 5,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000hsm3oekct5a9p",
+    "name": "Brody Schemel",
+    "capNumber": 6,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000ism3o6yuuabir",
+    "name": "Joel Kruger",
+    "capNumber": 7,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000jsm3ogyrmfwvl",
+    "name": "Ben Toiche",
+    "capNumber": 8,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000ksm3o678z9e9k",
+    "name": "Nick Goldswain",
+    "capNumber": 9,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnego4e000lsm3ouymuyk2e",
+    "name": "Luke Lategan",
+    "capNumber": 10,
+    "teamId": "cmgnego4c000bsm3oi5m81bmb",
+    "createdAt": "2025-10-12T05:45:41.914Z",
+    "updatedAt": "2025-10-12T05:45:41.914Z"
+  },
+  {
+    "id": "cmgnfkzlx000nsm3o9ak4uxqq",
+    "name": "Macario Egodigwe",
+    "capNumber": 1,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000osm3oo6qaczzy",
+    "name": "Joshua Jardim",
+    "capNumber": 2,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000psm3o4axbtw3s",
+    "name": "Marciano Mendes",
+    "capNumber": 3,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000qsm3ol9mfh6j3",
+    "name": "Matteo Milfoil",
+    "capNumber": 4,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000rsm3o29736xkt",
+    "name": "Liam Janse Van Rensburg",
+    "capNumber": 5,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000ssm3oocltau0o",
+    "name": "Joshua Rein",
+    "capNumber": 6,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000tsm3ow2wsd6hu",
+    "name": "Jaden Van Rensburg",
+    "capNumber": 7,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000usm3ovwcd5vjo",
+    "name": "Gianluca Milfoil",
+    "capNumber": 8,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000vsm3o3x238bk1",
+    "name": "Connor Hill",
+    "capNumber": 9,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgnfkzlx000wsm3o3l4730yg",
+    "name": "Lincon Andrews",
+    "capNumber": 10,
+    "teamId": "cmgnfkzlx000msm3opbhwes9i",
+    "createdAt": "2025-10-12T06:17:03.045Z",
+    "updatedAt": "2025-10-12T06:17:03.045Z"
+  },
+  {
+    "id": "cmgngra9n0010sm3oexiizamp",
+    "name": "Andrew Zekeyo",
+    "capNumber": 1,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0011sm3oq3vhuf34",
+    "name": "Charlie Miller",
+    "capNumber": 2,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0012sm3okeuj195y",
+    "name": "Stefan Vermeulen",
+    "capNumber": 3,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0013sm3ohieouyss",
+    "name": "Gabriel van Beuningen",
+    "capNumber": 4,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0014sm3o7k6fpenm",
+    "name": "Garrett Mallinson",
+    "capNumber": 12,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0015sm3oimuxbvup",
+    "name": "Jamie Pratt",
+    "capNumber": 6,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0016sm3oxlfskww4",
+    "name": "Elliot Berndsen",
+    "capNumber": 7,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0017sm3oclu7boin",
+    "name": "Finlay Bond",
+    "capNumber": 8,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0018sm3on7ql9dir",
+    "name": "Leo Martin-McKay",
+    "capNumber": 9,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgngra9n0019sm3op7mt7awj",
+    "name": "Austin Mainstone",
+    "capNumber": 10,
+    "teamId": "cmgngra9i000zsm3oflgxn1y7",
+    "createdAt": "2025-10-12T06:49:56.399Z",
+    "updatedAt": "2025-10-12T06:49:56.399Z"
+  },
+  {
+    "id": "cmgnhjb5p001dsm3o33rp8fq8",
+    "name": "Kurt Webb",
+    "capNumber": 1,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001esm3orymtbhf6",
+    "name": "Daniel Marais",
+    "capNumber": 2,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001fsm3o67uk4fm3",
+    "name": "Elijah Beard",
+    "capNumber": 3,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001gsm3omf8ejg7z",
+    "name": "Zinda Ngcangisa",
+    "capNumber": 4,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001hsm3o0ug8wvyr",
+    "name": "Zize Ngcangisa",
+    "capNumber": 5,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001ism3olutjekyh",
+    "name": "Cruz Goddard",
+    "capNumber": 6,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001jsm3o6fpmjj6w",
+    "name": "Jacob Smit",
+    "capNumber": 7,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001ksm3or2f8z0pn",
+    "name": "Kungawo Xhasa",
+    "capNumber": 8,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001lsm3oqf6ygm0f",
+    "name": "Jeandre Wessels",
+    "capNumber": 9,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhjb5p001msm3oacq7tykd",
+    "name": "Devan Govender",
+    "capNumber": 10,
+    "teamId": "cmgnhjb5o001csm3ocg7w61xl",
+    "createdAt": "2025-10-12T07:11:43.932Z",
+    "updatedAt": "2025-10-12T07:11:43.932Z"
+  },
+  {
+    "id": "cmgnhswlj001osm3o1o9sr8uu",
+    "name": "Matthew Pienaar",
+    "capNumber": 1,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001psm3o3ni5o988",
+    "name": "Thomas Bond",
+    "capNumber": 3,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001qsm3oqfaa09q4",
+    "name": "Matthew Misplon",
+    "capNumber": 4,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001rsm3ofpw6iilu",
+    "name": "Zach Potgieter",
+    "capNumber": 5,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001ssm3ouyx6ye9h",
+    "name": "James Frye",
+    "capNumber": 6,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001tsm3omh39dyk9",
+    "name": "Sebastian Brandon",
+    "capNumber": 7,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001usm3oml3mh3vb",
+    "name": "Matthew Hopkinson",
+    "capNumber": 8,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001vsm3oamfp1k6z",
+    "name": "Finn Wilter",
+    "capNumber": 9,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001wsm3ow3cqloog",
+    "name": "Lucas Nielsen",
+    "capNumber": 10,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnhswlj001xsm3ohnnbrx3b",
+    "name": "Oliver Lange",
+    "capNumber": 11,
+    "teamId": "cmgnhswli001nsm3oqhz59eq1",
+    "createdAt": "2025-10-12T07:19:11.619Z",
+    "updatedAt": "2025-10-12T07:19:11.619Z"
+  },
+  {
+    "id": "cmgnixqa4006xsm3opk3na18t",
+    "name": "Juan Pretorious",
+    "capNumber": 1,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa40074sm3oou7r0l7x",
+    "name": "Jack McEwen",
+    "capNumber": 2,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa40072sm3onokl0hka",
+    "name": "Ryan le Grange",
+    "capNumber": 8,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa40070sm3o8vqygo9c",
+    "name": "Matthew Coenen",
+    "capNumber": 6,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnj5vgx0078sm3osbd9sql8",
+    "name": "Rhys Robson",
+    "capNumber": 1,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx0079sm3ohx5sat9h",
+    "name": "Riley Badsha-Eybers",
+    "capNumber": 4,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007asm3ofp37h6p1",
+    "name": "Josh Skeen",
+    "capNumber": 5,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007bsm3o657lar0w",
+    "name": "Grayson Williams",
+    "capNumber": 6,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007csm3ow9trvo1g",
+    "name": "Adam August",
+    "capNumber": 7,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007dsm3ooaqyi2g1",
+    "name": "Michael Parker",
+    "capNumber": 9,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007esm3o3sk7qfwk",
+    "name": "Sne Moyo",
+    "capNumber": 10,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007fsm3oyle1j8mv",
+    "name": "Dylan Lourens",
+    "capNumber": 11,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnj5vgx007gsm3ocwo7fnbb",
+    "name": "Keith Snyman",
+    "capNumber": 12,
+    "teamId": "cmgnj5vgt0077sm3owub5fvnk",
+    "createdAt": "2025-10-12T07:57:16.301Z",
+    "updatedAt": "2025-10-12T07:57:16.301Z"
+  },
+  {
+    "id": "cmgnjei8d007ism3ovnkwysdy",
+    "name": "Jamie White",
+    "capNumber": 1,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007jsm3o5ihdires",
+    "name": "Hiram Robertson",
+    "capNumber": 2,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007ksm3o9hx2wf6d",
+    "name": "Mark Rosser",
+    "capNumber": 3,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007lsm3onmym38sa",
+    "name": "Jack Lokotsch",
+    "capNumber": 4,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007msm3o6582ce9l",
+    "name": "Liam Van Der Walt",
+    "capNumber": 5,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007nsm3oiwpzryf5",
+    "name": "Alex Le Roux",
+    "capNumber": 6,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnixqa40071sm3ox5e6gch6",
+    "name": "Sebastian Iles",
+    "capNumber": 7,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa4006zsm3o70ll166n",
+    "name": "Cullen White",
+    "capNumber": 5,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa4006ysm3oa9tate89",
+    "name": "Oscar Jensen",
+    "capNumber": 4,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa40076sm3oxk57mccc",
+    "name": "Matthew Skeeles",
+    "capNumber": 12,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnjei8d007osm3o3u53t6r0",
+    "name": "Rogan Barret",
+    "capNumber": 7,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007psm3ozpyvmfct",
+    "name": "Callum Davis-Taylor",
+    "capNumber": 8,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007qsm3ocyszlboc",
+    "name": "Matthew Lokotsch",
+    "capNumber": 9,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjei8d007rsm3or2hvt35g",
+    "name": "Murry John Boonzaier",
+    "capNumber": 10,
+    "teamId": "cmgnjei8d007hsm3oyfm3lzoi",
+    "createdAt": "2025-10-12T08:03:59.053Z",
+    "updatedAt": "2025-10-12T08:03:59.053Z"
+  },
+  {
+    "id": "cmgnjznjq0084sm3oblvm8kpi",
+    "name": "Leo Wright",
+    "capNumber": 1,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq0085sm3o5illxlm7",
+    "name": "Hashim Mohammed",
+    "capNumber": 2,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq0086sm3o1la9f2kn",
+    "name": "Luca McGillicuddy",
+    "capNumber": 3,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq0087sm3odycjt6zg",
+    "name": "Callum Houston",
+    "capNumber": 4,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq0088sm3oqzktg5nj",
+    "name": "Tom Kroukamp",
+    "capNumber": 5,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq0089sm3o7d3f0yt6",
+    "name": "Logan Swanepoel",
+    "capNumber": 6,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq008asm3oh8zfrn6a",
+    "name": "Riley Snyman",
+    "capNumber": 7,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq008bsm3oydch1nyk",
+    "name": "Nick Adriaans",
+    "capNumber": 8,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq008csm3oaamlmu5z",
+    "name": "Vidar Bendixen",
+    "capNumber": 9,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnjznjq008dsm3oytbsqt2q",
+    "name": "Gabriel Turner",
+    "capNumber": 10,
+    "teamId": "cmgnjznjp0083sm3oo1mfofmz",
+    "createdAt": "2025-10-12T08:20:25.718Z",
+    "updatedAt": "2025-10-12T08:20:25.718Z"
+  },
+  {
+    "id": "cmgnljcw30091sm3onrthyaui",
+    "name": "Francois Joubert",
+    "capNumber": 1,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30092sm3o863c94hq",
+    "name": "Luca Oliver",
+    "capNumber": 2,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30093sm3odtvedyut",
+    "name": "Hannes Muller",
+    "capNumber": 3,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30094sm3o8y8i8wvk",
+    "name": "Luke Simpson",
+    "capNumber": 4,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30095sm3os69cqmec",
+    "name": "Henry Buchanan",
+    "capNumber": 5,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30096sm3odis018eg",
+    "name": "MG Jooste",
+    "capNumber": 6,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30097sm3o6p697dnk",
+    "name": "Malan Basson",
+    "capNumber": 7,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30098sm3orjguntog",
+    "name": "Wynand Grobler",
+    "capNumber": 8,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw30099sm3ojv8h31b5",
+    "name": "Sias Zietsman",
+    "capNumber": 9,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnljcw3009asm3ot1alstvp",
+    "name": "Ruben Erasmus",
+    "capNumber": 10,
+    "teamId": "cmgnljcw20090sm3o75pzduj1",
+    "createdAt": "2025-10-12T09:03:44.640Z",
+    "updatedAt": "2025-10-12T09:03:44.640Z"
+  },
+  {
+    "id": "cmgnlyumq009csm3o0rwx3vcc",
+    "name": "Michael Elliot",
+    "capNumber": 1,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009dsm3o80ivw74g",
+    "name": "Evan Holster",
+    "capNumber": 2,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009esm3oz5mhbrep",
+    "name": "Ryan Magson",
+    "capNumber": 3,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009fsm3olaoixf6v",
+    "name": "Cameron Riley",
+    "capNumber": 4,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009gsm3o98qa2t0r",
+    "name": "Ithiel Harry",
+    "capNumber": 6,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009hsm3oo65ho186",
+    "name": "Levi Oakes",
+    "capNumber": 7,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009ism3oe8zr764o",
+    "name": "Josh Parker",
+    "capNumber": 8,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009jsm3ogajm54ij",
+    "name": "Gabriel Delgado",
+    "capNumber": 9,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009ksm3ou5336cwl",
+    "name": "Tom Everts",
+    "capNumber": 10,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnlyumq009lsm3onk09s6l2",
+    "name": "Axel Jorgensen",
+    "capNumber": 12,
+    "teamId": "cmgnlyumq009bsm3onmf0shzg",
+    "createdAt": "2025-10-12T09:15:47.473Z",
+    "updatedAt": "2025-10-12T09:15:47.473Z"
+  },
+  {
+    "id": "cmgnxgn9o0001sm53f305ub5m",
+    "name": "Danny Baxter",
+    "capNumber": 1,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0002sm53mmyor5gz",
+    "name": "Johan Gräbe",
+    "capNumber": 3,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0003sm53749acwxn",
+    "name": "Finnbar van der Zee",
+    "capNumber": 4,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0004sm53rgnxw4yf",
+    "name": "Adrian Van Wyk",
+    "capNumber": 5,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0005sm535qjiwyx9",
+    "name": "Caiden Scholtz",
+    "capNumber": 6,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0006sm53f18gxjon",
+    "name": "Nolan Taberer",
+    "capNumber": 8,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0007sm53k7ut9jaw",
+    "name": "Sebastian Gudgeon",
+    "capNumber": 9,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0008sm532weqv9uw",
+    "name": "Paul Harris",
+    "capNumber": 10,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o0009sm53st7gf1kj",
+    "name": "Tanaka Mlingo",
+    "capNumber": 11,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxgn9o000asm53po447dtf",
+    "name": "Matt Taylor",
+    "capNumber": 12,
+    "teamId": "cmgnxgn9k0000sm53xylqrc0e",
+    "createdAt": "2025-10-12T14:37:33.511Z",
+    "updatedAt": "2025-10-12T14:37:33.511Z"
+  },
+  {
+    "id": "cmgnxtadb000nsm53sg5attad",
+    "name": "Liam Sharp",
+    "capNumber": 1,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000osm53qator50p",
+    "name": "Jethro Berger",
+    "capNumber": 2,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000psm536urwqp0b",
+    "name": "Charlie Sheppy",
+    "capNumber": 3,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000qsm53cycck9p9",
+    "name": "Benjamin Uys",
+    "capNumber": 4,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000rsm53in3k42jp",
+    "name": "Jake Hodgson",
+    "capNumber": 5,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000ssm53fnzjp2q4",
+    "name": "Samuel Cocks",
+    "capNumber": 6,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000tsm53d3lblw7d",
+    "name": "James Gaddi",
+    "capNumber": 7,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000usm53j3l5jjrf",
+    "name": "Hayden Dalton",
+    "capNumber": 8,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000vsm53ofupj0xt",
+    "name": "Corban Stander",
+    "capNumber": 9,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxtadb000wsm53dqvpoj9l",
+    "name": "Tyler Balfour",
+    "capNumber": 13,
+    "teamId": "cmgnxtada000msm53yzqs4mq2",
+    "createdAt": "2025-10-12T14:47:23.325Z",
+    "updatedAt": "2025-10-12T14:47:23.325Z"
+  },
+  {
+    "id": "cmgnxzf51000ysm53tbi442zi",
+    "name": "Kai Van Buuren",
+    "capNumber": 1,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf51000zsm532tc2gpej",
+    "name": "Alexander Botha",
+    "capNumber": 2,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510010sm536chywums",
+    "name": "Kayden Vermaak",
+    "capNumber": 4,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510011sm53r21xizb0",
+    "name": "Mohamed Zuhayr Meyers",
+    "capNumber": 5,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510012sm53orbn4zwb",
+    "name": "Daniel Verdon",
+    "capNumber": 6,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510013sm530tfkpgqt",
+    "name": "Kayd De Klerk",
+    "capNumber": 7,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510014sm53oopg5wof",
+    "name": "Nicholas Taljaard",
+    "capNumber": 8,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510015sm53bl4vllu3",
+    "name": "Nic Centurier-Harris",
+    "capNumber": 9,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510016sm53lo8ircxt",
+    "name": "Brandon Steele",
+    "capNumber": 10,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgnxzf510017sm53aadceavu",
+    "name": "Musa Sumsodien",
+    "capNumber": 12,
+    "teamId": "cmgnxzf50000xsm53hs9rar7o",
+    "createdAt": "2025-10-12T14:52:09.442Z",
+    "updatedAt": "2025-10-12T14:52:09.442Z"
+  },
+  {
+    "id": "cmgny4r3k0019sm533zdptyga",
+    "name": "Cameron Quinn",
+    "capNumber": 1,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001asm53rehnwsb8",
+    "name": "Luke Geddes",
+    "capNumber": 4,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001bsm537jhc2pve",
+    "name": "Daniel le Cordeur",
+    "capNumber": 5,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001csm53loxk6uqh",
+    "name": "Jude Polley",
+    "capNumber": 6,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001dsm53rd0takr2",
+    "name": "Lukholo Ngcola",
+    "capNumber": 7,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001esm53hogtec3h",
+    "name": "Aaron Heywood",
+    "capNumber": 8,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001fsm53ikg9drqt",
+    "name": "Lukas Thomas",
+    "capNumber": 9,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001gsm532e7crxey",
+    "name": "Tariq Eskinazi",
+    "capNumber": 10,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001hsm53y7r3ohxn",
+    "name": "Ayola Banner",
+    "capNumber": 11,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgny4r3k001ism53vm6og6g8",
+    "name": "Brett Liddell",
+    "capNumber": 12,
+    "teamId": "cmgny4r3j0018sm53uogj4xlp",
+    "createdAt": "2025-10-12T14:56:18.224Z",
+    "updatedAt": "2025-10-12T14:56:18.224Z"
+  },
+  {
+    "id": "cmgnyefs6001ksm53wjz7tjb5",
+    "name": "Neels Botha",
+    "capNumber": 1,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001lsm532ed5cyvr",
+    "name": "Noah Botha",
+    "capNumber": 2,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001msm53i1u709ke",
+    "name": "Maddox Richardson",
+    "capNumber": 3,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001nsm53vb880bw2",
+    "name": "Ben Gerber",
+    "capNumber": 4,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001osm53f3beq5vp",
+    "name": "Christian De Kock",
+    "capNumber": 5,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001psm53na6uzi59",
+    "name": "Alex Wetzl",
+    "capNumber": 6,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001qsm531oweoc4g",
+    "name": "Nicholas Coolen",
+    "capNumber": 7,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001rsm53omfy7ejs",
+    "name": "Tristan Van Rensberg",
+    "capNumber": 8,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001ssm53774t1qgb",
+    "name": "Earle Van der Watt",
+    "capNumber": 9,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnyefs6001tsm535n4nozk7",
+    "name": "Rijk Van Gaalen",
+    "capNumber": 10,
+    "teamId": "cmgnyefs6001jsm5352340mp5",
+    "createdAt": "2025-10-12T15:03:50.118Z",
+    "updatedAt": "2025-10-12T15:03:50.118Z"
+  },
+  {
+    "id": "cmgnzdj2q0026sm5345h0jdf4",
+    "name": "Ethan Hocknell",
+    "capNumber": 1,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q0027sm53wz24w7tl",
+    "name": "James Hugo",
+    "capNumber": 3,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q0028sm53xiji6ydg",
+    "name": "Max Barlow",
+    "capNumber": 4,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q0029sm53d05xcw28",
+    "name": "Jono Cheek",
+    "capNumber": 6,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q002asm539m3qxxzl",
+    "name": "Gregory Anderson",
+    "capNumber": 7,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q002bsm53i3mlmkdw",
+    "name": "Daniel Stevens",
+    "capNumber": 8,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2q002csm53els4a8zk",
+    "name": "Jeremy Wattam",
+    "capNumber": 9,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2r002dsm53pn4gwqh0",
+    "name": "Bradley Bowen",
+    "capNumber": 10,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2r002esm53x107nb9j",
+    "name": "Tane Watson",
+    "capNumber": 11,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzdj2r002fsm53o7cbry25",
+    "name": "Thapelo Mostamai",
+    "capNumber": 14,
+    "teamId": "cmgnzdj2p0025sm53t0fk8oqr",
+    "createdAt": "2025-10-12T15:31:07.344Z",
+    "updatedAt": "2025-10-12T15:31:07.344Z"
+  },
+  {
+    "id": "cmgnzpl3g002hsm53phk7jyon",
+    "name": "Ralph Jansen van Rensburg",
+    "capNumber": 1,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002ism53atu0thr1",
+    "name": "Ross Ferguson",
+    "capNumber": 2,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002jsm533rrp0r8e",
+    "name": "Kaden van Wyk",
+    "capNumber": 5,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002ksm53g3nsi0qg",
+    "name": "Kyle van de Linde",
+    "capNumber": 6,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002lsm53vf8r6luu",
+    "name": "Pabi Motsepe",
+    "capNumber": 7,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002msm53j8xqg44f",
+    "name": "Joshua van Zyl",
+    "capNumber": 8,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002nsm5360dnz2ob",
+    "name": "Phillip Herholdt",
+    "capNumber": 9,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002osm5364hhano9",
+    "name": "Oliver Carloni",
+    "capNumber": 10,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002psm53z2b28bnv",
+    "name": "Aiden van der Veen",
+    "capNumber": 11,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnzpl3g002qsm530jrkg04w",
+    "name": "Owendalo Malindi",
+    "capNumber": 12,
+    "teamId": "cmgnzpl3e002gsm53kkyobsyf",
+    "createdAt": "2025-10-12T15:40:29.833Z",
+    "updatedAt": "2025-10-12T15:40:29.833Z"
+  },
+  {
+    "id": "cmgnztzew002ssm53xj6msrkx",
+    "name": "Thomas Jackson",
+    "capNumber": 1,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002tsm535zf4u3t0",
+    "name": "Matthew Barnhoorn",
+    "capNumber": 2,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002usm53z9nagy3n",
+    "name": "Jamie Kruger",
+    "capNumber": 3,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002vsm53ymqx1jcl",
+    "name": "Ben Groves",
+    "capNumber": 4,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002wsm53o7p8bzaq",
+    "name": "Riley Parr",
+    "capNumber": 5,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002xsm53ppfisf96",
+    "name": "Benjamin van Staden",
+    "capNumber": 6,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002ysm539bu1bsgz",
+    "name": "Keagan Godfrey",
+    "capNumber": 7,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew002zsm539k9hx730",
+    "name": "Elliot Campbell",
+    "capNumber": 8,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew0030sm53j31qus4y",
+    "name": "Haitham Hawkins-Badat",
+    "capNumber": 9,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnztzew0031sm53cfpm0mtg",
+    "name": "Craig Buttle",
+    "capNumber": 10,
+    "teamId": "cmgnztzev002rsm53vt9ofns8",
+    "createdAt": "2025-10-12T15:43:55.015Z",
+    "updatedAt": "2025-10-12T15:43:55.015Z"
+  },
+  {
+    "id": "cmgnzxzhg0033sm53hbe36p30",
+    "name": "Aaron Diesel",
+    "capNumber": 1,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0034sm53ksr6oq8a",
+    "name": "Henri Kok",
+    "capNumber": 2,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0035sm53ayyp81zd",
+    "name": "Adam Smith",
+    "capNumber": 4,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0036sm53m6o8ylt8",
+    "name": "Jack Clifford",
+    "capNumber": 6,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0037sm5343e0hub6",
+    "name": "Nathan Stead",
+    "capNumber": 8,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0038sm5325ut0k1y",
+    "name": "Alex Lubbe",
+    "capNumber": 10,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg0039sm53yjfww12n",
+    "name": "Jake Miles",
+    "capNumber": 11,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg003asm53bwm90w84",
+    "name": "Liam Priem",
+    "capNumber": 12,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgnzxzhg003bsm53b0hufn23",
+    "name": "Connor Powell",
+    "capNumber": 13,
+    "teamId": "cmgnzxzhf0032sm5302qfqz8m",
+    "createdAt": "2025-10-12T15:47:01.730Z",
+    "updatedAt": "2025-10-12T15:47:01.730Z"
+  },
+  {
+    "id": "cmgo0aadn003dsm53ajpagloa",
+    "name": "Heinrich Bezuidenhoud",
+    "capNumber": 1,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003esm53v96flp2n",
+    "name": "Cruz De Sousa",
+    "capNumber": 2,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003fsm53v26ifunx",
+    "name": "Derek Foster",
+    "capNumber": 3,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003gsm535l2l6uqx",
+    "name": "Lukas Meyer",
+    "capNumber": 4,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003hsm53a4c1dd88",
+    "name": "Wian Strachan",
+    "capNumber": 5,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003ism53ukxdhooy",
+    "name": "Jayvin van Zyl",
+    "capNumber": 6,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003jsm53g86pxm2n",
+    "name": "Marius du Plessis",
+    "capNumber": 7,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003ksm53aet6r06r",
+    "name": "Harnu Hayward",
+    "capNumber": 8,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003lsm53207afxce",
+    "name": "Sidney Gasson",
+    "capNumber": 9,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0aadn003msm533z32n1qu",
+    "name": "Williem Groenewald",
+    "capNumber": 10,
+    "teamId": "cmgo0aadn003csm539145pvx4",
+    "createdAt": "2025-10-12T15:56:35.723Z",
+    "updatedAt": "2025-10-12T15:56:35.723Z"
+  },
+  {
+    "id": "cmgo0i8ns003qsm53gx6o48wg",
+    "name": "Christopher Vermaak",
+    "capNumber": 5,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003rsm53os97zjkw",
+    "name": "Harry Corlett",
+    "capNumber": 6,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003ssm53mb7cmbn9",
+    "name": "Daniel Loftus",
+    "capNumber": 7,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003tsm53gq2qyqft",
+    "name": "Thomas Koller",
+    "capNumber": 8,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003usm53wxzvr6om",
+    "name": "Jake Du Plessis",
+    "capNumber": 9,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003vsm53kjp6o8nb",
+    "name": "Josh Labushagne",
+    "capNumber": 10,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003wsm53wsus4l5k",
+    "name": "Stuart McEvoy",
+    "capNumber": 11,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo0i8ns003xsm53gj26ia06",
+    "name": "Caleb Glasspool",
+    "capNumber": 12,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgo476790001smlpz6p2jb0u",
+    "name": "Lee Ferriman-Else",
+    "capNumber": 1,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790002smlpwu7hu34s",
+    "name": "Jack Hobbs",
+    "capNumber": 2,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790003smlp3llptzpp",
+    "name": "Luc Crofton",
+    "capNumber": 7,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790004smlpj4m022nf",
+    "name": "Marco Protti",
+    "capNumber": 9,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790005smlpjxh6pr4h",
+    "name": "Chuma Manjo",
+    "capNumber": 10,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790006smlp5420jznf",
+    "name": "Matthew Ford",
+    "capNumber": 11,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790007smlpqskyk30x",
+    "name": "Renzo Ferrari",
+    "capNumber": 12,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790008smlpxvgp8to9",
+    "name": "Alexi Nousias",
+    "capNumber": 13,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo476790009smlpiy4pkg39",
+    "name": "Matteo Valenti",
+    "capNumber": 14,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo47679000asmlpegcudyl5",
+    "name": "Oliver Biddulph",
+    "capNumber": 15,
+    "teamId": "cmgo476750000smlpa6lgqml8",
+    "createdAt": "2025-10-12T17:46:08.798Z",
+    "updatedAt": "2025-10-12T17:46:08.798Z"
+  },
+  {
+    "id": "cmgo4errn000csmlpq3onahvw",
+    "name": "AléksMikal du Plessis",
+    "capNumber": 1,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000dsmlp336pjewl",
+    "name": "Justin Smit",
+    "capNumber": 2,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000esmlpvfsl0kl5",
+    "name": "Chase Pieret",
+    "capNumber": 3,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000fsmlp1saq6an2",
+    "name": "Zach Bartlett",
+    "capNumber": 4,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000gsmlpk2fxnskw",
+    "name": "Luke von Brandis",
+    "capNumber": 5,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000hsmlpruflb6yu",
+    "name": "Nhlaks Thwala",
+    "capNumber": 6,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4errn000ismlppq48wh53",
+    "name": "Max Janman",
+    "capNumber": 7,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4erro000jsmlpk84lwyk3",
+    "name": "Hunter Gie",
+    "capNumber": 9,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4erro000ksmlp1s1p7v9o",
+    "name": "Kai Sato",
+    "capNumber": 10,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgo4erro000lsmlp0g3czrj4",
+    "name": "Oliver Lilleike",
+    "capNumber": 11,
+    "teamId": "cmgo4errn000bsmlp79rkqnmf",
+    "createdAt": "2025-10-12T17:52:03.347Z",
+    "updatedAt": "2025-10-12T17:52:03.347Z"
+  },
+  {
+    "id": "cmgoxc3dp0001sm53d3404bcd",
+    "name": "Jack Lucas",
+    "capNumber": 1,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgo0i8ns003psm53vjx23wy8",
+    "name": "Luca Naude",
+    "capNumber": 2,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgoxc3dp0007sm53v1xp7kp8",
+    "name": "Raadi Rinquest",
+    "capNumber": 7,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgpiyvp80001smydcu6tskcs",
+    "name": "Samuel Terlingen",
+    "capNumber": 2,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80002smyd6tw5mrki",
+    "name": "Antonio Isidro",
+    "capNumber": 3,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80003smyd381hxlf7",
+    "name": "Thomas Petzer",
+    "capNumber": 4,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80004smydme8br2w8",
+    "name": "James Oliver",
+    "capNumber": 5,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80005smydahs76rom",
+    "name": "Benjamin Alberts",
+    "capNumber": 7,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80006smydk584b1da",
+    "name": "Tristan Kearns",
+    "capNumber": 8,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80007smydfb4ckfff",
+    "name": "Adam Derby",
+    "capNumber": 9,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80008smydnsx3xm1t",
+    "name": "Edward Carmichael",
+    "capNumber": 10,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp80009smyd3cd6k0ik",
+    "name": "Callum Case",
+    "capNumber": 11,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpiyvp8000asmyd2hlmr27n",
+    "name": "Phuti Tema",
+    "capNumber": 13,
+    "teamId": "cmgpiyvp70000smydzdct7kt7",
+    "createdAt": "2025-10-13T17:27:22.362Z",
+    "updatedAt": "2025-10-13T17:27:22.362Z"
+  },
+  {
+    "id": "cmgpj2d94000csmydzc9a350y",
+    "name": "Daniel Ward",
+    "capNumber": 1,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000dsmydklep66j6",
+    "name": "Finlay Boyes",
+    "capNumber": 2,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000esmydgw9wqtmu",
+    "name": "Murray Abendanon",
+    "capNumber": 3,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000fsmyd36p3v3o7",
+    "name": "Charles Dingley",
+    "capNumber": 4,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000gsmydefx2ira9",
+    "name": "Alex Bains",
+    "capNumber": 5,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000hsmyddvey5eir",
+    "name": "Joshua Chambers",
+    "capNumber": 6,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000ismydk41fphkg",
+    "name": "Jonathan McLagan",
+    "capNumber": 7,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000jsmydnw3kpk57",
+    "name": "Guy Chamberlin",
+    "capNumber": 8,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000ksmyd5n9edzsq",
+    "name": "Nicholas Ciolli",
+    "capNumber": 9,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgpj2d94000lsmyda7ixny3a",
+    "name": "Max Grout",
+    "capNumber": 10,
+    "teamId": "cmgpj2d93000bsmydpl4gea9g",
+    "createdAt": "2025-10-13T17:30:05.078Z",
+    "updatedAt": "2025-10-13T17:30:05.078Z"
+  },
+  {
+    "id": "cmgo0i8ns003osm53lic80mjg",
+    "name": "Michael Vermaak",
+    "capNumber": 1,
+    "teamId": "cmgo0i8nr003nsm536c0dt40x",
+    "createdAt": "2025-10-12T16:02:46.744Z",
+    "updatedAt": "2025-10-12T16:02:46.744Z"
+  },
+  {
+    "id": "cmgnixqa40075sm3oggr46zfc",
+    "name": "Jake Gordon",
+    "capNumber": 11,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgnixqa40073sm3odkbj9agi",
+    "name": "Gus Cloete",
+    "capNumber": 9,
+    "teamId": "cmgnixqa2006wsm3ovmmb3yqm",
+    "createdAt": "2025-10-12T07:50:56.329Z",
+    "updatedAt": "2025-10-12T07:50:56.329Z"
+  },
+  {
+    "id": "cmgoxc3dp0009sm539e5vjks0",
+    "name": "Max Wides",
+    "capNumber": 2,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp000asm53err3gnk7",
+    "name": "Samuel Yazdanpanahi",
+    "capNumber": 9,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0006sm53s4jkh5xi",
+    "name": "Alexander Reeves",
+    "capNumber": 10,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0005sm534gx05h88",
+    "name": "Sam Neethling",
+    "capNumber": 6,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0008sm53oe85z8x5",
+    "name": "Oliver Vickers",
+    "capNumber": 3,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0002sm53wwcprh7a",
+    "name": "Thomas Cobbledick",
+    "capNumber": 8,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0003sm53skfhhfji",
+    "name": "Kuhle Cossie",
+    "capNumber": 4,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  },
+  {
+    "id": "cmgoxc3dp0004sm53ks1146e6",
+    "name": "Leo Constantinou",
+    "capNumber": 5,
+    "teamId": "cmgoxc3dm0000sm53bnq2xoon",
+    "createdAt": "2025-10-13T07:21:47.287Z",
+    "updatedAt": "2025-10-13T07:21:47.287Z"
+  }
+]
