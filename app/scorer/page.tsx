@@ -47,6 +47,7 @@ export default function AdminScoring() {
   const [starting,    setStarting]    = useState(false);
   const [error,       setError]       = useState<string | null>(null);
   const [activeDay,   setActiveDay]   = useState(1);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const match = matches.find((m) => m.id === matchId);
 
@@ -215,12 +216,25 @@ export default function AdminScoring() {
 
   return (
     <div className="min-h-screen bg-[#07091F]">
-      <div className="border-b border-[#1B3A6E] px-4 py-3 flex items-center justify-between">
-        <div className="font-black uppercase text-sm text-white tracking-wide">Live Scorer</div>
-        <div className="flex items-center gap-2 text-[#2DB87A] text-xs font-bold uppercase tracking-widest shrink-0">
-          <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />{matches.filter((m) => m.status === "live").length} live
+      <div className="border-b border-[#1B3A6E] px-4 md:px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <div className="font-black uppercase text-xl text-white tracking-wide">🏆 Live Scorer</div>
+            <p className="text-[#7A9CC8] text-xs mt-0.5">Select a fixture, start the match, and log player stats live</p>
+          </div>
+          <div className="flex items-center gap-2 text-[#2DB87A] text-xs font-bold uppercase tracking-widest shrink-0">
+            <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />{matches.filter((m) => m.status === "live").length} live
+          </div>
         </div>
       </div>
+
+      {saveSuccess && (
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pt-3">
+          <div className="border border-[#2DB87A]/40 bg-[#2DB87A]/10 text-[#2DB87A] text-xs px-3 py-2">
+            Match result saved successfully
+          </div>
+        </div>
+      )}
 
       {/* Day tabs */}
       <div className="border-b border-[#1B3A6E] flex max-w-7xl mx-auto">
@@ -299,7 +313,7 @@ export default function AdminScoring() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => updateMatchStatus(match.id,"completed").then(loadMatches)}
+              <button onClick={() => updateMatchStatus(match.id,"completed").then(() => { loadMatches(); setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 3000); })}
                 className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-red-800 text-red-200 hover:opacity-80 transition-opacity">
                 ■ End match
               </button>

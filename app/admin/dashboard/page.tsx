@@ -36,13 +36,13 @@ export default function AdminDashboard() {
           <div className="text-white font-black uppercase text-lg tracking-wide">Admin Dashboard</div>
           <div className="text-[#7A9CC8] text-xs">SACS Junior Water Polo Tournament 2025</div>
         </div>
-        <Link href="/admin/scoring" className="flex items-center gap-2 bg-[#2DB87A]/20 border border-[#2DB87A] text-[#2DB87A] text-xs font-bold uppercase tracking-widest px-4 py-2 hover:bg-[#2DB87A]/30 transition-colors">
+        <Link href="/scorer" className="flex items-center gap-2 bg-[#2DB87A]/20 border border-[#2DB87A] text-[#2DB87A] text-xs font-bold uppercase tracking-widest px-4 py-2 hover:bg-[#2DB87A]/30 transition-colors">
           <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />Open scorer
         </Link>
       </div>
 
       {live.length > 0 && (
-        <Link href="/admin/scoring" className="flex items-center gap-3 bg-blue-50 border-b border-[#1B6FC8]/30 px-6 py-3 hover:bg-blue-100 transition-colors">
+        <Link href="/scorer" className="flex items-center gap-3 bg-blue-50 border-b border-[#1B6FC8]/30 px-6 py-3 hover:bg-blue-100 transition-colors">
           <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />
           <span className="text-sm text-[#1B6FC8] font-medium">{live.length} match{live.length > 1 ? "es" : ""} currently live — tap to score</span>
           <span className="ml-auto text-[#1B6FC8] font-bold">→</span>
@@ -106,10 +106,11 @@ export default function AdminDashboard() {
               <div className="px-4 py-3 border-b border-gray-200"><span className="font-black uppercase text-sm text-gray-900">Quick Actions</span></div>
               <div className="p-3 space-y-2">
                 {[
-                  { href: "/admin/scoring",  label: "Live Scorer",    icon: "⚡", primary: true },
+                  { href: "/scorer",  label: "Live Scorer",    icon: "⚡", primary: true },
                   { href: "/admin/fixtures", label: "Fixtures",       icon: "📋" },
                   { href: "/admin/bracket",  label: "Bracket",        icon: "🏆" },
                   { href: "/admin/teams",    label: "Teams & Players",icon: "👥" },
+                  { href: "/admin/corrections", label: "Score Corrections", icon: "🛠" },
                 ].map(({ href, label, icon, primary }) => (
                   <Link key={href} href={href} className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wide transition-colors ${primary ? "bg-[#1B6FC8] text-white hover:bg-[#0D4A8A]" : "bg-gray-50 text-gray-700 border border-gray-200 hover:border-[#1B6FC8] hover:text-[#1B6FC8]"}`}>
                     <span>{icon}</span>{label}<span className="ml-auto">→</span>

@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
-type Team = { id: string; name: string; short_code: string; coach: string; group_id: string; groups: { name: string; pools: { name: string } | null } | null };
+type Team = { id: string; name: string; short_code: string; coach: string; group_id: string; logo_url: string | null; groups: { name: string; pools: { name: string } | null } | null };
 type Standing = { team_id: string; team_name: string; group_id: string; played: number; won: number; goals_for: number; goals_against: number; goal_diff: number; points: number; rank: number };
 type PlayerStat = { player_id: string; player_name: string; cap_number: number; position: string; team_id: string; goals: number; kickouts: number; yellow_cards: number; red_cards: number };
 
@@ -13,7 +14,6 @@ interface Props {
 
 export default function TeamsClient({ teams, standings, stats }: Props) {
   const [activeGroup, setActiveGroup] = useState("all");
-  const [expanded, setExpanded] = useState<string | null>(null);
 
   const groups = [...new Set(teams.map((t) => t.groups?.name).filter(Boolean))].sort() as string[];
   const filtered = activeGroup === "all" ? teams : teams.filter((t) => t.groups?.name === activeGroup);
@@ -29,15 +29,24 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
         </div>
       </div>
 
-      <div className="bg-white border-b border-gray-200 px-6 py-5">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-[10px] font-bold uppercase tracking-[3px] text-[#1B6FC8] border-l-2 border-[#F5C518] pl-2 mb-4">Tournament Top Scorers</div>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-3 h-3 rounded-full bg-[#F5C518] shrink-0" />
+            <h2 className="font-black uppercase text-lg tracking-wide text-gray-900">Top Scorers</h2>
+          </div>
           {topScorers.length === 0
             ? <div className="text-sm text-gray-400">No goals scored yet</div>
             : <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                 {topScorers.map((s, i) => (
                   <div key={s.player_id} className="flex items-center gap-3 py-1">
-                    <span className="text-sm font-black text-gray-300 w-4 shrink-0">{i + 1}</span>
+                    <span className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold border ${
+                      i === 0 ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
+                      i === 1 ? "bg-gray-100 text-gray-700 border-gray-300" :
+                      i === 2 ? "bg-orange-100 text-orange-800 border-orange-200" :
+                      "bg-blue-100 text-blue-800 border-blue-200"}`}>
+                      {i + 1}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <div className="font-black uppercase text-xs text-gray-900 truncate">{s.player_name}</div>
                       <div className="text-[10px] text-gray-400 uppercase truncate">{teams.find((t) => t.id === s.team_id)?.name}</div>
@@ -53,8 +62,8 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
         </div>
       </div>
 
-      <div className="border-b-2 border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto flex overflow-x-auto">
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        <div className="border-b-2 border-gray-200 flex overflow-x-auto">
           {["all", ...groups].map((g) => (
             <button key={g} onClick={() => setActiveGroup(g)}
               className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 -mb-0.5 whitespace-nowrap transition-colors ${activeGroup === g ? "text-[#1B6FC8] border-[#1B6FC8]" : "text-gray-400 border-transparent hover:text-gray-700"}`}>
@@ -64,83 +73,36 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-2">
-        {filtered.map((team) => {
-          const standing = standings.find((s) => s.team_id === team.id);
-          const players = stats.filter((p) => p.team_id === team.id);
-          const isOpen = expanded === team.id;
-          const isCup = (standing?.rank ?? 99) <= 4;
-          return (
-            <div key={team.id} className={`border bg-white ${isOpen ? "border-[#1B6FC8]" : "border-gray-200"}`}>
-              <button className="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
-                onClick={() => setExpanded(isOpen ? null : team.id)}>
-                <div className={`w-10 h-10 flex items-center justify-center text-xs font-black text-white shrink-0 ${isCup ? "bg-[#1B6FC8]" : "bg-gray-300"}`}>{team.short_code}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black uppercase text-sm text-gray-900">{team.name}</div>
-                  <div className="text-[10px] text-gray-400 uppercase">{team.groups?.name} · {team.groups?.pools?.name} · Coach: {team.coach}</div>
-                </div>
-                {standing && (
-                  <div className="hidden sm:flex items-center gap-4 shrink-0">
-                    {[{ v: standing.goals_for, l: "GF" }, { v: (standing.goal_diff > 0 ? "+" : "") + standing.goal_diff, l: "GD" }, { v: standing.points, l: "Pts" }].map(({ v, l }) => (
-                      <div key={l} className="text-center">
-                        <div className="font-black text-sm text-[#1B6FC8] leading-none">{v}</div>
-                        <div className="text-[9px] text-gray-400 uppercase">{l}</div>
-                      </div>
-                    ))}
-                    <span className={`text-[10px] font-black uppercase px-2 py-1 ${isCup ? "bg-[#1B6FC8] text-white" : "bg-gray-100 text-gray-400"}`}>
-                      {standing.rank}{["st", "nd", "rd"][standing.rank - 1] ?? "th"}
-                    </span>
-                  </div>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Team cards — badge is the main piece of the card, links to a dedicated team page */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map((team) => {
+            const standing = standings.find((s) => s.team_id === team.id);
+            const isCup = (standing?.rank ?? 99) <= 4;
+            return (
+              <Link key={team.id} href={`/teams/${team.short_code}`}
+                className="relative aspect-square rounded-2xl border border-gray-200 hover:border-[#1B6FC8] bg-white overflow-hidden text-left transition-colors block">
+                {team.groups?.name && (
+                  <span className="absolute top-2 right-2 z-10 bg-[#F5C518] text-[#07091F] text-[10px] font-black uppercase px-2 py-0.5 rounded-full shadow-sm">
+                    {team.groups.name}
+                  </span>
                 )}
-                <span className="text-gray-400 text-xs ml-2">{isOpen ? "▲" : "▼"}</span>
-              </button>
-
-              {isOpen && (
-                <div className="border-t border-gray-200 px-4 py-4 bg-gray-50/50">
-                  {standing && (
-                    <div className="grid grid-cols-4 gap-2 mb-4">
-                      {[{ v: standing.played, l: "Played" }, { v: standing.goals_for, l: "Goals For" }, { v: standing.goals_against, l: "Goals Against" }, { v: (standing.goal_diff > 0 ? "+" : "") + standing.goal_diff, l: "GD" }].map(({ v, l }) => (
-                        <div key={l} className="bg-white border border-gray-200 p-3 text-center">
-                          <div className="font-black text-xl text-gray-900 leading-none">{v}</div>
-                          <div className="text-[9px] text-[#1B6FC8] uppercase tracking-widest mt-1">{l}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {players.length > 0 ? (
-                    <>
-                      <div className="text-[10px] font-bold uppercase tracking-[3px] text-[#1B6FC8] mb-3">Player Stats</div>
-                      <div className="bg-white border border-gray-200 overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-gray-200">
-                              {["#", "Player", "Pos", "Goals", "KO", "YC", "RC"].map((h, i) => (
-                                <th key={h} className={`px-2 py-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 ${i <= 1 ? "text-left" : "text-right"} ${i === 0 ? "w-10" : ""}`}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            {players.sort((a, b) => b.goals - a.goals).map((p) => (
-                              <tr key={p.player_id} className="hover:bg-gray-50">
-                                <td className="px-2 py-2 font-bold text-gray-400 text-left">#{p.cap_number}</td>
-                                <td className="px-2 py-2 font-bold uppercase text-gray-900 text-left">{p.player_name}</td>
-                                <td className="px-2 py-2 text-center text-gray-400 text-[10px] uppercase">{p.position === "Goalkeeper" ? "GK" : "FD"}</td>
-                                <td className={`px-2 py-2 text-right font-black ${p.goals > 0 ? "text-[#1B6FC8]" : "text-gray-300"}`}>{p.goals}</td>
-                                <td className={`px-2 py-2 text-right ${p.kickouts > 0 ? "text-gray-700" : "text-gray-300"}`}>{p.kickouts || "—"}</td>
-                                <td className="px-2 py-2 text-right">{p.yellow_cards > 0 ? <span className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5">{p.yellow_cards}</span> : <span className="text-gray-300">—</span>}</td>
-                                <td className="px-2 py-2 text-right">{p.red_cards > 0 ? <span className="bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5">{p.red_cards}</span> : <span className="text-gray-300">—</span>}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  {team.logo_url
+                    ? <img src={team.logo_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-md" />
+                    : <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-md ${isCup ? "bg-[#1B6FC8]" : "bg-gray-400"}`}>
+                        {team.short_code}
                       </div>
-                    </>
-                  ) : <div className="text-center text-sm text-gray-400 py-4">No player data yet</div>}
+                  }
                 </div>
-              )}
-            </div>
-          );
-        })}
+                <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm px-3 py-2.5 border-t border-gray-100">
+                  <div className="font-black uppercase text-xs text-gray-900 truncate">{team.name}</div>
+                  <div className="text-[10px] text-gray-400 uppercase truncate">Coach: {team.coach || "—"}</div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

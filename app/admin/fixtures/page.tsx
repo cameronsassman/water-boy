@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { updateMatchStatus } from "@/lib/db";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Label, Select } from "@/components/ui-lite";
 
 type Match = {
   id: string; status: string; home_score: number; away_score: number;
@@ -24,6 +25,12 @@ const STAGES = [
   "plate_sf","plate_final","festival",
 ];
 
+const STAGE_BADGE: Record<string, "default"|"secondary"|"warning"|"success"> = {
+  group: "secondary", cup_r16: "default", cup_qf: "default", cup_sf: "default", cup_final: "default",
+  shield_qf: "warning", shield_sf: "warning", shield_final: "warning",
+  plate_sf: "success", plate_final: "success", festival: "secondary",
+};
+
 export default function AdminFixtures() {
   const [activeDay, setActiveDay] = useState(2);
   const [matches,   setMatches]   = useState<Match[]>([]);
@@ -33,7 +40,6 @@ export default function AdminFixtures() {
   const [loading,   setLoading]   = useState(true);
   const [saving,    setSaving]    = useState(false);
 
-  // Form state
   const [homeId,    setHomeId]    = useState("");
   const [awayId,    setAwayId]    = useState("");
   const [poolId,    setPoolId]    = useState("");
@@ -75,7 +81,6 @@ export default function AdminFixtures() {
       match_time: time,
       status: "scheduled",
     });
-    // Refresh
     const { data } = await supabase.from("matches").select(SELECT).eq("day", activeDay).order("match_time");
     setMatches((data as Match[]) ?? []);
     setHomeId(""); setAwayId(""); setSaving(false);
@@ -88,17 +93,16 @@ export default function AdminFixtures() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#07091F] border-b border-[#1B3A6E] px-6 py-4">
+      <div className="bg-[#07091F] px-6 py-4">
         <div className="text-white font-black uppercase text-lg tracking-wide">Fixtures</div>
         <div className="text-[#7A9CC8] text-xs mt-0.5">Manage match schedule · Set match status</div>
       </div>
 
-      {/* Day tabs */}
       <div className="border-b-2 border-gray-200 bg-white">
         <div className="flex">
           {[1,2,3,4].map((d) => (
             <button key={d} onClick={() => setActiveDay(d)}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest border-b-2 -mb-0.5 transition-colors ${activeDay === d ? "text-[#1B6FC8] border-[#1B6FC8]" : "text-gray-400 border-transparent hover:text-gray-700"}`}>
+              className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest border-b-2 -mb-0.5 transition-colors ${activeDay === d ? "text-blue-600 border-blue-600" : "text-gray-400 border-transparent hover:text-gray-700"}`}>
               Day {d}
             </button>
           ))}
@@ -107,111 +111,112 @@ export default function AdminFixtures() {
 
       <div className="max-w-4xl mx-auto px-6 py-6 space-y-6">
 
-        {/* Existing matches */}
-        <div className="bg-white border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <span className="font-black uppercase text-sm text-gray-900">Day {activeDay} Matches</span>
-          </div>
-          {loading
-            ? <div className="px-4 py-8 text-center text-gray-400 text-sm">Loading...</div>
-            : matches.length === 0
-              ? <div className="px-4 py-8 text-center text-gray-400 text-sm">No matches for Day {activeDay}</div>
-              : <div className="divide-y divide-gray-100">
-                  {matches.map((m) => {
-                    const isLive = m.status === "live";
-                    const isDone = m.status === "completed";
-                    return (
-                      <div key={m.id} className={`flex items-center gap-3 px-4 py-3 ${isLive ? "bg-blue-50" : ""}`}>
-                        <span className="text-xs font-mono text-gray-400 w-10 shrink-0">{m.match_time}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-bold text-sm uppercase text-gray-900 truncate">
-                            {m.home_team?.name} <span className="text-gray-400 font-normal">vs</span> {m.away_team?.name}
+        <Card>
+          <CardHeader>
+            <CardTitle>Day {activeDay} Matches</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading
+              ? <div className="px-5 py-8 text-center text-gray-400 text-sm">Loading...</div>
+              : matches.length === 0
+                ? <div className="px-5 py-8 text-center text-gray-400 text-sm">No matches for Day {activeDay}</div>
+                : <div className="divide-y divide-gray-100">
+                    {matches.map((m) => {
+                      const isLive = m.status === "live";
+                      const isDone = m.status === "completed";
+                      return (
+                        <div key={m.id} className={`flex items-center gap-3 px-5 py-3 flex-wrap ${isLive ? "bg-blue-50" : ""}`}>
+                          <span className="text-xs font-mono text-gray-400 w-10 shrink-0">{m.match_time}</span>
+                          <div className="flex-1 min-w-[180px]">
+                            <div className="font-bold text-sm text-gray-900 truncate">
+                              {m.home_team?.name} <span className="text-gray-400 font-normal">vs</span> {m.away_team?.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <Badge variant="outline">{m.pools?.name}</Badge>
+                              {m.groups?.name && <Badge variant="outline">{m.groups.name}</Badge>}
+                              <Badge variant={STAGE_BADGE[m.stage] ?? "secondary"}>{m.stage}</Badge>
+                              {isLive && <Badge variant="success">● Live</Badge>}
+                              {isDone && <Badge variant="secondary">Full time</Badge>}
+                            </div>
                           </div>
-                          <div className="text-[10px] text-gray-400 uppercase">{m.pools?.name} · {m.groups?.name} · {m.stage}</div>
+                          {m.status !== "scheduled" && (
+                            <span className="font-black text-sm text-gray-700">{m.home_score}–{m.away_score}</span>
+                          )}
+                          <div className="flex gap-1.5 shrink-0">
+                            {!isLive && !isDone && (
+                              <Button size="sm" onClick={() => setStatus(m.id, "live")} className="bg-green-600 hover:bg-green-700">▶ Live</Button>
+                            )}
+                            {isLive && (
+                              <Button size="sm" variant="destructive" onClick={() => setStatus(m.id, "completed")}>■ End</Button>
+                            )}
+                            {!isDone && (
+                              <Button size="sm" variant="outline" onClick={() => setStatus(m.id, "scheduled")}>Reset</Button>
+                            )}
+                          </div>
                         </div>
-                        {m.status !== "scheduled" && (
-                          <span className="font-black text-sm text-gray-600">{m.home_score}–{m.away_score}</span>
-                        )}
-                        {/* Status controls */}
-                        <div className="flex gap-1 shrink-0">
-                          {!isLive && !isDone && (
-                            <button onClick={() => setStatus(m.id, "live")} className="text-[10px] font-bold uppercase px-2 py-1 bg-[#2DB87A] text-white hover:opacity-80">▶ Live</button>
-                          )}
-                          {isLive && (
-                            <button onClick={() => setStatus(m.id, "completed")} className="text-[10px] font-bold uppercase px-2 py-1 bg-red-600 text-white hover:opacity-80">■ End</button>
-                          )}
-                          {isDone && (
-                            <span className="text-[10px] font-bold uppercase px-2 py-1 bg-gray-100 text-gray-400">FT</span>
-                          )}
-                          {!isDone && (
-                            <button onClick={() => setStatus(m.id, "scheduled")} className="text-[10px] font-bold uppercase px-2 py-1 border border-gray-200 text-gray-400 hover:border-gray-400">Reset</button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-          }
-        </div>
+                      );
+                    })}
+                  </div>
+            }
+          </CardContent>
+        </Card>
 
-        {/* Add fixture */}
-        <div className="bg-white border border-gray-200">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <span className="font-black uppercase text-sm text-gray-900">Add New Fixture</span>
-          </div>
-          <div className="p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Fixture</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Home team</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={homeId} onChange={(e) => setHomeId(e.target.value)}>
+                <Label>Home team</Label>
+                <Select value={homeId} onChange={(e) => setHomeId(e.target.value)}>
                   <option value="">Select...</option>
                   {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Away team</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={awayId} onChange={(e) => setAwayId(e.target.value)}>
+                <Label>Away team</Label>
+                <Select value={awayId} onChange={(e) => setAwayId(e.target.value)}>
                   <option value="">Select...</option>
                   {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Pool</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={poolId} onChange={(e) => setPoolId(e.target.value)}>
+                <Label>Pool</Label>
+                <Select value={poolId} onChange={(e) => setPoolId(e.target.value)}>
                   <option value="">Select...</option>
                   {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Group</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+                <Label>Group</Label>
+                <Select value={groupId} onChange={(e) => setGroupId(e.target.value)}>
                   <option value="">None</option>
                   {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Stage</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={stage} onChange={(e) => setStage(e.target.value)}>
+                <Label>Stage</Label>
+                <Select value={stage} onChange={(e) => setStage(e.target.value)}>
                   {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Day</label>
-                <select className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={day} onChange={(e) => setDay(e.target.value)}>
+                <Label>Day</Label>
+                <Select value={day} onChange={(e) => setDay(e.target.value)}>
                   {[1,2,3,4].map((d) => <option key={d} value={d}>Day {d}</option>)}
-                </select>
+                </Select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Time</label>
-                <input type="time" className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-[#1B6FC8]" value={time} onChange={(e) => setTime(e.target.value)} />
+                <Label>Time</Label>
+                <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
               </div>
             </div>
-            <button onClick={createFixture} disabled={saving || !homeId || !awayId || !poolId}
-              className="mt-4 w-full bg-[#1B6FC8] text-white text-xs font-bold uppercase tracking-widest py-3 hover:bg-[#0D4A8A] disabled:opacity-50 transition-colors">
-              {saving ? "Creating..." : "Create Fixture"}
-            </button>
-          </div>
-        </div>
+            <Button onClick={createFixture} disabled={saving || !homeId || !awayId || !poolId} className="mt-4 w-full">
+              {saving ? "Creating..." : "+ Create Fixture"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
