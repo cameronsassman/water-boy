@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+import { getAllStandings, getGroupStageResults, getGroupStageDiscipline } from "@/lib/db";
+
 // lib/standings.ts
 //
 // Implements the tournament's group-stage ranking rules:
@@ -132,3 +135,19 @@ function resolveMultiWayTie(cluster: StandingRow[], matches: MatchResult[], disc
   }
   return out;
 }
+// The full tiebreaker cascade is real compute — 3 queries plus a
+// multi-step sort/cluster algorithm — and it was previously re-run on
+// every single request to every page that shows standings (home, the
+// standings page, every team page), even within the same revalidation
+// window. This caches the whole "fetch + resolve" operation so it only
+// actually runs once per 30s window, not once per visitor.
+export const getCachedGroupStandings = unstable_cache(
+  async () => {
+    const [raw, matches, discipline] = await Promise.all([
+      getAllStandings(), getGroupStageResults(), getGroupStageDiscipline(),
+    ]);
+    return resolveGroupStandings(raw, matches, discipline);
+  },
+  ["group-standings"],
+  { revalidate: 30 }
+);

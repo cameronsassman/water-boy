@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getLiveMatches, getMatchesByDay, getTopScorers, getAllStandings, getGroups, getTournament, getGroupStageResults, getGroupStageDiscipline } from "@/lib/db";
-import { resolveGroupStandings } from "@/lib/standings";
+import { getLiveMatches, getMatchesByDay, getTopScorers, getGroups, getTournament } from "@/lib/db";
+import { getCachedGroupStandings } from "@/lib/standings";
 import LiveScores from "@/components/LiveScores";
+import Image from "next/image";
 
 export const revalidate = 30;
 
@@ -17,8 +18,15 @@ const VIDEOS = [
 // files in your public/sponsors folder and point each entry at its file.
 // Leave logo_url out to just show the name as text instead.
 const SPONSORS: { name: string; tier: string; logo_url?: string; is_charity?: boolean }[] = [
-  // { name: "Example Headline Sponsor", tier: "headline", logo_url: "/sponsors/example.png" },
-  // { name: "Example Charity",          tier: "tier_one",  logo_url: "/sponsors/charity.png", is_charity: true },
+  { name: "RSAWEB",                       tier: "headline",  logo_url: "/assets/rsaweb.png" },
+  { name: "Hudsons",                      tier: "tier_one",  logo_url: "/assets/hudsons.png" },
+  { name: "First National Bank",          tier: "tier_one",  logo_url: "/assets/fnb.png" },
+  { name: "Sports Science Physiotherapy Centre", tier: "tier_two", logo_url: "/assets/sspc-physio.png" },
+  { name: "Sofaworx",                     tier: "tier_two",  logo_url: "/assets/sofaworx.png" },
+  { name: "Stikka",                       tier: "tier_two",  logo_url: "/assets/stikka.png" },
+  { name: "Geddes Capital",               tier: "smaller",   logo_url: "/assets/geddes.jpeg" },
+  { name: "Shout Music Company",          tier: "smaller",   logo_url: "/assets/shout-music.png" },
+  { name: "KY-ND",                        tier: "smaller",   logo_url: "/assets/ky-nd.png", is_charity: true },
 ];
 
 export default async function HomePage() {
@@ -29,12 +37,10 @@ export default async function HomePage() {
   const dates = tournament?.dates ?? tournament?.date_range ?? "";
   const venue = tournament?.venue ?? "";
 
-  const [liveMatches, todayMatches, topScorers, rawStandings, groups, groupMatches, discipline] = await Promise.all([
+  const [liveMatches, todayMatches, topScorers, allStandings, groups] = await Promise.all([
     getLiveMatches(), getMatchesByDay(currentDay),
-    getTopScorers(5), getAllStandings(), getGroups(),
-    getGroupStageResults(), getGroupStageDiscipline(),
+    getTopScorers(5), getCachedGroupStandings(), getGroups(),
   ]);
-  const allStandings = resolveGroupStandings(rawStandings, groupMatches, discipline);
 
   const headmaster = VIDEOS.find((v) => v.role === "headmaster");
   const captain = VIDEOS.find((v) => v.role === "captain");
@@ -46,59 +52,64 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFFFC] overflow-x-hidden">
       {/* HERO — floating bubbles */}
-      <section className="relative bg-[#07091F] border-b-4 border-[#1B6FC8] px-6 py-16 overflow-hidden">
-        <Bubble className="w-72 h-72 -top-20 -right-16 border-[#38B6E8]/20" />
-        <Bubble className="w-40 h-40 top-24 right-40 border-[#F5C518]/20 hidden sm:block" />
-        <Bubble className="w-24 h-24 top-8 right-8 bg-[#1B6FC8]/10 border-0 hidden sm:block" />
-        <Bubble className="w-56 h-56 -bottom-24 -left-20 border-[#1B6FC8]/20" />
-        <Bubble className="w-16 h-16 bottom-10 left-24 bg-[#F5C518]/10 border-0 hidden sm:block" />
+      <section className="relative bg-gradient-to-b from-[#EAF6FE] to-white px-6 pt-14 pb-10 overflow-hidden">
+        <Bubble className="w-72 h-72 -top-20 -right-16 border-[#1B6FC8]/15" />
+        <Bubble className="w-40 h-40 top-24 right-40 border-[#38B6E8]/15 hidden sm:block" />
+        <Bubble className="w-24 h-24 top-8 right-8 bg-[#1B6FC8]/5 border-0 hidden sm:block" />
+        <Bubble className="w-56 h-56 -bottom-24 -left-20 border-[#1B6FC8]/15" />
+        <Bubble className="w-16 h-16 bottom-10 left-24 bg-[#38B6E8]/10 border-0 hidden sm:block" />
 
-        <div className="max-w-5xl mx-auto relative text-center">
-          <div className="inline-flex items-center gap-2 mb-5 text-[#38B6E8] text-xs font-bold uppercase tracking-[3px] bg-white/5 border border-[#1B3A6E] rounded-full px-4 py-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#38B6E8] live-dot" />
-            Day {currentDay} of {totalDays}
+        <div className="max-w-3xl mx-auto relative text-center">
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 mb-6 text-[#1B6FC8] text-xs font-bold uppercase tracking-[3px] bg-white border border-[#CFE6F8] rounded-full px-4 py-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#1B6FC8] live-dot" />
+              Day {currentDay} of {totalDays}
+            </div>
+            <div className="mb-3 flex justify-center">
+              <Image
+                src="/assets/logo/sacs-wp-logo.png"
+                alt={name}
+                width={857}
+                height={720}
+                priority
+                className="w-auto h-auto max-h-[150px] sm:max-h-[180px]"
+              />
+            </div>
+            {(dates || venue) && <p className="text-[#5C7B9C] text-sm">{dates}{dates && venue ? " · " : ""}{venue}</p>}
           </div>
-          <h1 className="text-white font-black uppercase leading-none mb-4" style={{ fontSize: "clamp(2.25rem,6vw,4rem)" }}>
-            {name}
-          </h1>
-          {(dates || venue) && <p className="text-[#7A9CC8] text-sm mb-8">{dates}{dates && venue ? " · " : ""}{venue}</p>}
 
-          <div className="flex justify-center gap-4 flex-wrap">
+          {/* Headline sponsor + charity partner — shown plainly, no tier badge */}
+          {bannerSponsors.length > 0 && (
+            <div className="mt-10">
+              <div className="text-[9px] font-bold uppercase tracking-[3px] text-[#7A9CC8] mb-5">Presented by</div>
+              <div className="flex flex-wrap items-center justify-center gap-x-14 gap-y-8">
+                {bannerSponsors.map((s) => (
+                  s.logo_url
+                    ? <img key={s.name} src={s.logo_url} alt={s.name} className="h-24 sm:h-28 object-contain" />
+                    : <span key={s.name} className="font-bold text-3xl text-[#07091F]">{s.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* QUICK LINKS */}
+          <div className="mt-10 pt-8 border-t border-[#CFE6F8] flex flex-wrap items-center justify-center gap-3">
             {[
-              { v: todayMatches.length, l: "Today" },
-              { v: liveMatches.length, l: "Live" },
-              { v: 32, l: "Teams" },
-              { v: totalDays, l: "Days" },
-            ].map(({ v, l }) => (
-              <div key={l} className="w-20 h-20 rounded-full bg-white/5 border-2 border-[#1B3A6E] flex flex-col items-center justify-center">
-                <div className="text-[#F5C518] font-black text-xl leading-none">{v}</div>
-                <div className="text-[#7A9CC8] text-[8px] uppercase tracking-widest mt-1">{l}</div>
-              </div>
+              { href: "#live", label: "Live Scores" },
+              { href: "/standings", label: "Standings" },
+              { href: "/teams", label: "Top Scorers" },
+            ].map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className="text-xs font-bold uppercase tracking-wider text-[#1B6FC8] bg-white border border-[#CFE6F8] rounded-full px-4 py-2 shadow-sm hover:bg-[#EAF6FE] transition-colors"
+              >
+                {l.label}
+              </a>
             ))}
           </div>
         </div>
-
-        <RippleDivider />
       </section>
-
-      {/* Headline sponsor + charity partner banner */}
-      {bannerSponsors.length > 0 && (
-        <div className="bg-gray-50 border-b border-gray-100 px-6 py-6">
-          <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-center gap-8">
-            {bannerSponsors.map((s) => (
-              <div key={s.name} className="flex flex-col items-center gap-2">
-                {s.logo_url
-                  ? <img src={s.logo_url} alt={s.name} className="h-14 object-contain" />
-                  : <span className="font-black text-xl text-gray-900 uppercase tracking-wide">{s.name}</span>
-                }
-                <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${s.is_charity ? "text-[#2DB87A] bg-green-50 border-green-200" : "text-[#F5C518] bg-yellow-50 border-[#F5C518]/40"}`}>
-                  {s.is_charity ? "Charity Partner" : "Headline Sponsor"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-14">
 

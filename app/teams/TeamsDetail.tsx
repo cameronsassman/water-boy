@@ -1,18 +1,29 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTeamByShortCode, getGroupStandings, getPlayerStatsByTeam } from "@/lib/db";
+import { getTeamByShortCode, getPlayerStatsByTeam, getTeams } from "@/lib/db";
+import { getCachedGroupStandings } from "@/lib/standings";
 
 export const revalidate = 60;
+
+// Pre-render every known team's page at build time instead of rendering
+// on demand per-visit — without this, every single team-page request hit
+// the database live, unlike every other page on the site which serves
+// from a static/ISR cache.
+export async function generateStaticParams() {
+  const teams = await getTeams();
+  return teams.map((t: any) => ({ slug: t.short_code }));
+}
 
 export default async function TeamDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const team = await getTeamByShortCode(slug);
   if (!team) notFound();
 
-  const [standings, players] = await Promise.all([
-    getGroupStandings(team.group_id),
+  const [allStandings, players] = await Promise.all([
+    getCachedGroupStandings(),
     getPlayerStatsByTeam(team.id),
   ]);
+  const standings = allStandings.filter((s: any) => s.group_id === team.group_id);
   const standing = standings.find((s: any) => s.team_id === team.id);
   const isCup = (standing?.rank ?? 99) <= 4;
 

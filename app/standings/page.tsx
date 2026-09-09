@@ -1,13 +1,10 @@
-import { getAllStandings, getGroups, getPools, getGroupStageResults, getGroupStageDiscipline } from "@/lib/db";
-import { resolveGroupStandings } from "@/lib/standings";
+import { getGroups, getPools } from "@/lib/db";
+import { getCachedGroupStandings } from "@/lib/standings";
 import StandingsClient from "./StandingsClient";
 
 export const revalidate = 30;
 
 export default async function StandingsPage() {
-  const [rawStandings, groups, pools, matches, discipline] = await Promise.all([
-    getAllStandings(), getGroups(), getPools(), getGroupStageResults(), getGroupStageDiscipline(),
-  ]);
-  const standings = resolveGroupStandings(rawStandings, matches, discipline);
+  const [standings, groups, pools] = await Promise.all([getCachedGroupStandings(), getGroups(), getPools()]);
   return <StandingsClient standings={standings} groups={groups} pools={pools} />;
 }
