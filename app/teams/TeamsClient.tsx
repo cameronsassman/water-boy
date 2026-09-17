@@ -2,9 +2,40 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Team = { id: string; name: string; short_code: string; coach: string; group_id: string; logo_url: string | null; groups: { name: string; pools: { name: string } | null } | null };
-type Standing = { team_id: string; team_name: string; group_id: string; played: number; won: number; goals_for: number; goals_against: number; goal_diff: number; points: number; rank: number };
-type PlayerStat = { player_id: string; player_name: string; cap_number: number; position: string; team_id: string; goals: number; kickouts: number; yellow_cards: number; red_cards: number };
+type Team = {
+  id: string;
+  name: string;
+  short_code: string;
+  coach: string;
+  group_id: string;
+  logo_url: string | null;
+  groups: { name: string; pools: { name: string } | null } | null;
+};
+
+type Standing = {
+  team_id: string;
+  team_name: string;
+  group_id: string;
+  played: number;
+  won: number;
+  goals_for: number;
+  goals_against: number;
+  goal_diff: number;
+  points: number;
+  rank: number;
+};
+
+type PlayerStat = {
+  player_id: string;
+  player_name: string;
+  cap_number: number;
+  position: string;
+  team_id: string;
+  goals: number;
+  kickouts: number;
+  yellow_cards: number;
+  red_cards: number;
+};
 
 interface Props {
   teams: Team[];
@@ -20,84 +51,125 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
   const topScorers = stats.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#FFFFFC]">
-      <div className="bg-[#07091F] border-b-4 border-[#1B6FC8] px-6 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-[#38B6E8] text-xs font-bold uppercase tracking-[3px] mb-2">32 Teams · 4 Groups</div>
-          <h1 className="text-white font-black uppercase text-4xl leading-none">Teams</h1>
-          <p className="text-[#7A9CC8] text-sm mt-1">Profiles · Player stats · Standings</p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="w-3 h-3 rounded-full bg-[#F5C518] shrink-0" />
-            <h2 className="font-black uppercase text-lg tracking-wide text-gray-900">Top Scorers</h2>
+    <div className="min-h-screen bg-[#EAF6FE]">
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Top Scorers Spotlight */}
+        <div className="rounded-2xl border border-[#CFE6F8] bg-white shadow-sm overflow-hidden">
+          <div className="bg-[#07091F] px-5 py-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
+              <h2 className="font-black uppercase text-xs sm:text-sm tracking-wider text-white">
+                Tournament Top Scorers
+              </h2>
+            </div>
+            <span className="text-white/40 font-bold uppercase text-[10px] tracking-widest">
+              Top 5 Leaders
+            </span>
           </div>
-          {topScorers.length === 0
-            ? <div className="text-sm text-gray-400">No goals scored yet</div>
-            : <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
+
+          <div className="p-5">
+            {topScorers.length === 0 ? (
+              <div className="text-sm text-gray-400 text-center py-4">No goals scored yet</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                 {topScorers.map((s, i) => (
-                  <div key={s.player_id} className="flex items-center gap-3 py-1">
-                    <span className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold border ${
-                      i === 0 ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
-                      i === 1 ? "bg-gray-100 text-gray-700 border-gray-300" :
-                      i === 2 ? "bg-orange-100 text-orange-800 border-orange-200" :
-                      "bg-blue-100 text-blue-800 border-blue-200"}`}>
+                  <div
+                    key={s.player_id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#F3FAFF] border border-[#CFE6F8]"
+                  >
+                    <span
+                      className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${
+                        i === 0
+                          ? "bg-[#F5C518] text-[#07091F]"
+                          : i === 1
+                          ? "bg-[#1B6FC8] text-white"
+                          : i === 2
+                          ? "bg-[#38B6E8] text-white"
+                          : "bg-white text-gray-700 border border-[#CFE6F8]"
+                      }`}
+                    >
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-black uppercase text-xs text-gray-900 truncate">{s.player_name}</div>
-                      <div className="text-[10px] text-gray-400 uppercase truncate">{teams.find((t) => t.id === s.team_id)?.name}</div>
+                      <div className="font-black uppercase text-xs text-gray-900 truncate">
+                        {s.player_name}
+                      </div>
+                      <div className="text-[10px] text-[#5C7B9C] uppercase truncate font-semibold">
+                        {teams.find((t) => t.id === s.team_id)?.name}
+                      </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-black text-lg text-[#1B6FC8] leading-none">{s.goals}</div>
-                      <div className="text-[9px] text-gray-400 uppercase">goals</div>
+                      <div className="font-black text-lg text-[#1B6FC8] leading-none">
+                        {s.goals}
+                      </div>
+                      <div className="text-[9px] text-gray-400 uppercase font-semibold">goals</div>
                     </div>
                   </div>
                 ))}
               </div>
-          }
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <div className="border-b-2 border-gray-200 flex overflow-x-auto">
+        {/* Group Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {["all", ...groups].map((g) => (
-            <button key={g} onClick={() => setActiveGroup(g)}
-              className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 -mb-0.5 whitespace-nowrap transition-colors ${activeGroup === g ? "text-[#1B6FC8] border-[#1B6FC8]" : "text-gray-400 border-transparent hover:text-gray-700"}`}>
+            <button
+              key={g}
+              onClick={() => setActiveGroup(g)}
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                activeGroup === g
+                  ? "bg-[#07091F] text-white shadow-sm"
+                  : "bg-white border border-[#CFE6F8] text-[#5C7B9C] hover:text-[#07091F] hover:border-[#1B6FC8]"
+              }`}
+            >
               {g === "all" ? "All Groups" : g}
             </button>
           ))}
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Team cards — badge is the main piece of the card, links to a dedicated team page */}
+        {/* Team Cards Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {filtered.map((team) => {
             const standing = standings.find((s) => s.team_id === team.id);
             const isCup = (standing?.rank ?? 99) <= 4;
             return (
-              <Link key={team.id} href={`/teams/${team.short_code}`}
-                className="relative aspect-square rounded-2xl border border-gray-200 hover:border-[#1B6FC8] bg-white overflow-hidden text-left transition-colors block">
+              <Link
+                key={team.id}
+                href={`/teams/${team.short_code}`}
+                className="group relative rounded-2xl border border-[#CFE6F8] hover:border-[#1B6FC8] bg-white overflow-hidden text-left transition-all hover:shadow-md flex flex-col justify-between"
+              >
                 {team.groups?.name && (
-                  <span className="absolute top-2 right-2 z-10 bg-[#F5C518] text-[#07091F] text-[10px] font-black uppercase px-2 py-0.5 rounded-full shadow-sm">
+                  <span className="absolute top-3 right-3 z-10 bg-[#F5C518] text-[#07091F] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-sm">
                     {team.groups.name}
                   </span>
                 )}
-                <div className="w-full h-full flex items-center justify-center p-4">
-                  {team.logo_url
-                    ? <img src={team.logo_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-md" />
-                    : <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-md ${isCup ? "bg-[#1B6FC8]" : "bg-gray-400"}`}>
-                        {team.short_code}
-                      </div>
-                  }
+
+                <div className="w-full flex items-center justify-center p-6 sm:p-7 min-h-[160px]">
+                  {team.logo_url ? (
+                    <img
+                      src={team.logo_url}
+                      alt={team.name}
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div
+                      className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-sm group-hover:scale-105 transition-transform ${
+                        isCup ? "bg-[#1B6FC8]" : "bg-[#07091F]"
+                      }`}
+                    >
+                      {team.short_code}
+                    </div>
+                  )}
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm px-3 py-2.5 border-t border-gray-100">
-                  <div className="font-black uppercase text-xs text-gray-900 truncate">{team.name}</div>
-                  <div className="text-[10px] text-gray-400 uppercase truncate">Coach: {team.coach || "—"}</div>
+
+                <div className="bg-[#F3FAFF] px-4 py-3 border-t border-[#CFE6F8] group-hover:bg-[#EAF6FE] transition-colors">
+                  <div className="font-black uppercase text-xs text-gray-900 truncate">
+                    {team.name}
+                  </div>
+                  <div className="text-[10px] text-[#5C7B9C] uppercase truncate font-medium mt-0.5">
+                    Coach: {team.coach || "—"}
+                  </div>
                 </div>
               </Link>
             );
@@ -106,4 +178,8 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
       </div>
     </div>
   );
+}
+
+function Bubble({ className = "" }: { className?: string }) {
+  return <div className={`absolute rounded-full border pointer-events-none ${className}`} />;
 }

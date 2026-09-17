@@ -36,43 +36,41 @@ export default function StandingsClient({ standings, groups, pools }: Props) {
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+
+        {/* Group Stage Status Notification */}
         {allComplete && (
-          <div className="rounded-2xl border border-[#CFE6F8] bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="rounded-2xl border border-[#CFE6F8] bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="w-3 h-3 rounded-full bg-[#2DB87A] shrink-0" />
               <div>
-                <div className="font-black text-gray-900 text-sm uppercase">
+                <div className="font-black text-[#07091F] text-sm uppercase tracking-wide">
                   Group Stage Complete
                 </div>
-                <div className="text-gray-500 text-xs mt-0.5">
-                  All group matches played · top 4 advance to Cup, rest to Festival
+                <div className="text-[#5C7B9C] text-xs mt-0.5">
+                  All group matches played · Top 4 advance to Cup, rest to Festival
                 </div>
               </div>
             </div>
+            <Link
+              href="/bracket"
+              className="shrink-0 bg-[#07091F] hover:bg-[#1B6FC8] text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-5 py-2.5 transition-colors shadow-sm"
+            >
+              View Bracket →
+            </Link>
           </div>
         )}
 
-        <select
-          value={active}
-          onChange={(e) => setActive(e.target.value)}
-          className="sm:hidden w-full rounded-2xl border border-[#CFE6F8] px-4 py-3 font-bold text-xs uppercase text-gray-700 bg-white"
-        >
-          {tabs.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-
-        <div className="hidden sm:flex border-b border-[#CFE6F8]">
+        {/* Group Navigation Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setActive(t.id)}
-              className={`px-5 py-3 text-xs font-bold uppercase tracking-widest border-b-2 -mb-px transition-colors ${
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                 active === t.id
-                  ? "text-[#1B6FC8] border-[#1B6FC8]"
-                  : "text-[#9FB6CC] border-transparent hover:text-[#1B6FC8]"
+                  ? "bg-[#07091F] text-white shadow-sm"
+                  : "bg-white border border-[#CFE6F8] text-[#5C7B9C] hover:text-[#07091F] hover:border-[#1B6FC8]"
               }`}
             >
               {t.label}
@@ -80,6 +78,7 @@ export default function StandingsClient({ standings, groups, pools }: Props) {
           ))}
         </div>
 
+        {/* Content View */}
         {active === "overview" ? (
           <OverviewGrid groups={groups} pools={pools} standings={standings} />
         ) : (
@@ -110,45 +109,48 @@ function OverviewGrid({
         const pool = pools.find((p) => p.id === g.pool_id);
         const hasResults = rows.some((r) => r.played > 0);
         return (
-          <div key={g.id} className="rounded-2xl border border-[#CFE6F8] bg-white overflow-hidden">
-            <div className="bg-[#07091F] px-4 py-3 flex items-center justify-between">
+          <div
+            key={g.id}
+            className="rounded-2xl border border-[#CFE6F8] bg-white overflow-hidden shadow-sm"
+          >
+            <div className="bg-[#07091F] px-5 py-3.5 flex items-center justify-between">
               <span className="text-white font-black uppercase text-sm tracking-wider">
                 {g.name}
               </span>
-              <span className="text-[#7A9CC8] text-[10px] font-bold uppercase tracking-widest">
-                {rows.length} teams · {pool?.name}
+              <span className="text-[#38B6E8] text-[10px] font-bold uppercase tracking-widest">
+                {rows.length} teams · {pool?.name ?? "Main Pool"}
               </span>
             </div>
-            <div className="p-3 space-y-2">
+            <div className="p-4 space-y-2">
               {rows.length === 0 ? (
                 <div className="text-center py-6 text-gray-400 text-sm">No teams yet</div>
               ) : (
                 rows.slice(0, 4).map((row, idx) => (
                   <div
                     key={row.team_id}
-                    className="flex items-center gap-3 rounded-xl border border-[#EAF6FE] px-3 py-2"
+                    className="flex items-center gap-3 rounded-xl border border-[#CFE6F8] bg-[#F3FAFF] px-3.5 py-2.5"
                   >
                     <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
                         idx < 4 && hasResults
                           ? "bg-[#1B6FC8] text-white"
-                          : "bg-gray-100 text-gray-400"
+                          : "bg-white text-gray-400 border border-[#CFE6F8]"
                       }`}
                     >
                       {idx + 1}
                     </span>
-                    <span className="flex-1 truncate text-sm font-bold uppercase text-gray-900">
+                    <span className="flex-1 truncate text-xs font-bold uppercase text-gray-900">
                       {row.team_name}
                     </span>
                     <span className="font-black text-[#1B6FC8] text-sm shrink-0">
-                      {row.points} pts
+                      {row.points} <span className="text-[10px] text-gray-400 font-semibold">pts</span>
                     </span>
                   </div>
                 ))
               )}
               {rows.length > 4 && (
-                <div className="text-center text-[10px] text-gray-400 pt-1">
-                  +{rows.length - 4} more teams
+                <div className="text-center text-[10px] font-bold uppercase tracking-wider text-[#5C7B9C] pt-1">
+                  +{rows.length - 4} more teams in group
                 </div>
               )}
             </div>
@@ -174,30 +176,33 @@ function GroupTable({
   const rows = [...standings].sort((a, b) => a.rank - b.rank);
 
   return (
-    <div className="rounded-2xl border border-[#CFE6F8] bg-white overflow-hidden">
-      <div className="bg-[#07091F] px-4 py-3 flex items-center justify-between">
-        <span className="text-white font-black uppercase text-sm tracking-wider">{group.name}</span>
-        <span className="text-[#7A9CC8] text-[10px] font-bold uppercase tracking-widest">
-          {pool?.name}
+    <div className="rounded-2xl border border-[#CFE6F8] bg-white overflow-hidden shadow-sm">
+      <div className="bg-[#07091F] px-5 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
+          <span className="text-white font-black uppercase text-sm tracking-wider">{group.name}</span>
+        </div>
+        <span className="text-[#38B6E8] text-[10px] font-bold uppercase tracking-widest">
+          {pool?.name ?? "Main Pool"}
         </span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#CFE6F8]">
+            <tr className="bg-[#F3FAFF] border-b border-[#CFE6F8]">
               {["#", "Team", "P", "W", "D", "L", "GF", "GA", "GD", "Pts"].map((h, i) => (
                 <th
                   key={h}
-                  className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-[#1B6FC8] whitespace-nowrap ${
+                  className={`px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C] whitespace-nowrap ${
                     i === 1 ? "text-left" : "text-right"
-                  }`}
+                  } ${i === 0 ? "w-12 text-left" : ""}`}
                 >
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-[#EAF6FE]">
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={10} className="px-4 py-8 text-center text-gray-400 text-sm">
@@ -210,13 +215,13 @@ function GroupTable({
                 return (
                   <tr
                     key={row.team_id}
-                    className={
+                    className={`transition-colors ${
                       isCup && hasResults
-                        ? "bg-[#EAF6FE]/70 hover:bg-[#EAF6FE]"
-                        : "hover:bg-[#F3FAFF]"
-                    }
+                        ? "bg-[#F3FAFF]/60 hover:bg-[#EAF6FE]"
+                        : "hover:bg-[#F8FCFF]"
+                    }`}
                   >
-                    <td className="px-3 py-2.5">
+                    <td className="px-4 py-3">
                       <span
                         className={`inline-flex w-6 h-6 items-center justify-center text-[10px] font-black rounded-full ${
                           isCup && hasResults
@@ -227,21 +232,21 @@ function GroupTable({
                         {idx + 1}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 font-bold uppercase text-xs text-gray-900">
+                    <td className="px-4 py-3 font-bold uppercase text-xs text-gray-900">
                       {row.team_name}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">{row.played}</td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">{row.won}</td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">{row.drawn}</td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">{row.lost}</td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">{row.played}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">{row.won}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">{row.drawn}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">{row.lost}</td>
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">
                       {row.goals_for}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-xs text-gray-500">
+                    <td className="px-4 py-3 text-right text-xs text-gray-600 font-medium">
                       {row.goals_against}
                     </td>
                     <td
-                      className={`px-3 py-2.5 text-right text-xs font-bold ${
+                      className={`px-4 py-3 text-right text-xs font-bold ${
                         row.goal_diff > 0
                           ? "text-[#2DB87A]"
                           : row.goal_diff < 0
@@ -253,7 +258,7 @@ function GroupTable({
                       {row.goal_diff}
                     </td>
                     <td
-                      className={`px-3 py-2.5 text-right text-xs font-black ${
+                      className={`px-4 py-3 text-right text-xs font-black ${
                         isCup && hasResults ? "text-[#1B6FC8]" : "text-gray-400"
                       }`}
                     >
@@ -266,20 +271,24 @@ function GroupTable({
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-3 border-t border-[#CFE6F8] flex gap-4 text-[10px] text-gray-400">
+      <div className="px-5 py-3.5 border-t border-[#CFE6F8] bg-[#F3FAFF]/40 flex gap-5 text-[10px] text-[#5C7B9C] font-semibold uppercase tracking-wider">
         <span className="flex items-center gap-1.5">
           <span className="inline-flex w-4 h-4 bg-[#1B6FC8] text-white items-center justify-center text-[9px] font-black rounded-full">
             1
           </span>
-          Cup
+          Cup Qualification (Top 4)
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-flex w-4 h-4 bg-gray-100 text-gray-400 items-center justify-center text-[9px] font-black rounded-full">
+          <span className="inline-flex w-4 h-4 bg-gray-200 text-gray-500 items-center justify-center text-[9px] font-black rounded-full">
             5
           </span>
-          Festival
+          Festival Section
         </span>
       </div>
     </div>
   );
+}
+
+function Bubble({ className = "" }: { className?: string }) {
+  return <div className={`absolute rounded-full border pointer-events-none ${className}`} />;
 }
