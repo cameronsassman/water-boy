@@ -79,6 +79,36 @@ export async function getBracketSlots() {
 export async function createMatch(match: { tournament_id:string; pool_id:string; group_id?:string; home_team_id:string; away_team_id:string; stage:string; day:number; match_time:string }) {
   const { data, error } = await supabase.from("matches").insert(match).select().single(); if (error) throw error; return data;
 }
+export async function updateMatch(matchId: string, fields: { home_team_id?:string; away_team_id?:string; pool_id?:string; group_id?:string|null; stage?:string; day?:number; match_time?:string }) {
+  const { error } = await supabase.from("matches").update(fields).eq("id", matchId); if (error) throw error;
+}
+export async function deleteMatch(matchId: string) {
+  const { error: eventsError } = await supabase.from("match_events").delete().eq("match_id", matchId);
+  if (eventsError) throw eventsError;
+  const { error } = await supabase.from("matches").delete().eq("id", matchId); if (error) throw error;
+}
+export async function createPool(name: string) {
+  const { data, error } = await supabase.from("pools").insert({ name }).select().single(); if (error) throw error; return data;
+}
+export async function updatePool(poolId: string, name: string) {
+  const { error } = await supabase.from("pools").update({ name }).eq("id", poolId); if (error) throw error;
+}
+export async function deletePool(poolId: string) {
+  const { count } = await supabase.from("groups").select("id", { count: "exact", head: true }).eq("pool_id", poolId);
+  if (count && count > 0) throw new Error(`Cannot delete — ${count} group(s) still belong to this pool. Delete or reassign them first.`);
+  const { error } = await supabase.from("pools").delete().eq("id", poolId); if (error) throw error;
+}
+export async function createGroup(name: string, poolId: string) {
+  const { data, error } = await supabase.from("groups").insert({ name, pool_id: poolId }).select().single(); if (error) throw error; return data;
+}
+export async function updateGroup(groupId: string, fields: { name?:string; pool_id?:string }) {
+  const { error } = await supabase.from("groups").update(fields).eq("id", groupId); if (error) throw error;
+}
+export async function deleteGroup(groupId: string) {
+  const { count } = await supabase.from("teams").select("id", { count: "exact", head: true }).eq("group_id", groupId);
+  if (count && count > 0) throw new Error(`Cannot delete — ${count} team(s) still belong to this group. Reassign or delete them first.`);
+  const { error } = await supabase.from("groups").delete().eq("id", groupId); if (error) throw error;
+}
 export async function updateMatchScore(matchId: string, homeScore: number, awayScore: number, halfScores: { half1_home:number; half1_away:number; half2_home:number; half2_away:number }) {
   const { error } = await supabase.from("matches").update({ home_score:homeScore, away_score:awayScore, ...halfScores }).eq("id", matchId); if (error) throw error;
 }
@@ -118,7 +148,7 @@ export async function deleteEventAndRecomputeScore(eventId: string, matchId: str
 export async function assignBracketSlot(slotId: string, homeTeamId: string, awayTeamId: string) {
   const { error } = await supabase.from("bracket_slots").update({ home_team_id:homeTeamId, away_team_id:awayTeamId }).eq("id", slotId); if (error) throw error;
 }
-export async function addPlayer(player: { team_id:string; name:string; cap_number:number; position?:string }) {
+export async function addPlayer(player: { team_id:string; name:string; cap_number:number }) {
   const { data, error } = await supabase.from("players").insert(player).select().single(); if (error) throw error; return data;
 }
 export async function updatePlayer(playerId: string, fields: { name?:string; cap_number?:number }) {

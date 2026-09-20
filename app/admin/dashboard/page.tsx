@@ -111,6 +111,7 @@ export default function AdminDashboard() {
                   { href: "/admin/bracket",  label: "Bracket",        icon: "🏆" },
                   { href: "/admin/teams",    label: "Teams & Players",icon: "👥" },
                   { href: "/admin/corrections", label: "Score Corrections", icon: "🛠" },
+                  { href: "/admin/groups", label: "Groups & Pools", icon: "🗂" },
                 ].map(({ href, label, icon, primary }) => (
                   <Link key={href} href={href} className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wide transition-colors ${primary ? "bg-[#1B6FC8] text-white hover:bg-[#0D4A8A]" : "bg-gray-50 text-gray-700 border border-gray-200 hover:border-[#1B6FC8] hover:text-[#1B6FC8]"}`}>
                     <span>{icon}</span>{label}<span className="ml-auto">→</span>

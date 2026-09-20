@@ -5,7 +5,7 @@ import { addPlayer, createTeam, updateTeamLogo, updateTeam, deleteTeam, updatePl
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Select } from "@/components/ui-lite";
 
 type Team   = { id: string; name: string; short_code: string; coach: string; manager?: string; group_id: string; logo_url: string | null; groups: { name: string; pools: { name: string } | null } | null };
-type Player = { id: string; name: string; cap_number: number; position?: string; team_id: string };
+type Player = { id: string; name: string; cap_number: number; team_id: string };
 type Group  = { id: string; name: string; pool_id: string };
 
 async function uploadLogo(file: File): Promise<string> {

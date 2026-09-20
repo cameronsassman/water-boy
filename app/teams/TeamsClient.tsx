@@ -29,7 +29,6 @@ type PlayerStat = {
   player_id: string;
   player_name: string;
   cap_number: number;
-  position: string;
   team_id: string;
   goals: number;
   kickouts: number;

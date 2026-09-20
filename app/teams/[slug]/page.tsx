@@ -79,7 +79,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    {["#", "Player", "Pos", "Goals", "KO", "YC", "RC"].map((h, i) => (
+                    {["#", "Player", "Goals", "KO", "YC", "RC"].map((h, i) => (
                       <th key={h} className={`px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 ${i <= 1 ? "text-left" : "text-right"} ${i === 0 ? "w-12" : ""}`}>{h}</th>
                     ))}
                   </tr>
@@ -89,7 +89,6 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
                     <tr key={p.player_id} className="hover:bg-gray-50">
                       <td className="px-3 py-2.5 font-bold text-gray-400 text-left">#{p.cap_number}</td>
                       <td className="px-3 py-2.5 font-bold uppercase text-gray-900 text-left">{p.player_name}</td>
-                      <td className="px-3 py-2.5 text-center text-gray-400 text-[10px] uppercase">{p.position === "Goalkeeper" ? "GK" : "FD"}</td>
                       <td className={`px-3 py-2.5 text-right font-black ${p.goals > 0 ? "text-[#1B6FC8]" : "text-gray-300"}`}>{p.goals}</td>
                       <td className={`px-3 py-2.5 text-right ${p.kickouts > 0 ? "text-gray-700" : "text-gray-300"}`}>{p.kickouts || "—"}</td>
                       <td className="px-3 py-2.5 text-right">{p.yellow_cards > 0 ? <span className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{p.yellow_cards}</span> : <span className="text-gray-300">—</span>}</td>

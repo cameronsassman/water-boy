@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { updateMatchStatus } from "@/lib/db";
+import { updateMatchStatus, updateMatch, deleteMatch } from "@/lib/db";
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Label, Select } from "@/components/ui-lite";
 
 type Match = {
   id: string; status: string; home_score: number; away_score: number;
   match_time: string; day: number; stage: string;
+  home_team_id: string; away_team_id: string; pool_id: string; group_id: string | null;
   home_team: { name: string } | null;
   away_team: { name: string } | null;
   groups: { name: string } | null;
@@ -47,6 +48,12 @@ export default function AdminFixtures() {
   const [stage,     setStage]     = useState("group");
   const [day,       setDay]       = useState("2");
   const [time,      setTime]      = useState("09:00");
+
+  const [editingId,  setEditingId]  = useState<string | null>(null);
+  const [editDraft,  setEditDraft]  = useState({ homeId: "", awayId: "", poolId: "", groupId: "", stage: "group", day: "1", time: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -91,6 +98,37 @@ export default function AdminFixtures() {
     setMatches((prev) => prev.map((m) => m.id === matchId ? { ...m, status } : m));
   }
 
+  function startEdit(m: Match) {
+    setEditingId(m.id);
+    setEditDraft({ homeId: m.home_team_id, awayId: m.away_team_id, poolId: m.pool_id, groupId: m.group_id ?? "", stage: m.stage, day: String(m.day), time: m.match_time });
+  }
+
+  async function handleSaveEdit(matchId: string) {
+    if (!editDraft.homeId || !editDraft.awayId || !editDraft.poolId || savingEdit) return;
+    setSavingEdit(true);
+    try {
+      await updateMatch(matchId, {
+        home_team_id: editDraft.homeId, away_team_id: editDraft.awayId,
+        pool_id: editDraft.poolId, group_id: editDraft.groupId || null,
+        stage: editDraft.stage, day: parseInt(editDraft.day), match_time: editDraft.time,
+      });
+      const { data } = await supabase.from("matches").select(SELECT).eq("day", activeDay).order("match_time");
+      setMatches((data as Match[]) ?? []);
+      setEditingId(null);
+    } catch (err) { console.error(err); }
+    finally { setSavingEdit(false); }
+  }
+
+  async function handleDeleteMatch(matchId: string) {
+    setDeletingId(matchId);
+    try {
+      await deleteMatch(matchId);
+      setMatches((prev) => prev.filter((m) => m.id !== matchId));
+      setConfirmDeleteId(null);
+    } catch (err) { console.error(err); }
+    finally { setDeletingId(null); }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-[#07091F] px-6 py-4">
@@ -124,6 +162,43 @@ export default function AdminFixtures() {
                     {matches.map((m) => {
                       const isLive = m.status === "live";
                       const isDone = m.status === "completed";
+                      if (editingId === m.id) {
+                        return (
+                          <div key={m.id} className="px-5 py-4 bg-gray-50">
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <Select value={editDraft.homeId} onChange={(e) => setEditDraft((d) => ({ ...d, homeId: e.target.value }))}>
+                                <option value="">Home team...</option>
+                                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                              </Select>
+                              <Select value={editDraft.awayId} onChange={(e) => setEditDraft((d) => ({ ...d, awayId: e.target.value }))}>
+                                <option value="">Away team...</option>
+                                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                              </Select>
+                              <Select value={editDraft.poolId} onChange={(e) => setEditDraft((d) => ({ ...d, poolId: e.target.value }))}>
+                                <option value="">Pool...</option>
+                                {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              </Select>
+                              <Select value={editDraft.groupId} onChange={(e) => setEditDraft((d) => ({ ...d, groupId: e.target.value }))}>
+                                <option value="">No group</option>
+                                {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                              </Select>
+                              <Select value={editDraft.stage} onChange={(e) => setEditDraft((d) => ({ ...d, stage: e.target.value }))}>
+                                {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </Select>
+                              <Select value={editDraft.day} onChange={(e) => setEditDraft((d) => ({ ...d, day: e.target.value }))}>
+                                {[1,2,3,4].map((d) => <option key={d} value={d}>Day {d}</option>)}
+                              </Select>
+                              <Input type="time" value={editDraft.time} onChange={(e) => setEditDraft((d) => ({ ...d, time: e.target.value }))} />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => handleSaveEdit(m.id)} disabled={savingEdit || !editDraft.homeId || !editDraft.awayId || !editDraft.poolId}>
+                                {savingEdit ? "Saving..." : "Save changes"}
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+                            </div>
+                          </div>
+                        );
+                      }
                       return (
                         <div key={m.id} className={`flex items-center gap-3 px-5 py-3 flex-wrap ${isLive ? "bg-blue-50" : ""}`}>
                           <span className="text-xs font-mono text-gray-400 w-10 shrink-0">{m.match_time}</span>
@@ -142,7 +217,7 @@ export default function AdminFixtures() {
                           {m.status !== "scheduled" && (
                             <span className="font-black text-sm text-gray-700">{m.home_score}–{m.away_score}</span>
                           )}
-                          <div className="flex gap-1.5 shrink-0">
+                          <div className="flex gap-1.5 shrink-0 items-center flex-wrap">
                             {!isLive && !isDone && (
                               <Button size="sm" onClick={() => setStatus(m.id, "live")} className="bg-green-600 hover:bg-green-700">▶ Live</Button>
                             )}
@@ -151,6 +226,18 @@ export default function AdminFixtures() {
                             )}
                             {!isDone && (
                               <Button size="sm" variant="outline" onClick={() => setStatus(m.id, "scheduled")}>Reset</Button>
+                            )}
+                            <Button size="sm" variant="ghost" onClick={() => startEdit(m)}>Edit</Button>
+                            {confirmDeleteId === m.id ? (
+                              <>
+                                <span className="text-[10px] text-red-600">Delete?</span>
+                                <Button size="sm" variant="destructive" disabled={deletingId === m.id} onClick={() => handleDeleteMatch(m.id)}>
+                                  {deletingId === m.id ? "..." : "Confirm"}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
+                              </>
+                            ) : (
+                              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => setConfirmDeleteId(m.id)}>Delete</Button>
                             )}
                           </div>
                         </div>
