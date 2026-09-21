@@ -13,11 +13,11 @@ const publicLinks: NavLink[] = [
 ];
 
 const adminLinks: NavLink[] = [
-  { href: "/admin/dashboard", label: "Dashboard" },
+  { href: "/admin/", label: "Dashboard" },
   { href: "/scorer", label: "Live Scoring", live: true },
   { href: "/admin/fixtures", label: "Fixtures" },
   { href: "/admin/teams", label: "Teams" },
-  { href: "/admin/bracket", label: "Bracket" },
+  // { href: "/admin/bracket", label: "Bracket" },
 ];
 
 export default function Navbar() {

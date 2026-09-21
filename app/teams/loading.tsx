@@ -1,13 +1,6 @@
 export default function TeamsLoading() {
     return (
       <div className="min-h-screen bg-[#FFFFFC]">
-        <div className="bg-[#07091F] border-b-4 border-[#1B6FC8] px-6 py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-[#38B6E8] text-xs font-bold uppercase tracking-[3px] mb-2">32 Teams · 4 Groups</div>
-            <h1 className="text-white font-black uppercase text-4xl leading-none">Teams</h1>
-            <p className="text-[#7A9CC8] text-sm mt-1">Profiles · Player stats · Standings</p>
-          </div>
-        </div>
   
         {/* Top scorers skeleton */}
         <div className="bg-white border-b border-gray-200 px-6 py-5">

@@ -33,7 +33,7 @@ const STAGE_BADGE: Record<string, "default"|"secondary"|"warning"|"success"> = {
 };
 
 export default function AdminFixtures() {
-  const [activeDay, setActiveDay] = useState(2);
+  const [activeDay, setActiveDay] = useState(1);
   const [matches,   setMatches]   = useState<Match[]>([]);
   const [teams,     setTeams]     = useState<Team[]>([]);
   const [pools,     setPools]     = useState<Pool[]>([]);
@@ -46,7 +46,7 @@ export default function AdminFixtures() {
   const [poolId,    setPoolId]    = useState("");
   const [groupId,   setGroupId]   = useState("");
   const [stage,     setStage]     = useState("group");
-  const [day,       setDay]       = useState("2");
+  const [day,       setDay]       = useState("");
   const [time,      setTime]      = useState("09:00");
 
   const [editingId,  setEditingId]  = useState<string | null>(null);

@@ -48,12 +48,12 @@ export default function AdminCorrections() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#07091F] px-6 py-4">
+      <div className="bg-[#07091F] px-4 sm:px-6 py-4">
         <div className="text-white font-black uppercase text-lg tracking-wide">Score Corrections</div>
         <div className="text-[#7A9CC8] text-xs mt-0.5">Fix a goal or foul logged to the wrong player</div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
         {error && (
           <div className="flex items-center justify-between gap-3 border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">
             <span>{error}</span>
@@ -82,7 +82,7 @@ export default function AdminCorrections() {
                   ? <div className="text-center py-8 text-gray-400 text-sm">No events logged for this match yet</div>
                   : <div className="divide-y divide-gray-100">
                       {events.map((e) => (
-                        <div key={e.id} className="flex items-center gap-3 px-5 py-3">
+                        <div key={e.id} className="flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 flex-wrap">
                           <Badge variant={e.event_type === "goal" ? "success" : e.event_type === "red_card" ? "default" : "secondary"}>{EVENT_LABEL[e.event_type] ?? e.event_type}</Badge>
                           <span className="text-sm font-semibold text-gray-900">#{e.players?.cap_number} {e.players?.name}</span>
                           <span className="text-xs text-gray-400">{e.teams?.name} · H{e.half}</span>

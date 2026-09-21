@@ -1,15 +1,6 @@
 export default function StandingsLoading() {
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
-      <div className="bg-[#07091F] border-b-2 border-[#1B6FC8] px-6 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-[#38B6E8] text-xs font-bold uppercase tracking-[3px] mb-2">
-            Group Stage · Live updated
-          </div>
-          <h1 className="text-white font-black uppercase text-4xl leading-none">Standings</h1>
-          <p className="text-[#7A9CC8] text-sm mt-1">Top 4 per group → Cup · Bottom 4 → Festival</p>
-        </div>
-      </div>
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (

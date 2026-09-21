@@ -18,7 +18,7 @@ function SlotCard({ slot, onEdit }: { slot: Slot; onEdit: () => void }) {
           <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-1">vs</div>
           <div className={`font-black uppercase text-xs truncate ${filled ? "text-gray-900" : "text-gray-400"}`}>{slot.away_team?.name ?? "TBD"}</div>
         </div>
-        <button onClick={onEdit} className="text-[10px] font-bold uppercase tracking-wide text-[#1B6FC8] border border-[#1B6FC8]/40 px-2 py-1 hover:bg-blue-50 shrink-0">
+        <button onClick={onEdit} className="text-[10px] font-bold uppercase tracking-wide text-[#1B6FC8] border border-[#1B6FC8]/40 px-2 py-1.5 hover:bg-blue-50 shrink-0">
           {filled ? "Edit" : "Assign"}
         </button>
       </div>
@@ -96,7 +96,7 @@ export default function AdminBracket() {
 
   const Section = ({ title, color, items }: { title: string; color: string; items: { label: string; bracket: string; round: string; note?: string }[] }) => (
     <section>
-      <div className={`inline-flex px-4 py-2 font-black uppercase text-sm tracking-widest text-white mb-4 ${color}`}>{title}</div>
+      <div className={`inline-flex px-3 py-1.5 sm:px-4 sm:py-2 font-black uppercase text-xs sm:text-sm tracking-widest text-white mb-4 ${color}`}>{title}</div>
       {items.map(({ label, bracket, round, note }) => {
         const slts = get(bracket, round);
         return (
@@ -114,12 +114,12 @@ export default function AdminBracket() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#07091F] border-b border-[#1B3A6E] px-6 py-4">
+      <div className="bg-[#07091F] border-b border-[#1B3A6E] px-4 sm:px-6 py-4">
         <div className="text-white font-black uppercase text-lg tracking-wide">Bracket Management</div>
         <div className="text-[#7A9CC8] text-xs mt-0.5">Manually assign teams to Cup · Shield · Plate slots</div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-6 space-y-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6 sm:space-y-8">
         <Section title="🏆 Cup" color="bg-[#C8960A]" items={[
           { label: "Round of 16", bracket: "cup", round: "r16", note: "R16 losers → Shield QF" },
           { label: "Quarter-finals", bracket: "cup", round: "qf", note: "QF losers → Plate SF" },
@@ -139,8 +139,8 @@ export default function AdminBracket() {
         ]} />
         <div className="border-t border-gray-200" />
         <section className="pb-8">
-          <div className="inline-flex px-4 py-2 font-black uppercase text-sm tracking-widest text-white mb-4 bg-[#2DB87A]">🎉 Festival</div>
-          <div className="border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
+          <div className="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 font-black uppercase text-xs sm:text-sm tracking-widest text-white mb-4 bg-[#2DB87A]">🎉 Festival</div>
+          <div className="border border-dashed border-gray-300 bg-gray-50 p-4 sm:p-6 text-center">
             <div className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-1">20 teams · manually assigned</div>
             <div className="text-xs text-gray-400">Bottom 4 per group (16) + Shield QF losers (4) · Create via the Fixtures page</div>
           </div>

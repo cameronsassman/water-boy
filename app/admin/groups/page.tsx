@@ -102,12 +102,12 @@ export default function AdminGroups() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#07091F] px-6 py-4">
+      <div className="bg-[#07091F] px-4 sm:px-6 py-4">
         <div className="text-white font-black uppercase text-lg tracking-wide">Groups &amp; Pools</div>
         <div className="text-[#7A9CC8] text-xs mt-0.5">Manage the tournament's pool and group structure</div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {error && (
           <div className="flex items-center justify-between gap-3 border border-red-200 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">
             <span>{error}</span>
@@ -119,9 +119,9 @@ export default function AdminGroups() {
         <Card>
           <CardHeader><CardTitle>Pools</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <Input placeholder="New pool name (e.g. Pool 1)" value={newPoolName} onChange={(e) => setNewPoolName(e.target.value)} className="flex-1" />
-              <Button onClick={handleAddPool} disabled={savingPool || !newPoolName}>{savingPool ? "..." : "Add pool"}</Button>
+              <Button onClick={handleAddPool} disabled={savingPool || !newPoolName} className="w-full sm:w-auto">{savingPool ? "..." : "Add pool"}</Button>
             </div>
             {loading
               ? <div className="text-center py-6 text-gray-400 text-sm">Loading...</div>
@@ -130,10 +130,12 @@ export default function AdminGroups() {
                 : <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
                     {pools.map((p) => (
                       editingPoolId === p.id ? (
-                        <div key={p.id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50">
+                        <div key={p.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2.5 bg-gray-50">
                           <Input value={poolDraft} onChange={(e) => setPoolDraft(e.target.value)} className="flex-1" />
-                          <Button size="sm" onClick={() => handleSavePool(p.id)}>Save</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingPoolId(null)}>Cancel</Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleSavePool(p.id)}>Save</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingPoolId(null)}>Cancel</Button>
+                          </div>
                         </div>
                       ) : (
                         <div key={p.id} className="flex items-center gap-2 px-4 py-2.5">
@@ -158,7 +160,7 @@ export default function AdminGroups() {
                 <option value="">Select pool...</option>
                 {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </Select>
-              <Button onClick={handleAddGroup} disabled={savingGroup || !newGroupName || !newGroupPool}>{savingGroup ? "..." : "Add group"}</Button>
+              <Button onClick={handleAddGroup} disabled={savingGroup || !newGroupName || !newGroupPool} className="w-full sm:w-auto">{savingGroup ? "..." : "Add group"}</Button>
             </div>
             {loading
               ? <div className="text-center py-6 text-gray-400 text-sm">Loading...</div>
@@ -167,17 +169,19 @@ export default function AdminGroups() {
                 : <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
                     {groups.map((g) => (
                       editingGroupId === g.id ? (
-                        <div key={g.id} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 flex-wrap">
-                          <Input value={groupDraft.name} onChange={(e) => setGroupDraft((d) => ({ ...d, name: e.target.value }))} className="flex-1 min-w-[120px]" />
-                          <div className="w-40 shrink-0"><Select value={groupDraft.pool_id} onChange={(e) => setGroupDraft((d) => ({ ...d, pool_id: e.target.value }))}>
+                        <div key={g.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-2.5 bg-gray-50">
+                          <Input value={groupDraft.name} onChange={(e) => setGroupDraft((d) => ({ ...d, name: e.target.value }))} className="flex-1" />
+                          <div className="sm:w-40 shrink-0"><Select value={groupDraft.pool_id} onChange={(e) => setGroupDraft((d) => ({ ...d, pool_id: e.target.value }))}>
                             {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </Select></div>
-                          <Button size="sm" onClick={() => handleSaveGroup(g.id)}>Save</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingGroupId(null)}>Cancel</Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleSaveGroup(g.id)}>Save</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingGroupId(null)}>Cancel</Button>
+                          </div>
                         </div>
                       ) : (
-                        <div key={g.id} className="flex items-center gap-2 px-4 py-2.5">
-                          <span className="font-semibold text-sm text-gray-900 flex-1">{g.name}</span>
+                        <div key={g.id} className="flex items-center gap-2 px-4 py-2.5 flex-wrap">
+                          <span className="font-semibold text-sm text-gray-900 flex-1 min-w-[100px]">{g.name}</span>
                           <span className="text-xs text-gray-400">{pools.find((p) => p.id === g.pool_id)?.name}</span>
                           <Button size="sm" variant="ghost" onClick={() => { setEditingGroupId(g.id); setGroupDraft({ name: g.name, pool_id: g.pool_id }); }}>Edit</Button>
                           <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => handleDeleteGroup(g.id)}>Delete</Button>

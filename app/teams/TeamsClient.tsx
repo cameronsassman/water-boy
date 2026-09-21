@@ -51,33 +51,34 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-6 sm:space-y-8">
+
         {/* Top Scorers Spotlight */}
         <div className="rounded-2xl border border-[#CFE6F8] bg-white shadow-sm overflow-hidden">
-          <div className="bg-[#07091F] px-5 py-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
+          <div className="bg-[#07091F] px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#F5C518] shrink-0" />
               <h2 className="font-black uppercase text-xs sm:text-sm tracking-wider text-white">
                 Tournament Top Scorers
               </h2>
             </div>
-            <span className="text-white/40 font-bold uppercase text-[10px] tracking-widest">
-              Top 5 Leaders
+            <span className="text-white/40 font-bold uppercase text-[9px] sm:text-[10px] tracking-widest">
+              Top 5
             </span>
           </div>
 
-          <div className="p-5">
+          <div className="p-3 sm:p-5">
             {topScorers.length === 0 ? (
               <div className="text-sm text-gray-400 text-center py-4">No goals scored yet</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
                 {topScorers.map((s, i) => (
                   <div
                     key={s.player_id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#F3FAFF] border border-[#CFE6F8]"
+                    className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#F3FAFF] border border-[#CFE6F8]"
                   >
                     <span
-                      className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black ${
+                      className={`w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black ${
                         i === 0
                           ? "bg-[#F5C518] text-[#07091F]"
                           : i === 1
@@ -98,10 +99,12 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-black text-lg text-[#1B6FC8] leading-none">
+                      <div className="font-black text-base sm:text-lg text-[#1B6FC8] leading-none">
                         {s.goals}
                       </div>
-                      <div className="text-[9px] text-gray-400 uppercase font-semibold">goals</div>
+                      <div className="text-[8px] sm:text-[9px] text-gray-400 uppercase font-semibold mt-0.5">
+                        goals
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -110,13 +113,13 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
           </div>
         </div>
 
-        {/* Group Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {/* Group Filter Tabs with mobile horizontal scroll */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
           {["all", ...groups].map((g) => (
             <button
               key={g}
               onClick={() => setActiveGroup(g)}
-              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+              className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
                 activeGroup === g
                   ? "bg-[#07091F] text-white shadow-sm"
                   : "bg-white border border-[#CFE6F8] text-[#5C7B9C] hover:text-[#07091F] hover:border-[#1B6FC8]"
@@ -127,8 +130,8 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
           ))}
         </div>
 
-        {/* Team Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* Team Cards Grid - 2 columns on mobile, 3 on tablet, 4 on desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {filtered.map((team) => {
             const standing = standings.find((s) => s.team_id === team.id);
             const isCup = (standing?.rank ?? 99) <= 4;
@@ -136,24 +139,24 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
               <Link
                 key={team.id}
                 href={`/teams/${team.short_code}`}
-                className="group relative rounded-2xl border border-[#CFE6F8] hover:border-[#1B6FC8] bg-white overflow-hidden text-left transition-all hover:shadow-md flex flex-col justify-between"
+                className="group relative rounded-2xl border border-[#CFE6F8] hover:border-[#1B6FC8] bg-white overflow-visible text-left transition-all hover:shadow-md flex flex-col justify-between"
               >
                 {team.groups?.name && (
-                  <span className="absolute top-3 right-3 z-10 bg-[#F5C518] text-[#07091F] text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full shadow-sm">
+                  <span className="absolute -top-2 -right-2 sm:-top-2.5 sm:-right-2.5 z-20 bg-[#F5C518] text-[#07091F] text-[9px] sm:text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-md border-2 border-white whitespace-nowrap leading-none">
                     {team.groups.name}
                   </span>
                 )}
 
-                <div className="w-full flex items-center justify-center p-6 sm:p-7 min-h-[160px]">
+                <div className="w-full flex items-center justify-center p-4 sm:p-6 min-h-[120px] sm:min-h-[160px] rounded-t-2xl overflow-hidden">
                   {team.logo_url ? (
                     <img
                       src={team.logo_url}
                       alt={team.name}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform"
+                      className="w-[50%]  object-cover shadow-sm group-hover:scale-105 transition-transform"
                     />
                   ) : (
                     <div
-                      className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-sm group-hover:scale-105 transition-transform ${
+                      className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-lg sm:text-2xl font-black text-white shadow-sm group-hover:scale-105 transition-transform ${
                         isCup ? "bg-[#1B6FC8]" : "bg-[#07091F]"
                       }`}
                     >
@@ -162,11 +165,11 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
                   )}
                 </div>
 
-                <div className="bg-[#F3FAFF] px-4 py-3 border-t border-[#CFE6F8] group-hover:bg-[#EAF6FE] transition-colors">
-                  <div className="font-black uppercase text-xs text-gray-900 truncate">
+                <div className="bg-[#F3FAFF] px-3 sm:px-4 py-2.5 sm:py-3 border-t border-[#CFE6F8] group-hover:bg-[#EAF6FE] transition-colors rounded-b-2xl">
+                  <div className="font-black uppercase text-[11px] sm:text-xs text-gray-900 truncate">
                     {team.name}
                   </div>
-                  <div className="text-[10px] text-[#5C7B9C] uppercase truncate font-medium mt-0.5">
+                  <div className="text-[9px] sm:text-[10px] text-[#5C7B9C] uppercase truncate font-medium mt-0.5">
                     Coach: {team.coach || "—"}
                   </div>
                 </div>

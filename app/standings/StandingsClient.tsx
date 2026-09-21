@@ -37,30 +37,6 @@ export default function StandingsClient({ standings, groups, pools }: Props) {
     <div className="min-h-screen bg-[#EAF6FE]">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
 
-
-        {/* Group Stage Status Notification */}
-        {allComplete && (
-          <div className="rounded-2xl border border-[#CFE6F8] bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-[#2DB87A] shrink-0" />
-              <div>
-                <div className="font-black text-[#07091F] text-sm uppercase tracking-wide">
-                  Group Stage Complete
-                </div>
-                <div className="text-[#5C7B9C] text-xs mt-0.5">
-                  All group matches played · Top 4 advance to Cup, rest to Festival
-                </div>
-              </div>
-            </div>
-            <Link
-              href="/bracket"
-              className="shrink-0 bg-[#07091F] hover:bg-[#1B6FC8] text-white text-[10px] font-bold uppercase tracking-widest rounded-full px-5 py-2.5 transition-colors shadow-sm"
-            >
-              View Bracket →
-            </Link>
-          </div>
-        )}
-
         {/* Group Navigation Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {tabs.map((t) => (
@@ -118,7 +94,7 @@ function OverviewGrid({
                 {g.name}
               </span>
               <span className="text-[#38B6E8] text-[10px] font-bold uppercase tracking-widest">
-                {rows.length} teams · {pool?.name ?? "Main Pool"}
+                {rows.length} teams
               </span>
             </div>
             <div className="p-4 space-y-2">
