@@ -40,13 +40,14 @@ export default function AdminFixtures() {
   const [groups,    setGroups]    = useState<Group[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [saving,    setSaving]    = useState(false);
+  const [createMsg, setCreateMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [homeId,    setHomeId]    = useState("");
   const [awayId,    setAwayId]    = useState("");
   const [poolId,    setPoolId]    = useState("");
   const [groupId,   setGroupId]   = useState("");
   const [stage,     setStage]     = useState("group");
-  const [day,       setDay]       = useState("");
+  const [day,       setDay]       = useState("1");
   const [time,      setTime]      = useState("09:00");
 
   const [editingId,  setEditingId]  = useState<string | null>(null);
@@ -75,22 +76,47 @@ export default function AdminFixtures() {
 
   async function createFixture() {
     if (!homeId || !awayId || !poolId) return;
+    if (homeId === awayId) {
+      setCreateMsg({ type: "error", text: "Home and away team can't be the same." });
+      return;
+    }
+    const parsedDay = parseInt(day, 10);
+    if (Number.isNaN(parsedDay)) {
+      setCreateMsg({ type: "error", text: "Please select a valid day." });
+      return;
+    }
+
     setSaving(true);
-    const { data: t } = await supabase.from("tournaments").select("id").single();
-    await supabase.from("matches").insert({
-      tournament_id: t?.id,
-      home_team_id: homeId,
-      away_team_id: awayId,
-      pool_id: poolId,
-      group_id: groupId || null,
-      stage,
-      day: parseInt(day),
-      match_time: time,
-      status: "scheduled",
-    });
-    const { data } = await supabase.from("matches").select(SELECT).eq("day", activeDay).order("match_time");
-    setMatches((data as Match[]) ?? []);
-    setHomeId(""); setAwayId(""); setSaving(false);
+    setCreateMsg(null);
+    try {
+      const { data: t, error: tError } = await supabase.from("tournaments").select("id").single();
+      if (tError || !t?.id) throw tError ?? new Error("No tournament found — create a tournament first.");
+
+      const { error: insertError } = await supabase.from("matches").insert({
+        tournament_id: t.id,
+        home_team_id: homeId,
+        away_team_id: awayId,
+        pool_id: poolId,
+        group_id: groupId || null,
+        stage,
+        day: parsedDay,
+        match_time: time,
+        status: "scheduled",
+      });
+      if (insertError) throw insertError;
+
+      const { data, error: refetchError } = await supabase.from("matches").select(SELECT).eq("day", activeDay).order("match_time");
+      if (refetchError) throw refetchError;
+      setMatches((data as Match[]) ?? []);
+
+      setCreateMsg({ type: "success", text: "Fixture created." });
+      setHomeId(""); setAwayId("");
+    } catch (err: any) {
+      console.error("createFixture failed:", err);
+      setCreateMsg({ type: "error", text: err?.message || "Failed to create fixture. Check the console for details." });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function setStatus(matchId: string, status: "scheduled" | "live" | "completed") {
@@ -302,6 +328,18 @@ export default function AdminFixtures() {
             <Button onClick={createFixture} disabled={saving || !homeId || !awayId || !poolId} className="mt-4 w-full">
               {saving ? "Creating..." : "+ Create Fixture"}
             </Button>
+            {createMsg && (
+              <div
+                className={`mt-3 rounded-lg px-3 py-2 text-sm font-medium ${
+                  createMsg.type === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+              >
+                {createMsg.type === "success" ? "✓ " : "✗ "}
+                {createMsg.text}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
