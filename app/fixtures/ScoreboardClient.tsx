@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase } from "@/lib/supabase";
 
 type Match = {
   id: string;
@@ -16,9 +15,6 @@ type Match = {
   groups: { name: string } | null;
   pools: { name: string } | null;
 };
-
-const SELECT =
-  "*, home_team:teams!matches_home_team_id_fkey(name), away_team:teams!matches_away_team_id_fkey(name), groups(name), pools(name)";
 
 const STAGE_INFO: Record<string, { label: string; color: string; bg: string }> = {
   group: { label: "Group", color: "text-[#1B6FC8]", bg: "bg-[#EAF6FE]" },
@@ -48,23 +44,17 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const [loading, setLoading] = useState(false);
 
-  const fetchDay = useCallback(async (day: number) => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("matches")
-      .select(SELECT)
-      .eq("day", day)
-      .order("match_time");
-    if (error) {
-      console.error("fetchDay failed:", {
-        day,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      });
+  const fetchDay = useCallback(async (day: number, showLoading: boolean) => {
+    if (showLoading) setLoading(true);
+    try {
+      const res = await fetch(`/api/fixtures?day=${day}`);
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const data = await res.json();
+      setMatches(data ?? []);
+    } catch (err) {
+      console.error("fetchDay failed:", err);
     }
-    setMatches((data as Match[]) ?? []);
-    setLoading(false);
+    if (showLoading) setLoading(false);
   }, []);
 
   // Skip the first run: the server already fetched fresh data for initialDay.
@@ -74,32 +64,16 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
       isFirstRender.current = false;
       return;
     }
-    fetchDay(activeDay);
+    fetchDay(activeDay, true);
   }, [activeDay, fetchDay]);
 
-  // Realtime score updates
+  // Poll the cached API route for live score updates instead of holding a
+  // persistent Realtime connection — CDN-cached at 5s, so this scales to
+  // many concurrent viewers without costing Realtime connections at all.
   useEffect(() => {
-    const ch = supabase
-      .channel("sb-matches")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "matches" },
-        (payload) => {
-          const updated = payload.new as Match;
-          setMatches((prev) => {
-            const idx = prev.findIndex((m) => m.id === updated.id);
-            if (idx === -1) return prev;
-            const next = [...prev];
-            next[idx] = { ...prev[idx], ...updated };
-            return next;
-          });
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, []);
+    const interval = setInterval(() => fetchDay(activeDay, false), 5000);
+    return () => clearInterval(interval);
+  }, [activeDay, fetchDay]);
 
   const selectDay = (d: number) => {
     setActiveDay(d);

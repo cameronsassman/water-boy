@@ -3,18 +3,6 @@
 import Bubble from "./Bubble";
 import { useHomeData } from "./HomeDataProvider";
 
-function initials(name: string) {
-  return name.trim().charAt(0).toUpperCase();
-}
-
-function TeamBadge({ label }: { label: string }) {
-  return (
-    <span className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center font-black text-white text-sm shrink-0">
-      {label}
-    </span>
-  );
-}
-
 export default function LivePanel() {
   const { live } = useHomeData();
 
@@ -24,30 +12,36 @@ export default function LivePanel() {
       <Bubble className="w-28 h-28 -bottom-10 -left-8 bg-white/[0.04] border-0" />
 
       {live.length > 0 ? (
-        <div className="relative flex-1 flex flex-col justify-center gap-6 divide-y divide-white/10">
-          {live.map((match, i) => (
-            <div key={match.id} className={`text-center ${i > 0 ? "pt-6" : ""}`}>
-              <p className="text-[#38B6E8] text-xs font-bold uppercase tracking-widest mb-4">
-                {match.pool_name ?? "Main Pool"}
-              </p>
-
-              <div className="flex items-center justify-center gap-6">
-                <TeamBadge label={initials(match.home_team_name)} />
-                <span className="font-black text-4xl text-white tabular-nums">
-                  {match.home_score ?? 0}
-                  <span className="text-[#38B6E8] mx-2">–</span>
-                  {match.away_score ?? 0}
-                </span>
-                <TeamBadge label={initials(match.away_team_name)} />
+        <div className={`relative flex-1 grid gap-4 ${live.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 place-content-center"}`}>
+          {live.map((match) => (
+            <div
+              key={match.id}
+              className="rounded-2xl bg-white/5 border border-white/10 px-5 py-4 flex flex-col justify-center"
+            >
+              <div className="flex items-center gap-1.5 mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E23744] animate-pulse" />
+                <p className="text-[#38B6E8] text-[10px] font-bold uppercase tracking-widest">
+                  {match.pool_name ?? "Main Pool"} · Live
+                </p>
               </div>
 
-              <div className="flex items-center justify-center gap-16 mt-2">
-                <span className="text-white text-xs font-bold uppercase tracking-wider">
-                  {match.home_team_name}
-                </span>
-                <span className="text-white text-xs font-bold uppercase tracking-wider">
-                  {match.away_team_name}
-                </span>
+              <div className="divide-y divide-white/10">
+                <div className="flex items-center gap-3 py-2.5">
+                  <span className="text-white text-xs font-bold uppercase tracking-wider flex-1 min-w-0 truncate">
+                    {match.home_team_name}
+                  </span>
+                  <span className="font-black text-xl text-white tabular-nums shrink-0">
+                    {match.home_score ?? 0}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 py-2.5">
+                  <span className="text-white text-xs font-bold uppercase tracking-wider flex-1 min-w-0 truncate">
+                    {match.away_team_name}
+                  </span>
+                  <span className="font-black text-xl text-white tabular-nums shrink-0">
+                    {match.away_score ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
