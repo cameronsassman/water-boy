@@ -46,7 +46,13 @@ export async function getGroupStageDiscipline(): Promise<Map<string, number>> {
   return map;
 }
 export async function getMatchesByDay(day: number) {
-  const { data } = await supabase.from("matches").select(MATCH_SELECT).eq("day", day).order("match_time"); return data ?? [];
+  const { data, error } = await supabase
+    .from("matches")
+    .select(MATCH_SELECT)
+    .eq("day", day)
+    .order("match_time");
+  if (error) console.error("getMatchesByDay failed:", { day, message: error.message, details: error.details, hint: error.hint });
+  return data ?? [];
 }
 export async function getLiveMatches() {
   const { data } = await supabase.from("matches").select(MATCH_SELECT).eq("status","live").order("match_time"); return data ?? [];

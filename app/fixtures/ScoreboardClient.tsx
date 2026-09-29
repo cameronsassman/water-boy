@@ -45,7 +45,7 @@ interface Props {
 
 export default function ScoreboardClient({ initialMatches, initialDay }: Props) {
   const [activeDay, setActiveDay] = useState(initialDay);
-  const [matches, setMatches] = useState<Match[]>(initialMatches as Match[]);
+  const [matches, setMatches] = useState<Match[]>(initialMatches);
   const [loading, setLoading] = useState(false);
 
   const fetchDay = useCallback(async (day: number) => {
@@ -67,6 +67,7 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
     setLoading(false);
   }, []);
 
+  // Skip the first run: the server already fetched fresh data for initialDay.
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -76,6 +77,7 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
     fetchDay(activeDay);
   }, [activeDay, fetchDay]);
 
+  // Realtime score updates
   useEffect(() => {
     const ch = supabase
       .channel("sb-matches")
@@ -99,20 +101,24 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
     };
   }, []);
 
+  const selectDay = (d: number) => {
+    setActiveDay(d);
+    // Persist day in the URL without a server round trip
+    window.history.replaceState(null, "", `?day=${d}`);
+  };
+
   const pool1 = matches.filter((m) => m.pools?.name === "Pool 1");
   const pool2 = matches.filter((m) => m.pools?.name === "Pool 2");
-  const liveCount = matches.filter((m) => m.status === "live").length;
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-
         {/* Day Navigation Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {[1, 2, 3, 4].map((d) => (
             <button
               key={d}
-              onClick={() => setActiveDay(d)}
+              onClick={() => selectDay(d)}
               className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
                 activeDay === d
                   ? "bg-[#07091F] text-white shadow-sm"
@@ -240,8 +246,4 @@ function MatchCard({ match: m }: { match: Match }) {
       </div>
     </div>
   );
-}
-
-function Bubble({ className = "" }: { className?: string }) {
-  return <div className={`absolute rounded-full border pointer-events-none ${className}`} />;
 }
