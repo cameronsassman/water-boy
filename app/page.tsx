@@ -27,7 +27,6 @@ const VIDEOS = [
 
 const SPONSORS: { name: string; tier: string; logo_url?: string; is_charity?: boolean }[] = [
   { name: "RSAWEB", tier: "tier_one", logo_url: "/assets/rsaweb.png" },
-  { name: "M&G Investment", tier: "headline", logo_url: "/assets/m-g.png" },
   { name: "Hudsons", tier: "tier_one", logo_url: "/assets/hudsons.png" },
   { name: "First National Bank", tier: "tier_one", logo_url: "/assets/fnb.png" },
   { name: "Sports Science Physiotherapy Centre", tier: "tier_two", logo_url: "/assets/sspc.png" },
