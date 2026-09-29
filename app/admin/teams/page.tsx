@@ -253,7 +253,7 @@ export default function AdminTeams() {
                     )}
                     <div className="w-full h-full flex items-center justify-center p-4">
                       {team.logo_url
-                        ? <img src={team.logo_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shadow-md" />
+                        ? <img src={team.logo_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 object-contain shadow-md" />
                         : <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-black text-white bg-blue-600 shadow-md">{team.short_code}</div>
                       }
                     </div>

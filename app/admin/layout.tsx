@@ -2,6 +2,7 @@
 "use client";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import AdminNav from "@/components/admin/AdminNav";
 
 function AdminTopBar() {
   const { logout } = useAuth();
@@ -23,6 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <AuthProvider>
       <ProtectedRoute require="super_admin" area="the admin dashboard">
         <AdminTopBar />
+        <AdminNav />
         {children}
       </ProtectedRoute>
     </AuthProvider>

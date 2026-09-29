@@ -34,6 +34,8 @@ function stageInfo(stage: string) {
   return STAGE_INFO[stage] ?? STAGE_INFO.group;
 }
 
+const UNASSIGNED = "Unassigned";
+
 interface Props {
   initialMatches: Match[];
   initialDay: number;
@@ -81,8 +83,17 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
     window.history.replaceState(null, "", `?day=${d}`);
   };
 
-  const pool1 = matches.filter((m) => m.pools?.name === "Pool 1");
-  const pool2 = matches.filter((m) => m.pools?.name === "Pool 2");
+  // Build pool sections from whatever pool names exist, so renames don't break the page.
+  const poolKey = (m: Match) => m.pools?.name ?? UNASSIGNED;
+  const poolNames = Array.from(new Set(matches.map(poolKey))).sort((a, b) => {
+    if (a === UNASSIGNED) return 1;
+    if (b === UNASSIGNED) return -1;
+    return a.localeCompare(b, undefined, { numeric: true });
+  });
+  const poolSections = poolNames.map((label) => ({
+    label,
+    list: matches.filter((m) => poolKey(m) === label),
+  }));
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
@@ -118,10 +129,7 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {[
-                { label: "Pool 1", list: pool1 },
-                { label: "Pool 2", list: pool2 },
-              ].map(({ label, list }) => (
+              {poolSections.map(({ label, list }) => (
                 <div key={label} className="space-y-4">
                   <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-2.5">
@@ -136,13 +144,9 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
                   </div>
 
                   <div className="space-y-3">
-                    {list.length === 0 ? (
-                      <div className="rounded-2xl border border-[#CFE6F8] bg-white px-4 py-8 text-center text-gray-400 text-sm shadow-sm">
-                        No matches scheduled for this pool
-                      </div>
-                    ) : (
-                      list.map((m) => <MatchCard key={m.id} match={m} />)
-                    )}
+                    {list.map((m) => (
+                      <MatchCard key={m.id} match={m} />
+                    ))}
                   </div>
                 </div>
               ))}

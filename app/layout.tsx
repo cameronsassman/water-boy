@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
+import ConditionalNavbar from "@/components/layout/ConditionalNavbar";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -11,13 +12,20 @@ export const metadata: Metadata = {
   description: "Official tournament hub — live scores, standings and teams",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={geist.className}>
-        <Navbar />
+        <ConditionalNavbar />
+
         <main>{children}</main>
+
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

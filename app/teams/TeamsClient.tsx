@@ -149,11 +149,13 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
 
                 <div className="w-full flex items-center justify-center p-4 sm:p-6 min-h-[120px] sm:min-h-[160px] rounded-t-2xl overflow-hidden">
                   {team.logo_url ? (
-                    <img
-                      src={team.logo_url}
-                      alt={team.name}
-                      className="w-[50%]  object-cover shadow-sm group-hover:scale-105 transition-transform"
-                    />
+                    <div className="w-[50%]">
+                      <img
+                        src={team.logo_url}
+                        alt={team.name}
+                        className="w-full object-cover shadow-sm group-hover:scale-105 transition-transform"
+                      />
+                    </div>
                   ) : (
                     <div
                       className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-lg sm:text-2xl font-black text-white shadow-sm group-hover:scale-105 transition-transform ${

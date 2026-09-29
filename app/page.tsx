@@ -5,6 +5,7 @@ import HomeDataProvider from "@/components/HomeDataProvider";
 import LivePanel from "@/components/LivePanel";
 import HomeMain from "@/components/HomeMain";
 import Bubble from "@/components/Bubble";
+import VideoCard from "@/components/VideoCard";
 
 // Static page regenerated at most every 10s and served from Vercel's CDN.
 // After first paint, HomeDataProvider polls /api/home for live updates.
@@ -13,15 +14,15 @@ export const revalidate = 10;
 const VIDEOS = [
   {
     role: "headmaster",
-    person_name: "Mr J. Williams",
     title: "Welcome to Tournament 2026",
-    video_url: "",
+    video_url: "/videos/headmaster.mp4",
+    poster: "/videos/headmaster.jpg",
   },
   {
     role: "captain",
-    person_name: "James Olivier",
-    title: "A message from the captain",
-    video_url: "",
+    title: "A message from the captains",
+    video_url: "/videos/captain.mp4",
+    poster: "/videos/captain.jpg",
   },
 ];
 
@@ -105,40 +106,55 @@ export default async function HomePage() {
           <section id="welcome">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[headmaster, captain].filter(Boolean).map((v: any) => {
-                const hasLink = Boolean(v.video_url);
                 const cardClassName =
                   "rounded-2xl border border-[#CFE6F8] bg-white hover:border-[#1B6FC8] transition-colors overflow-hidden";
-                const content = (
-                  <>
-                    <div className="bg-[#07091F] h-40 flex items-center justify-center relative overflow-hidden">
-                      <Bubble className="w-24 h-24 -top-8 -left-8 bg-[#1B6FC8]/10 border-0" />
-                      <Bubble className="w-16 h-16 bottom-4 right-8 bg-[#F5C518]/10 border-0" />
-                      <div className="relative w-14 h-14 rounded-full bg-[#F5C518] flex items-center justify-center">
-                        <div className="w-0 h-0 border-y-[11px] border-y-transparent border-l-[20px] border-l-[#07091F] ml-1" />
-                      </div>
+
+                const placeholder = (
+                  <div className="bg-[#07091F] aspect-video flex items-center justify-center relative overflow-hidden">
+                    {v.poster ? (
+                      <>
+                        <img
+                          src={v.poster}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-[#07091F]/30" />
+                      </>
+                    ) : (
+                      <>
+                        <Bubble className="w-24 h-24 -top-8 -left-8 bg-[#1B6FC8]/10 border-0" />
+                        <Bubble className="w-16 h-16 bottom-4 right-8 bg-[#F5C518]/10 border-0" />
+                      </>
+                    )}
+                    <div className="relative w-14 h-14 rounded-full bg-[#F5C518] flex items-center justify-center">
+                      <div className="w-0 h-0 border-y-[11px] border-y-transparent border-l-[20px] border-l-[#07091F] ml-1" />
                     </div>
-                    <div className="p-4">
-                      <div className="text-[#1B6FC8] text-[10px] font-bold uppercase tracking-widest mb-1">
-                        {v.role === "headmaster" ? "Headmaster" : "Team Captain"}
-                      </div>
-                      <div className="font-black uppercase text-sm text-gray-900 mb-1">{v.title}</div>
-                    </div>
-                  </>
+                  </div>
                 );
 
-                return hasLink ? (
-                  <a
+                const caption = (
+                  <div className="p-4">
+                    <div className="text-[#1B6FC8] text-[10px] font-bold uppercase tracking-widest mb-1">
+                      {v.role === "headmaster" ? "Headmaster" : "Team Captains"}
+                    </div>
+                    <div className="font-black uppercase text-sm text-gray-900 mb-1">{v.title}</div>
+                  </div>
+                );
+
+                return v.video_url ? (
+                  <VideoCard
                     key={v.role}
-                    href={v.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    src={v.video_url}
+                    poster={v.poster}
                     className={cardClassName}
+                    placeholder={placeholder}
                   >
-                    {content}
-                  </a>
+                    {caption}
+                  </VideoCard>
                 ) : (
                   <div key={v.role} className={cardClassName}>
-                    {content}
+                    {placeholder}
+                    {caption}
                   </div>
                 );
               })}

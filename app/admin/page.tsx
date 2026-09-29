@@ -31,14 +31,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#07091F] border-b border-[#1B3A6E] px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="text-white font-black uppercase text-lg tracking-wide">Admin Dashboard</div>
-          <div className="text-[#7A9CC8] text-xs">SACS Junior Water Polo Tournament 2026</div>
-        </div>
-        <Link href="/scorer" className="flex items-center justify-center gap-2 bg-[#2DB87A]/20 border border-[#2DB87A] text-[#2DB87A] text-xs font-bold uppercase tracking-widest px-4 py-2 hover:bg-[#2DB87A]/30 transition-colors w-full sm:w-auto">
-          <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />Open scorer
-        </Link>
+      <div className="bg-[#07091F] border-b border-[#1B3A6E] px-4 sm:px-6 py-4">
+        <div className="text-white font-black uppercase text-lg tracking-wide">Admin Dashboard</div>
+        <div className="text-[#7A9CC8] text-xs">SACS Junior Water Polo Tournament 2026</div>
       </div>
 
       {live.length > 0 && (
@@ -99,45 +94,23 @@ export default function AdminDashboard() {
             }
           </div>
 
-          {/* Right col */}
-          <div className="space-y-4">
-            {/* Quick actions */}
-            <div className="bg-white border border-gray-200">
-              <div className="px-4 py-3 border-b border-gray-200"><span className="font-black uppercase text-sm text-gray-900">Quick Actions</span></div>
-              <div className="p-3 space-y-2">
-                {[
-                  { href: "/scorer",  label: "Live Scorer", primary: true },
-                  { href: "/admin/fixtures", label: "Fixtures",       },
-                  // { href: "/admin/bracket",  label: "Bracket",        },
-                  { href: "/admin/teams",    label: "Teams & Players",},
-                  { href: "/admin/corrections", label: "Score Corrections", },
-                  { href: "/admin/groups", label: "Groups & Pools", },
-                ].map(({ href, label, primary }) => (
-                  <Link key={href} href={href} className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-wide transition-colors ${primary ? "bg-[#1B6FC8] text-white hover:bg-[#0D4A8A]" : "bg-gray-50 text-gray-700 border border-gray-200 hover:border-[#1B6FC8] hover:text-[#1B6FC8]"}`}>
-                    {label}<span className="ml-auto">→</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Group A standings */}
-            <div className="bg-white border border-gray-200">
-              <div className="px-4 py-3 border-b border-gray-200"><span className="font-black uppercase text-sm text-gray-900">Group A</span></div>
-              {standings.length === 0
-                ? <div className="px-4 py-4 text-center text-gray-400 text-xs">No matches played yet</div>
-                : standings.map((row) => {
-                  const isCup = row.rank <= 4;
-                  return (
-                    <div key={row.team_id} className={`flex items-center gap-2 px-4 py-2 border-b border-gray-100 last:border-0 ${!isCup ? "opacity-40" : ""}`}>
-                      <span className={`inline-flex w-5 h-5 items-center justify-center text-[10px] font-black shrink-0 ${isCup ? "bg-[#1B6FC8] text-white" : "bg-gray-100 text-gray-400"}`}>{row.rank}</span>
-                      <span className="flex-1 font-bold uppercase text-xs text-gray-900 truncate">{row.team_name}</span>
-                      <span className="text-xs text-gray-400">{row.goal_diff > 0 ? "+" : ""}{row.goal_diff}</span>
-                      <span className={`text-xs font-black w-8 text-right ${isCup ? "text-[#1B6FC8]" : "text-gray-400"}`}>{row.points}</span>
-                    </div>
-                  );
-                })
-              }
-            </div>
+          {/* Group A standings */}
+          <div className="bg-white border border-gray-200">
+            <div className="px-4 py-3 border-b border-gray-200"><span className="font-black uppercase text-sm text-gray-900">Group A</span></div>
+            {standings.length === 0
+              ? <div className="px-4 py-4 text-center text-gray-400 text-xs">No matches played yet</div>
+              : standings.map((row) => {
+                const isCup = row.rank <= 4;
+                return (
+                  <div key={row.team_id} className={`flex items-center gap-2 px-4 py-2 border-b border-gray-100 last:border-0 ${!isCup ? "opacity-40" : ""}`}>
+                    <span className={`inline-flex w-5 h-5 items-center justify-center text-[10px] font-black shrink-0 ${isCup ? "bg-[#1B6FC8] text-white" : "bg-gray-100 text-gray-400"}`}>{row.rank}</span>
+                    <span className="flex-1 font-bold uppercase text-xs text-gray-900 truncate">{row.team_name}</span>
+                    <span className="text-xs text-gray-400">{row.goal_diff > 0 ? "+" : ""}{row.goal_diff}</span>
+                    <span className={`text-xs font-black w-8 text-right ${isCup ? "text-[#1B6FC8]" : "text-gray-400"}`}>{row.points}</span>
+                  </div>
+                );
+              })
+            }
           </div>
         </div>
       </div>

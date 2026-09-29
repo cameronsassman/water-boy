@@ -2,8 +2,63 @@
 
 import { useHomeData } from "./HomeDataProvider";
 
+type Upcoming = ReturnType<typeof useHomeData>["upcoming"][number];
+
+// Anything matching "high school" goes right; everything else (Aquatic Centre) goes left.
+const isRightPool = (name?: string | null) => /high\s*school/i.test(name ?? "");
+
+function buildRows(upcoming: Upcoming[]) {
+  const sorted = [...upcoming].sort(
+    (a, b) =>
+      a.day - b.day ||
+      (a.start_time ?? "99:99").localeCompare(b.start_time ?? "99:99"),
+  );
+
+  const slots = new Map<string, { left: Upcoming[]; right: Upcoming[] }>();
+  for (const m of sorted) {
+    const key = `${m.day}|${m.start_time ?? "TBC"}`;
+    const slot = slots.get(key) ?? { left: [], right: [] };
+    (isRightPool(m.pool_name) ? slot.right : slot.left).push(m);
+    slots.set(key, slot);
+  }
+
+  return [...slots.values()].flatMap(({ left, right }) =>
+    Array.from({ length: Math.max(left.length, right.length) }, (_, i) => ({
+      left: left[i] as Upcoming | undefined,
+      right: right[i] as Upcoming | undefined,
+    })),
+  );
+}
+
+function UpcomingCard({ match }: { match: Upcoming }) {
+  return (
+    <div className="rounded-2xl border border-[#CFE6F8] bg-[#F3FAFF] px-3 py-3 sm:px-5 sm:py-4 min-w-0">
+      <div className="flex items-center justify-between flex-wrap gap-x-2 gap-y-1 mb-3">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C]">
+          {match.pool_name ?? "Main Pool"}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#1B6FC8]">
+          Day {match.day} · {match.start_time ?? "TBC"}
+        </span>
+      </div>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="w-full font-bold uppercase text-xs text-gray-900 truncate">
+          {match.home_team_name}
+        </span>
+        <span className="font-black text-[10px] text-white bg-[#07091F] rounded-full px-3 py-1">
+          vs
+        </span>
+        <span className="w-full font-bold uppercase text-xs text-gray-900 truncate">
+          {match.away_team_name}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function HomeMain() {
   const { upcoming, groups, scorers } = useHomeData();
+  const rows = buildRows(upcoming);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
@@ -15,32 +70,15 @@ export default function HomeMain() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {upcoming.map((match) => (
-                <div
-                  key={match.id}
-                  className="rounded-2xl border border-[#CFE6F8] bg-[#F3FAFF] px-3 py-3 sm:px-5 sm:py-4 min-w-0"
-                >
-                  <div className="flex items-center justify-between flex-wrap gap-x-2 gap-y-1 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C]">
-                      {match.pool_name ?? "Main Pool"}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1B6FC8]">
-                      Day {match.day} · {match.start_time ?? "TBC"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <span className="w-full font-bold uppercase text-xs text-gray-900 truncate">
-                      {match.home_team_name}
-                    </span>
-                    <span className="font-black text-[10px] text-white bg-[#07091F] rounded-full px-3 py-1">
-                      vs
-                    </span>
-                    <span className="w-full font-bold uppercase text-xs text-gray-900 truncate">
-                      {match.away_team_name}
-                    </span>
-                  </div>
-                </div>
-              ))}
+              {rows.flatMap((row, i) =>
+                [row.left, row.right].map((match, side) =>
+                  match ? (
+                    <UpcomingCard key={match.id} match={match} />
+                  ) : (
+                    <div key={`empty-${i}-${side}`} />
+                  ),
+                ),
+              )}
             </div>
           )}
         </section>
