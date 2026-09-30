@@ -27,12 +27,10 @@ const VIDEOS = [
 ];
 
 const SPONSORS: { name: string; tier: string; logo_url?: string; is_charity?: boolean }[] = [
-  { name: "RSAWEB", tier: "tier_one", logo_url: "/assets/rsaweb.png" },
+  { name: "RSAWEB", tier: "headline", logo_url: "/assets/rsaweb.png" },
   { name: "Hudsons", tier: "tier_one", logo_url: "/assets/hudsons.png" },
   { name: "First National Bank", tier: "tier_one", logo_url: "/assets/fnb.png" },
   { name: "Sports Science Physiotherapy Centre", tier: "tier_two", logo_url: "/assets/sspc.png" },
-  { name: "Sofaworx", tier: "tier_two", logo_url: "/assets/sofaworx.png" },
-  { name: "Stikka", tier: "tier_two", logo_url: "/assets/stikka.png" },
   { name: "Geddes Capital", tier: "smaller", logo_url: "/assets/geddes.jpeg" },
   { name: "Shout Music Company", tier: "smaller", logo_url: "/assets/shout.png" },
   { name: "KY-ND", tier: "smaller", logo_url: "/assets/ky-nd.png", is_charity: true },
@@ -58,7 +56,7 @@ export default async function HomePage() {
               <div>
                 <div className="flex items-center justify-between flex-wrap">
                   <Image
-                    src="/assets/logo/sacs-wp-logo.png"
+                    src="/assets/logo/powered-by-logo.jpg"
                     alt={name}
                     width={857}
                     height={720}

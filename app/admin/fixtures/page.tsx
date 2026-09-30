@@ -58,6 +58,47 @@ function teamLabel(team: Team, groups: Group[]): string {
   return g ? `${team.name} (${g.name})` : team.name;
 }
 
+function addMinutes(t: string, mins: number): string {
+  const [h, m] = t.slice(0, 5).split(":").map(Number);
+  const total = (((h * 60 + m + mins) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+// Next free slot in a pool on a day = last match time there + gap (09:00 if empty).
+function suggestTime(list: Match[], poolId: string, day: number, gap: number): string {
+  const times = list
+    .filter((m) => m.pool_id === poolId && m.day === day)
+    .map((m) => m.match_time.slice(0, 5))
+    .sort();
+  return times.length ? addMinutes(times[times.length - 1], gap) : "09:00";
+}
+
+// Same day + time + pool + pair of teams (either way round) = same fixture.
+function fixtureKey(day: number, time: string, poolId: string, a: string, b: string): string {
+  return `${day}|${time.slice(0, 5)}|${poolId}|${[a, b].sort().join("|")}`;
+}
+
+const norm = (s: string) => s.trim().toLowerCase();
+
+function pickUnique<T>(items: T[], name: (t: T) => string, input: string): T | null {
+  const x = norm(input);
+  if (!x) return null;
+  const exact = items.filter((i) => norm(name(i)) === x);
+  if (exact.length === 1) return exact[0];
+  const partial = items.filter((i) => norm(name(i)).includes(x));
+  return partial.length === 1 ? partial[0] : null;
+}
+
+type BulkRow = {
+  line: string;
+  error?: string;
+  duplicate?: "existing" | "pasted";
+  row?: {
+    day: number; match_time: string; pool_id: string; home_team_id: string;
+    away_team_id: string; group_id: string | null; stage: string;
+  };
+};
+
 export default function AdminFixtures() {
   const [activeDay, setActiveDay] = useState(0); // 0 = all days
   const [matches,   setMatches]   = useState<Match[]>([]);
@@ -68,18 +109,23 @@ export default function AdminFixtures() {
   const [saving,    setSaving]    = useState(false);
   const [createMsg, setCreateMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Match-list filter — one simple bucket, plus the existing day tabs
   const [filterBucket, setFilterBucket] = useState<Bucket>("all");
 
-  // New fixture — only the essentials are visible by default
+  // New fixture — day, pool, time, stage and group stay put between saves; only teams reset.
   const [homeId,    setHomeId]    = useState("");
   const [awayId,    setAwayId]    = useState("");
   const [day,       setDay]       = useState("1");
   const [time,      setTime]      = useState("09:00");
+  const [gap,       setGap]       = useState(20); // minutes between matches in a pool
   const [showMore,  setShowMore]  = useState(false);
   const [poolId,    setPoolId]    = useState("");
   const [groupId,   setGroupId]   = useState("");
   const [stage,     setStage]     = useState("group");
+
+  // Bulk paste
+  const [showBulk,   setShowBulk]   = useState(false);
+  const [bulkText,   setBulkText]   = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const [editingId,  setEditingId]  = useState<string | null>(null);
   const [editDraft,  setEditDraft]  = useState({ homeId: "", awayId: "", poolId: "", groupId: "", stage: "group", day: "1", time: "" });
@@ -97,14 +143,20 @@ export default function AdminFixtures() {
       setTeams((t as Team[]) ?? []);
       setPools((p as Pool[]) ?? []);
       setGroups((g as Group[]) ?? []);
-      // Default the venue to the first pool so most people never have to touch it.
+      console.log(`Teams (${t?.length ?? 0}):`);
+      console.table((t as Team[] | null)?.map((x) => ({ id: x.id, name: x.name, group_id: x.group_id })) ?? []);
+      console.log("Pools:", p);
       if (p && p.length > 0) setPoolId((current) => current || p[0].id);
     });
   }, []);
 
   useEffect(() => {
     supabase.from("matches").select(SELECT).order("day").order("match_time")
-      .then(({ data }) => { setMatches((data as Match[]) ?? []); setLoading(false); });
+      .then(({ data }) => {
+        const list = (data as Match[]) ?? [];
+        setMatches(list);
+        setLoading(false);
+      });
   }, []);
 
   const filteredMatches = useMemo(
@@ -114,18 +166,30 @@ export default function AdminFixtures() {
     [matches, filterBucket, activeDay]
   );
 
-  // Teams grouped by their group, for easy scanning — never restricts who can play whom.
   const teamsByGroup = useMemo(() => {
-    const sorted = [...teams].sort((a, b) => teamLabel(a, groups).localeCompare(teamLabel(b, groups)));
-    return sorted;
+    return [...teams].sort((a, b) => teamLabel(a, groups).localeCompare(teamLabel(b, groups)));
   }, [teams, groups]);
 
-  function resetCreateForm() {
-    setHomeId(""); setAwayId("");
+  async function refetch() {
+    const { data, error } = await supabase.from("matches").select(SELECT).order("day").order("match_time");
+    if (error) throw error;
+    const list = (data as Match[]) ?? [];
+    setMatches(list);
+    return list;
+  }
+
+  function changePool(id: string) {
+    setPoolId(id);
+    setTime(suggestTime(matches, id, parseInt(day, 10), gap));
+  }
+
+  function changeDay(d: string) {
+    setDay(d);
+    setTime(suggestTime(matches, poolId, parseInt(d, 10), gap));
   }
 
   async function createFixture() {
-    if (!homeId || !awayId || !poolId) return;
+    if (!homeId || !awayId || !poolId || saving) return;
     if (homeId === awayId) {
       setCreateMsg({ type: "error", text: "Home and away team can't be the same." });
       return;
@@ -136,18 +200,27 @@ export default function AdminFixtures() {
       return;
     }
 
+    if (existingKeys.has(fixtureKey(parsedDay, time, poolId, homeId, awayId))) {
+      setCreateMsg({ type: "error", text: "That fixture already exists (same teams, pool, day and time)." });
+      return;
+    }
+
     setSaving(true);
     setCreateMsg(null);
     try {
       const { data: t, error: tError } = await supabase.from("tournaments").select("id").single();
       if (tError || !t?.id) throw tError ?? new Error("No tournament found — create a tournament first.");
 
+      // Group defaults to the home team's group for group-stage matches.
+      const homeTeam = teams.find((x) => x.id === homeId);
+      const resolvedGroup = groupId || (stage === "group" ? homeTeam?.group_id ?? null : null);
+
       const { error: insertError } = await supabase.from("matches").insert({
         tournament_id: t.id,
         home_team_id: homeId,
         away_team_id: awayId,
         pool_id: poolId,
-        group_id: groupId || null,
+        group_id: resolvedGroup,
         stage,
         day: parsedDay,
         match_time: time,
@@ -155,17 +228,132 @@ export default function AdminFixtures() {
       });
       if (insertError) throw insertError;
 
-      const { data, error: refetchError } = await supabase.from("matches").select(SELECT).order("day").order("match_time");
-      if (refetchError) throw refetchError;
-      setMatches((data as Match[]) ?? []);
+      const list = await refetch();
+      const next = suggestTime(list, poolId, parsedDay, gap);
 
-      setCreateMsg({ type: "success", text: `Fixture created for Day ${parsedDay}.` });
-      resetCreateForm();
+      setCreateMsg({ type: "success", text: `Fixture created for Day ${parsedDay} at ${time}.` });
+      // Keep day / pool / stage / group. Clear teams, bump time to the next free slot.
+      setHomeId(""); setAwayId(""); setTime(next);
     } catch (err: any) {
       console.error("createFixture failed:", err);
       setCreateMsg({ type: "error", text: err?.message || "Failed to create fixture. Check the console for details." });
     } finally {
       setSaving(false);
+    }
+  }
+
+  // Copy a match's day/pool/stage/group into the form; just pick the teams.
+  function duplicateMatch(m: Match) {
+    setMoreActionsId(null);
+    setDay(String(m.day));
+    setPoolId(m.pool_id);
+    setStage(m.stage);
+    setGroupId(m.group_id ?? "");
+    setHomeId(""); setAwayId("");
+    setTime(suggestTime(matches, m.pool_id, m.day, gap));
+    document.getElementById("add-fixture")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ── Bulk paste ─────────────────────────────────────────────
+  // One match per line: day, time, pool, home, away[, stage]
+  const existingKeys = useMemo(
+    () => new Set(matches.map((m) => fixtureKey(m.day, m.match_time, m.pool_id, m.home_team_id, m.away_team_id))),
+    [matches]
+  );
+
+  const bulkRows: BulkRow[] = useMemo(() => {
+    const seen = new Set<string>();
+    return bulkText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((line): BulkRow => {
+        const parts = line.split(/\t|,/).map((p) => p.trim());
+        if (parts.length < 5) return { line, error: "Need: day, time, pool, home, away" };
+        const [d, tm, poolName, homeName, awayName, stageRaw] = parts;
+
+        const dayNum = parseInt(d.replace(/day/i, ""), 10);
+        if (![1, 2, 3, 4].includes(dayNum)) return { line, error: `Bad day "${d}"` };
+
+        const tmMatch = tm.match(/^(\d{1,2})[:.h](\d{2})$/);
+        if (!tmMatch) return { line, error: `Bad time "${tm}" (use 09:00)` };
+        const match_time = `${tmMatch[1].padStart(2, "0")}:${tmMatch[2]}`;
+
+        const pool = pickUnique(pools, (p) => p.name, poolName);
+        if (!pool) return { line, error: `Pool "${poolName}" not found` };
+
+        const home = pickUnique(teams, (t) => t.name, homeName);
+        if (!home) return { line, error: `Team "${homeName}" not found or ambiguous` };
+        const away = pickUnique(teams, (t) => t.name, awayName);
+        if (!away) return { line, error: `Team "${awayName}" not found or ambiguous` };
+        if (home.id === away.id) return { line, error: "Same team twice" };
+
+        let st = "group";
+        if (stageRaw) {
+          const s = norm(stageRaw);
+          const found = STAGES.find((k) => k === s.replace(/\s+/g, "_") || norm(STAGE_LABEL[k]) === s);
+          if (!found) return { line, error: `Unknown stage "${stageRaw}"` };
+          st = found;
+        }
+
+        const key = fixtureKey(dayNum, match_time, pool.id, home.id, away.id);
+        let duplicate: BulkRow["duplicate"];
+        if (existingKeys.has(key)) duplicate = "existing";
+        else if (seen.has(key)) duplicate = "pasted";
+        seen.add(key);
+
+        return {
+          line,
+          duplicate,
+          row: {
+            day: dayNum, match_time, pool_id: pool.id,
+            home_team_id: home.id, away_team_id: away.id,
+            group_id: st === "group" ? home.group_id ?? null : null,
+            stage: st,
+          },
+        };
+      });
+  }, [bulkText, pools, teams, existingKeys]);
+
+  const bulkNew = bulkRows.filter((r) => r.row && !r.duplicate);
+  const bulkDupes = bulkRows.filter((r) => r.duplicate);
+  const bulkErrors = bulkRows.filter((r) => r.error);
+
+  async function importBulk() {
+    if (bulkNew.length === 0 || bulkErrors.length > 0 || bulkSaving) return;
+    setBulkSaving(true);
+    setCreateMsg(null);
+    try {
+      const { data: t, error: tError } = await supabase.from("tournaments").select("id").single();
+      if (tError || !t?.id) throw tError ?? new Error("No tournament found — create a tournament first.");
+
+      // Re-check against the database right now, in case someone else added fixtures meanwhile.
+      const fresh = await refetch();
+      const freshKeys = new Set(fresh.map((m) => fixtureKey(m.day, m.match_time, m.pool_id, m.home_team_id, m.away_team_id)));
+      const toInsert = bulkNew.filter((r) => {
+        const x = r.row!;
+        return !freshKeys.has(fixtureKey(x.day, x.match_time, x.pool_id, x.home_team_id, x.away_team_id));
+      });
+
+      if (toInsert.length > 0) {
+        const { error } = await supabase.from("matches").insert(
+          toInsert.map((r) => ({ ...r.row!, tournament_id: t.id, status: "scheduled" }))
+        );
+        if (error) throw error;
+        await refetch();
+      }
+
+      const skipped = bulkRows.filter((r) => r.row).length - toInsert.length;
+      setCreateMsg({
+        type: "success",
+        text: `${toInsert.length} fixture${toInsert.length === 1 ? "" : "s"} created${skipped > 0 ? `, ${skipped} skipped (already exist)` : ""}.`,
+      });
+      setBulkText("");
+    } catch (err: any) {
+      console.error("importBulk failed:", err);
+      setCreateMsg({ type: "error", text: err?.message || "Bulk import failed." });
+    } finally {
+      setBulkSaving(false);
     }
   }
 
@@ -190,8 +378,7 @@ export default function AdminFixtures() {
         pool_id: editDraft.poolId, group_id: editDraft.groupId || null,
         stage: editDraft.stage, day: parseInt(editDraft.day), match_time: editDraft.time,
       });
-      const { data } = await supabase.from("matches").select(SELECT).order("day").order("match_time");
-      setMatches((data as Match[]) ?? []);
+      await refetch();
       setEditingId(null);
     } catch (err) { console.error(err); }
     finally { setSavingEdit(false); }
@@ -227,7 +414,6 @@ export default function AdminFixtures() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-        {/* Simple stage filter — one row of pills, no forms to fill in */}
         <div className="flex gap-1.5 flex-wrap">
           {BUCKETS.map((b) => (
             <button
@@ -242,7 +428,6 @@ export default function AdminFixtures() {
           ))}
         </div>
 
-        {/* One column per pool, side by side on desktop, stacked on mobile */}
         <div className={`grid grid-cols-1 gap-4 sm:gap-6 items-start ${pools.length > 1 ? "lg:grid-cols-2" : ""}`}>
         {pools.map((pool) => {
           const poolMatches = filteredMatches.filter((m) => m.pool_id === pool.id);
@@ -331,7 +516,6 @@ export default function AdminFixtures() {
                               <span className="font-black text-sm text-gray-700">{m.home_score}–{m.away_score}</span>
                             )}
 
-                            {/* One primary action per row — everything else is behind the ⋯ */}
                             <div className="flex gap-1.5 shrink-0 items-center">
                               {!isLive && !isDone && (
                                 <Button size="sm" onClick={() => setStatus(m.id, "live")} className="bg-green-600 hover:bg-green-700">▶ Start</Button>
@@ -352,6 +536,7 @@ export default function AdminFixtures() {
                           {isMenuOpen && (
                             <div className="flex items-center gap-2 px-4 sm:px-5 pb-3 flex-wrap">
                               <Button size="sm" variant="ghost" onClick={() => startEdit(m)}>Edit</Button>
+                              <Button size="sm" variant="ghost" onClick={() => duplicateMatch(m)}>Duplicate</Button>
                               {!isDone && (
                                 <Button size="sm" variant="outline" onClick={() => setStatus(m.id, "scheduled")}>Reset to scheduled</Button>
                               )}
@@ -382,80 +567,93 @@ export default function AdminFixtures() {
         })}
         </div>
 
-        <div className="max-w-3xl">
+        <div id="add-fixture" className="max-w-3xl space-y-6 scroll-mt-4">
         <Card>
           <CardHeader>
             <CardTitle>Add New Fixture</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Just the essentials */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label>Home team</Label>
-                <Select value={homeId} onChange={(e) => setHomeId(e.target.value)}>
-                  <option value="">Select...</option>
-                  {teamsByGroup.map((t) => <option key={t.id} value={t.id}>{teamLabel(t, groups)}</option>)}
-                </Select>
-              </div>
-              <div>
-                <Label>Away team</Label>
-                <Select value={awayId} onChange={(e) => setAwayId(e.target.value)}>
-                  <option value="">Select...</option>
-                  {teamsByGroup.map((t) => <option key={t.id} value={t.id}>{teamLabel(t, groups)}</option>)}
-                </Select>
-              </div>
-              <div>
-                <Label>Day</Label>
-                <Select value={day} onChange={(e) => setDay(e.target.value)}>
-                  {[1,2,3,4].map((d) => <option key={d} value={d}>Day {d}</option>)}
-                </Select>
-              </div>
-              <div>
-                <Label>Time</Label>
-                <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-              </div>
-            </div>
-
-            {homeId && homeId === awayId && (
-              <div className="mt-2 text-xs text-red-600">Home and away team can't be the same.</div>
-            )}
-
-            {/* Everything else — venue, group, stage — defaults sensibly and stays out of the way */}
-            <button
-              onClick={() => setShowMore((v) => !v)}
-              className="mt-4 text-xs font-bold uppercase tracking-wide text-[#1B6FC8] hover:underline"
+            <div
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "BUTTON") createFixture();
+              }}
             >
-              {showMore ? "Fewer options ▴" : "More options (venue, stage, group) ▾"}
-            </button>
-
-            {showMore && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 p-3 bg-gray-50 rounded-lg">
+              {/* Venue / day / time stay between saves; time jumps to the next free slot */}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <Label>Pool (venue)</Label>
-                  <Select value={poolId} onChange={(e) => setPoolId(e.target.value)}>
+                  <Label>Pool</Label>
+                  <Select value={poolId} onChange={(e) => changePool(e.target.value)}>
                     <option value="">Select...</option>
                     {pools.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </Select>
                 </div>
                 <div>
-                  <Label>Group (optional)</Label>
-                  <Select value={groupId} onChange={(e) => setGroupId(e.target.value)}>
-                    <option value="">None</option>
-                    {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  <Label>Day</Label>
+                  <Select value={day} onChange={(e) => changeDay(e.target.value)}>
+                    {[1,2,3,4].map((d) => <option key={d} value={d}>Day {d}</option>)}
                   </Select>
                 </div>
                 <div>
-                  <Label>Stage</Label>
-                  <Select value={stage} onChange={(e) => setStage(e.target.value)}>
-                    {STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
+                  <Label>Time</Label>
+                  <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label>Home team</Label>
+                  <Select value={homeId} onChange={(e) => setHomeId(e.target.value)}>
+                    <option value="">Select...</option>
+                    {teamsByGroup.map((t) => <option key={t.id} value={t.id}>{teamLabel(t, groups)}</option>)}
+                  </Select>
+                </div>
+                <div>
+                  <Label>Away team</Label>
+                  <Select value={awayId} onChange={(e) => setAwayId(e.target.value)}>
+                    <option value="">Select...</option>
+                    {teamsByGroup.filter((t) => t.id !== homeId).map((t) => <option key={t.id} value={t.id}>{teamLabel(t, groups)}</option>)}
                   </Select>
                 </div>
               </div>
-            )}
 
-            <Button onClick={createFixture} disabled={saving || !homeId || !awayId || !poolId || homeId === awayId} className="mt-4 w-full">
-              {saving ? "Creating..." : "+ Create Fixture"}
-            </Button>
+              {homeId && homeId === awayId && (
+                <div className="mt-2 text-xs text-red-600">Home and away team can't be the same.</div>
+              )}
+
+              <button
+                onClick={() => setShowMore((v) => !v)}
+                className="mt-4 text-xs font-bold uppercase tracking-wide text-[#1B6FC8] hover:underline"
+              >
+                {showMore ? "Fewer options ▴" : "More options (stage, group, slot length) ▾"}
+              </button>
+
+              {showMore && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <Label>Stage</Label>
+                    <Select value={stage} onChange={(e) => setStage(e.target.value)}>
+                      {STAGES.map((s) => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Group</Label>
+                    <Select value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+                      <option value="">Auto (home team's group)</option>
+                      {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Minutes between matches</Label>
+                    <Input type="number" min={5} step={5} value={gap} onChange={(e) => setGap(Math.max(5, parseInt(e.target.value, 10) || 20))} />
+                  </div>
+                </div>
+              )}
+
+              <Button onClick={createFixture} disabled={saving || !homeId || !awayId || !poolId || homeId === awayId} className="mt-4 w-full">
+                {saving ? "Creating..." : "+ Create Fixture"}
+              </Button>
+            </div>
+
             {createMsg && (
               <div
                 className={`mt-3 rounded-lg px-3 py-2 text-sm font-medium ${
@@ -469,6 +667,67 @@ export default function AdminFixtures() {
               </div>
             )}
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <button onClick={() => setShowBulk((v) => !v)} className="w-full flex items-center justify-between">
+              <CardTitle>Bulk add (paste from a spreadsheet)</CardTitle>
+              <span className="text-xs text-gray-400">{showBulk ? "▴" : "▾"}</span>
+            </button>
+          </CardHeader>
+          {showBulk && (
+            <CardContent>
+              <div className="text-xs text-gray-500 mb-2">
+                One match per line: <span className="font-mono">day, time, pool, home, away, stage</span> (stage optional, defaults to group).
+                Names can be partial, e.g. <span className="font-mono">1, 09:00, aquatic, Kearsney, SACS</span>. Tab-separated (pasted from Sheets/Excel) works too.
+              </div>
+              <textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                rows={8}
+                placeholder={"1, 09:00, aquatic, Kearsney, SACS\n1, 09:00, high school, Hilton, Maritzburg\n1, 09:30, aquatic, Michaelhouse, Westville, group"}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#1B6FC8]"
+              />
+
+              {bulkRows.length > 0 && (
+                <div className="mt-3 rounded-lg border border-gray-200 divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                  {bulkRows.map((r, i) => (
+                    <div key={i} className={`px-3 py-1.5 text-xs flex items-start gap-2 ${r.error ? "bg-red-50 text-red-700" : r.duplicate ? "bg-amber-50 text-amber-700" : "text-gray-700"}`}>
+                      <span className="shrink-0">{r.error ? "✗" : r.duplicate ? "•" : "✓"}</span>
+                      <span className="font-mono break-all">{r.line}</span>
+                      {r.error && <span className="ml-auto shrink-0 font-medium">{r.error}</span>}
+                      {r.duplicate && (
+                        <span className="ml-auto shrink-0 font-medium">
+                          {r.duplicate === "existing" ? "Already exists — skipped" : "Repeated in paste — skipped"}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {bulkRows.length > 0 && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {bulkNew.length} new · {bulkDupes.length} already exist · {bulkErrors.length} with errors
+                </div>
+              )}
+
+              <Button
+                onClick={importBulk}
+                disabled={bulkSaving || bulkNew.length === 0 || bulkErrors.length > 0}
+                className="mt-3 w-full"
+              >
+                {bulkSaving
+                  ? "Importing..."
+                  : bulkErrors.length > 0
+                    ? `Fix ${bulkErrors.length} line${bulkErrors.length === 1 ? "" : "s"} to import`
+                    : bulkNew.length === 0 && bulkDupes.length > 0
+                      ? "Nothing new to import"
+                      : `Import ${bulkNew.length} new fixture${bulkNew.length === 1 ? "" : "s"}`}
+              </Button>
+            </CardContent>
+          )}
         </Card>
         </div>
       </div>
