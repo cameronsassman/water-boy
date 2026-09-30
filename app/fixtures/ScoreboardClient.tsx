@@ -83,17 +83,36 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
     window.history.replaceState(null, "", `?day=${d}`);
   };
 
-  // Build pool sections from whatever pool names exist, so renames don't break the page.
   const poolKey = (m: Match) => m.pools?.name ?? UNASSIGNED;
-  const poolNames = Array.from(new Set(matches.map(poolKey))).sort((a, b) => {
-    if (a === UNASSIGNED) return 1;
-    if (b === UNASSIGNED) return -1;
-    return a.localeCompare(b, undefined, { numeric: true });
-  });
+
+  // Aquatic Center always first, then High School, then everything else, Unassigned last.
+  const poolRank = (name: string) => {
+    const n = name.toLowerCase();
+    if (name === UNASSIGNED) return 3;
+    if (n.includes("aquatic")) return 0;
+    if (n.includes("high school")) return 1;
+    return 2;
+  };
+  const comparePools = (a: string, b: string) =>
+    poolRank(a) - poolRank(b) || a.localeCompare(b, undefined, { numeric: true });
+
+  // Desktop: pool sections built from whatever pool names exist, so renames don't break the page.
+  const poolNames = Array.from(new Set(matches.map(poolKey))).sort(comparePools);
   const poolSections = poolNames.map((label) => ({
     label,
     list: matches.filter((m) => poolKey(m) === label),
   }));
+
+  // Mobile: group by kick-off time (assumes 24h "HH:mm" so string sort works),
+  // Aquatic Center matches first within each slot.
+  const timeSections = Array.from(new Set(matches.map((m) => m.match_time)))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    .map((time) => ({
+      time,
+      list: matches
+        .filter((m) => m.match_time === time)
+        .sort((a, b) => comparePools(poolKey(a), poolKey(b))),
+    }));
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
@@ -128,29 +147,55 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
               No matches scheduled for Day {activeDay}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {poolSections.map(({ label, list }) => (
-                <div key={label} className="space-y-4">
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
-                      <h2 className="font-black uppercase text-base tracking-wide text-[#07091F]">
-                        {label}
-                      </h2>
+            <>
+              {/* Mobile: grouped by time */}
+              <div className="space-y-6 lg:hidden">
+                {timeSections.map(({ time, list }) => (
+                  <div key={time} className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
+                        <h2 className="font-black uppercase text-base tracking-wide text-[#07091F]">
+                          {time}
+                        </h2>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#5C7B9C]">
+                        {list.length} {list.length === 1 ? "Match" : "Matches"}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#5C7B9C]">
-                      {list.length} {list.length === 1 ? "Match" : "Matches"}
-                    </span>
+                    <div className="space-y-3">
+                      {list.map((m) => (
+                        <MatchCard key={m.id} match={m} showPool />
+                      ))}
+                    </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="space-y-3">
-                    {list.map((m) => (
-                      <MatchCard key={m.id} match={m} />
-                    ))}
+              {/* Desktop: grouped by pool */}
+              <div className="hidden lg:grid grid-cols-2 gap-8">
+                {poolSections.map(({ label, list }) => (
+                  <div key={label} className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F5C518] shrink-0" />
+                        <h2 className="font-black uppercase text-base tracking-wide text-[#07091F]">
+                          {label}
+                        </h2>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#5C7B9C]">
+                        {list.length} {list.length === 1 ? "Match" : "Matches"}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {list.map((m) => (
+                        <MatchCard key={m.id} match={m} />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -158,7 +203,13 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
   );
 }
 
-function MatchCard({ match: m }: { match: Match }) {
+function MatchCard({
+  match: m,
+  showPool = false,
+}: {
+  match: Match;
+  showPool?: boolean;
+}) {
   const isLive = m.status === "live";
   const isDone = m.status === "completed";
   const isScheduled = m.status === "scheduled";
@@ -185,14 +236,23 @@ function MatchCard({ match: m }: { match: Match }) {
             {m.groups.name}
           </span>
         )}
+        {showPool && m.pools?.name && (
+          <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full text-[#07091F] bg-[#F5C518]/30">
+            {m.pools.name}
+          </span>
+        )}
         {isLive ? (
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-[#E23744] text-white ml-auto">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             Live · H{m.current_half ?? 1}
           </span>
-        ) : (
+        ) : isDone ? (
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C] ml-auto">
-            {isDone ? "FT" : `Starts ${m.match_time}`}
+            FT
+          </span>
+        ) : showPool ? null : (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C] ml-auto">
+            Starts {m.match_time}
           </span>
         )}
       </div>
