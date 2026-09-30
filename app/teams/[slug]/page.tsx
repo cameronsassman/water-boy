@@ -116,7 +116,9 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EAF6FE]">
-                  {players.map((p: any) => (
+                  {[...players]
+                    .sort((a: any, b: any) => a.cap_number - b.cap_number)
+                    .map((p: any) => (
                     <tr key={p.player_id} className="hover:bg-[#F8FCFF] transition-colors">
                       <td className="px-3 sm:px-4 py-2.5 sm:py-3 font-bold text-[#5C7B9C] text-left">
                         #{p.cap_number}
