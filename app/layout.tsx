@@ -9,7 +9,7 @@ const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "SACS Junior Water Polo Tournament 2026",
-  description: "Official tournament hub — live scores, standings and teams",
+  description: "Water Polo Tournament 2026 — live scores, standings and teams",
 };
 
 export default function RootLayout({
