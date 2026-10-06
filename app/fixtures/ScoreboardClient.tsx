@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 
-type Match = {
+export type Match = {
   id: string;
   status: string;
   home_score: number;
@@ -28,6 +28,12 @@ const STAGE_INFO: Record<string, { label: string; color: string; bg: string }> =
   plate_sf: { label: "Plate SF", color: "text-[#1B6FC8]", bg: "bg-[#EAF6FE]" },
   plate_final: { label: "Plate Final", color: "text-[#1B6FC8]", bg: "bg-[#EAF6FE]" },
   festival: { label: "Festival", color: "text-[#B45C1F]", bg: "bg-[#FCEEE3]" },
+  playoff_r1: { label: "Playoff R1", color: "text-[#8A6D00]", bg: "bg-[#FDF6DC]" },
+  playoff_15_16: { label: "15th/16th Playoff", color: "text-[#8A6D00]", bg: "bg-[#FDF6DC]" },
+  playoff_13_14: { label: "13th/14th Playoff", color: "text-[#8A6D00]", bg: "bg-[#FDF6DC]" },
+  shield_third: { label: "Shield 3rd/4th", color: "text-[#6B3FA0]", bg: "bg-[#F3EBFA]" },
+  plate_third: { label: "Plate 3rd/4th", color: "text-[#1B6FC8]", bg: "bg-[#EAF6FE]" },
+  cup_third: { label: "Cup 3rd/4th", color: "text-[#8A6D00]", bg: "bg-[#FDF6DC]" },
 };
 
 function stageInfo(stage: string) {
@@ -46,46 +52,49 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
   const [matches, setMatches] = useState<Match[]>(initialMatches);
   const [loading, setLoading] = useState(false);
 
-  const fetchDay = useCallback(async (day: number, showLoading: boolean) => {
-    if (showLoading) setLoading(true);
-    try {
-      const res = await fetch(`/api/fixtures?day=${day}`);
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const data = await res.json();
-      setMatches(data ?? []);
-    } catch (err) {
-      console.error("fetchDay failed:", err);
-    }
-    if (showLoading) setLoading(false);
-  }, []);
+  const fetchDay = useCallback(
+    async (day: number, showLoading: boolean, signal?: AbortSignal) => {
+      if (showLoading) setLoading(true);
+      try {
+        const res = await fetch(`/api/fixtures?day=${day}`, { signal });
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        setMatches((await res.json()) ?? []);
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        console.error("fetchDay failed:", err);
+      }
+      if (showLoading) setLoading(false);
+    },
+    []
+  );
 
-  // Skip the first run: the server already fetched fresh data for initialDay.
+  // First run: the server already rendered initialDay, so skip the fetch.
+  // After that: fetch on day change, then poll every 5s while the tab is visible.
+  // Cleanup aborts in-flight requests so a stale day can't overwrite the new one.
   const isFirstRender = useRef(true);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    fetchDay(activeDay, true);
-  }, [activeDay, fetchDay]);
+    const ctrl = new AbortController();
+    if (isFirstRender.current) isFirstRender.current = false;
+    else fetchDay(activeDay, true, ctrl.signal);
 
-  // Poll the cached API route for live score updates instead of holding a
-  // persistent Realtime connection — CDN-cached at 5s, so this scales to
-  // many concurrent viewers without costing Realtime connections at all.
-  useEffect(() => {
-    const interval = setInterval(() => fetchDay(activeDay, false), 5000);
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      if (!document.hidden) fetchDay(activeDay, false, ctrl.signal);
+    }, 5000);
+
+    return () => {
+      ctrl.abort();
+      clearInterval(id);
+    };
   }, [activeDay, fetchDay]);
 
   const selectDay = (d: number) => {
     setActiveDay(d);
-    // Persist day in the URL without a server round trip
-    window.history.replaceState(null, "", `?day=${d}`);
+    window.history.replaceState(null, "", `/fixtures/${d}`);
   };
 
   const poolKey = (m: Match) => m.pools?.name ?? UNASSIGNED;
 
-  // Aquatic Center always first, then High School, then everything else, Unassigned last.
+  // Aquatic Center first, then High School, then everything else, Unassigned last.
   const poolRank = (name: string) => {
     const n = name.toLowerCase();
     if (name === UNASSIGNED) return 3;
@@ -96,15 +105,14 @@ export default function ScoreboardClient({ initialMatches, initialDay }: Props) 
   const comparePools = (a: string, b: string) =>
     poolRank(a) - poolRank(b) || a.localeCompare(b, undefined, { numeric: true });
 
-  // Desktop: pool sections built from whatever pool names exist, so renames don't break the page.
+  // Desktop: pool sections built from whatever pool names exist.
   const poolNames = Array.from(new Set(matches.map(poolKey))).sort(comparePools);
   const poolSections = poolNames.map((label) => ({
     label,
     list: matches.filter((m) => poolKey(m) === label),
   }));
 
-  // Mobile: group by kick-off time (assumes 24h "HH:mm" so string sort works),
-  // Aquatic Center matches first within each slot.
+  // Mobile: group by kick-off time (24h "HH:mm"), Aquatic Center first within each slot.
   const timeSections = Array.from(new Set(matches.map((m) => m.match_time)))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
     .map((time) => ({
