@@ -11,5 +11,16 @@ export default async function TeamsPage() {
     getTopScorers(50), // fetch enough for all player stats
   ]);
 
-  return <TeamsClient teams={teams} standings={standings} stats={stats} />;
+  return (
+    <TeamsClient
+      teams={teams}
+      standings={standings.map((s: any) => ({ team_id: s.team_id, rank: s.rank }))}
+      stats={stats.slice(0, 5).map((s: any) => ({
+        player_id: s.player_id,
+        player_name: s.player_name,
+        team_id: s.team_id,
+        goals: s.goals,
+      }))}
+    />
+  );
 }

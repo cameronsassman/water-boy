@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
+  getTeams,
   getTeamByShortCode,
   getGroupStandings,
   getPlayerStatsByTeam,
@@ -10,6 +12,15 @@ import {
 import { resolveGroupStandings } from "@/lib/standings";
 
 export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const teams = await getTeams();
+    return teams.map((t: any) => ({ slug: t.short_code }));
+  } catch {
+    return [];
+  }
+}
 
 export default async function TeamDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -25,6 +36,11 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
   const standings = resolveGroupStandings(rawStandings, matches, discipline);
   const standing = standings.find((s: any) => s.team_id === team.id);
   const isCup = (standing?.rank ?? 99) <= 4;
+
+  const sortedPlayers = [...players].sort(
+    (a: any, b: any) =>
+      (Number(a.cap_number) || Infinity) - (Number(b.cap_number) || Infinity)
+  );
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
@@ -44,10 +60,14 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
 
             <div className="flex items-center gap-3.5 sm:gap-5 mt-1">
               {team.logo_url ? (
-                <img
+                <Image
                   src={team.logo_url}
                   alt={team.name}
-                  className="w-[15%] h-[15%] object-cover shrink-0 shadow-md border-2 border-[#CFE6F8]"
+                  width={80}
+                  height={80}
+                  sizes="(min-width: 640px) 80px, 56px"
+                  priority
+                  className="w-14 h-14 sm:w-20 sm:h-20 object-contain shrink-0 shadow-md border-2 border-[#CFE6F8]"
                 />
               ) : (
                 <div
@@ -96,7 +116,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
 
         {/* Player Roster & Stats */}
         <div className="rounded-2xl bg-white border border-[#CFE6F8] shadow-sm overflow-hidden">
-          {players.length === 0 ? (
+          {sortedPlayers.length === 0 ? (
             <div className="text-center text-sm text-gray-400 py-8 sm:py-10">No player data yet</div>
           ) : (
             <div className="overflow-x-auto">
@@ -108,7 +128,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
                         key={h}
                         className={`px-3 sm:px-4 py-2.5 sm:py-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#5C7B9C] ${
                           i <= 1 ? "text-left" : "text-right"
-                        } ${i === 0 ? "w-10 sm:w-12 text-left" : ""}`}
+                        } ${i === 0 ? "w-10 sm:w-12" : ""}`}
                       >
                         {h}
                       </th>
@@ -116,9 +136,7 @@ export default async function TeamDetailPage({ params }: { params: Promise<{ slu
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EAF6FE]">
-                  {[...players]
-                    .sort((a: any, b: any) => a.cap_number - b.cap_number)
-                    .map((p: any) => (
+                  {sortedPlayers.map((p: any) => (
                     <tr key={p.player_id} className="hover:bg-[#F8FCFF] transition-colors">
                       <td className="px-3 sm:px-4 py-2.5 sm:py-3 font-bold text-[#5C7B9C] text-left">
                         #{p.cap_number}

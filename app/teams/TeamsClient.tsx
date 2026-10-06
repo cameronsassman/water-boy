@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Team = {
   id: string;
@@ -14,26 +15,14 @@ type Team = {
 
 type Standing = {
   team_id: string;
-  team_name: string;
-  group_id: string;
-  played: number;
-  won: number;
-  goals_for: number;
-  goals_against: number;
-  goal_diff: number;
-  points: number;
   rank: number;
 };
 
 type PlayerStat = {
   player_id: string;
   player_name: string;
-  cap_number: number;
   team_id: string;
   goals: number;
-  kickouts: number;
-  yellow_cards: number;
-  red_cards: number;
 };
 
 interface Props {
@@ -132,7 +121,7 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
 
         {/* Team Cards Grid - 2 columns on mobile, 3 on tablet, 4 on desktop */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filtered.map((team) => {
+          {filtered.map((team, i) => {
             const standing = standings.find((s) => s.team_id === team.id);
             const isCup = (standing?.rank ?? 99) <= 4;
             return (
@@ -149,13 +138,15 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
 
                 <div className="w-full flex items-center justify-center p-4 sm:p-6 min-h-[120px] sm:min-h-[160px] rounded-t-2xl overflow-hidden">
                   {team.logo_url ? (
-                    <div className="w-[50%]">
-                      <img
-                        src={team.logo_url}
-                        alt={team.name}
-                        className="w-full object-cover shadow-sm group-hover:scale-105 transition-transform"
-                      />
-                    </div>
+                    <Image
+                      src={team.logo_url}
+                      alt={team.name}
+                      width={112}
+                      height={112}
+                      sizes="(min-width: 640px) 112px, 80px"
+                      priority={i < 4}
+                      className="w-20 h-20 sm:w-28 sm:h-28 object-contain shadow-sm group-hover:scale-105 transition-transform"
+                    />
                   ) : (
                     <div
                       className={`w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-lg sm:text-2xl font-black text-white shadow-sm group-hover:scale-105 transition-transform ${
@@ -182,8 +173,4 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
       </div>
     </div>
   );
-}
-
-function Bubble({ className = "" }: { className?: string }) {
-  return <div className={`absolute rounded-full border pointer-events-none ${className}`} />;
 }
