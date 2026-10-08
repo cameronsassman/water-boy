@@ -67,7 +67,7 @@ export async function getGroupStandings(groupId: string) {
   const { data } = await supabase.from("group_standings").select("*").eq("group_id", groupId).order("rank"); return data ?? [];
 }
 export async function getTopScorers(limit = 10) {
-  const { data, error } = await supabase.from("player_stats").select("*").order("goals",{ascending:false}).limit(limit);
+  const { data, error } = await supabase.from("player_stats").select("*").gt("goals",0).order("goals",{ascending:false}).order("player_name").limit(limit);
   if (error) console.error("getTopScorers failed:", { message: error.message, details: error.details, hint: error.hint });
   return data ?? [];
 }

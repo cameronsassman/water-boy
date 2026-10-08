@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { getCachedGroupStandings } from "./standings";
+import { buildTopScorers, type ScorerCard } from "./scorers";
 
 // Only the columns the homepage renders (same FK hints as MATCH_SELECT in db.ts).
 const HOME_MATCH_SELECT =
@@ -19,7 +20,7 @@ export type MatchCard = {
   home_score: number | null;
   away_score: number | null;
 };
-export type Scorer = { player_id: string; player_name: string; team_name?: string; goals: number };
+export type Scorer = ScorerCard;
 export type StandingRow = {
   team_id: string;
   rank: number;
@@ -70,7 +71,7 @@ export async function fetchHomeData(): Promise<HomeData> {
       .order("day").order("match_time").limit(2),
 
     supabase.from("player_stats").select("player_id,player_name,team_name,goals")
-      .order("goals", { ascending: false }).limit(5),
+      .gt("goals", 0).order("goals", { ascending: false }).order("player_name").limit(200),
 
     supabase.from("groups").select("id,name").order("name"),
 
@@ -89,12 +90,7 @@ export async function fetchHomeData(): Promise<HomeData> {
     currentDay: (tournament.data as any)?.current_day ?? 1,
     live: (live.data ?? []).map(toCard),
     upcoming: (upcoming.data ?? []).map(toCard),
-    scorers: (scorers.data ?? []).map((s: any) => ({
-      player_id: s.player_id,
-      player_name: s.player_name,
-      team_name: s.team_name,
-      goals: s.goals,
-    })),
+    scorers: buildTopScorers(scorers.data ?? []),
     groups: (groups.data ?? []).map((g: any) => ({
       id: g.id,
       name: g.name,

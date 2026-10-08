@@ -268,7 +268,7 @@ function MatchCard({
       <div className="flex items-center justify-between gap-3">
         <span
           className={`flex-1 min-w-0 text-left text-xs sm:text-sm font-bold uppercase truncate ${
-            homeWon ? "text-[#1B6FC8]" : "text-gray-900"
+            homeWon ? "text-[#008000]" : "text-gray-900"
           }`}
         >
           {m.home_team?.name}
@@ -284,7 +284,7 @@ function MatchCard({
         </span>
         <span
           className={`flex-1 min-w-0 text-right text-xs sm:text-sm font-bold uppercase truncate ${
-            awayWon ? "text-[#1B6FC8]" : "text-gray-900"
+            awayWon ? "text-[#008000]" : "text-gray-900"
           }`}
         >
           {m.away_team?.name}

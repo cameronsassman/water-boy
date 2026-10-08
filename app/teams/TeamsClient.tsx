@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import type { ScorerCard as Scorer } from "@/lib/scorers";
 
 type Team = {
   id: string;
@@ -18,25 +19,17 @@ type Standing = {
   rank: number;
 };
 
-type PlayerStat = {
-  player_id: string;
-  player_name: string;
-  team_id: string;
-  goals: number;
-};
-
 interface Props {
   teams: Team[];
   standings: Standing[];
-  stats: PlayerStat[];
+  scorers: Scorer[];
 }
 
-export default function TeamsClient({ teams, standings, stats }: Props) {
+export default function TeamsClient({ teams, standings, scorers }: Props) {
   const [activeGroup, setActiveGroup] = useState("all");
 
   const groups = [...new Set(teams.map((t) => t.groups?.name).filter(Boolean))].sort() as string[];
   const filtered = activeGroup === "all" ? teams : teams.filter((t) => t.groups?.name === activeGroup);
-  const topScorers = stats.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#EAF6FE]">
@@ -57,34 +50,34 @@ export default function TeamsClient({ teams, standings, stats }: Props) {
           </div>
 
           <div className="p-3 sm:p-5">
-            {topScorers.length === 0 ? (
+            {scorers.length === 0 ? (
               <div className="text-sm text-gray-400 text-center py-4">No goals scored yet</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                {topScorers.map((s, i) => (
+                {scorers.map((s) => (
                   <div
-                    key={s.player_id}
+                    key={s.key}
                     className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#F3FAFF] border border-[#CFE6F8]"
                   >
                     <span
                       className={`w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black ${
-                        i === 0
+                        s.rank === 1
                           ? "bg-[#F5C518] text-[#07091F]"
-                          : i === 1
+                          : s.rank === 2
                           ? "bg-[#1B6FC8] text-white"
-                          : i === 2
+                          : s.rank === 3
                           ? "bg-[#38B6E8] text-white"
                           : "bg-white text-gray-700 border border-[#CFE6F8]"
                       }`}
                     >
-                      {i + 1}
+                      {s.tied ? `${s.rank}` : s.rank}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="font-black uppercase text-xs text-gray-900 truncate">
-                        {s.player_name}
+                        {s.count ? `${s.count} players` : s.player_name}
                       </div>
                       <div className="text-[10px] text-[#5C7B9C] uppercase truncate font-semibold">
-                        {teams.find((t) => t.id === s.team_id)?.name}
+                        {s.count ? "Tied" : teams.find((t) => t.id === s.team_id)?.name}
                       </div>
                     </div>
                     <div className="text-right shrink-0">

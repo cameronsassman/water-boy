@@ -150,26 +150,26 @@ export default function HomeMain() {
                 No goals scored yet
               </div>
             ) : (
-              scorers.map((s, i) => (
+              scorers.map((s) => (
                 <div
-                  key={s.player_id}
+                  key={s.key}
                   className="flex items-center gap-3 px-5 py-3.5"
                 >
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 ${
-                      i === 0 ? "text-[#1B6FC8]" : "text-gray-300"
+                      s.rank === 1 ? "text-[#F5C518]" : "text-gray-300"
                     }`}
                   >
-                    {i + 1}
+                    {s.tied ? `${s.rank}` : s.rank}
                   </span>
 
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-gray-900 truncate">
-                      {s.player_name}
+                      {s.count ? `${s.count} players` : s.player_name}
                     </div>
 
                     <div className="text-[10px] text-gray-400 uppercase tracking-wide">
-                      {s.team_name}
+                      {s.count ? "Tied" : s.team_name}
                     </div>
                   </div>
 
