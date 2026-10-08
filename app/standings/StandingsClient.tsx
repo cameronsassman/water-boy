@@ -247,20 +247,6 @@ function GroupTable({
           </tbody>
         </table>
       </div>
-      <div className="px-5 py-3.5 border-t border-[#CFE6F8] bg-[#F3FAFF]/40 flex gap-5 text-[10px] text-[#5C7B9C] font-semibold uppercase tracking-wider">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-flex w-4 h-4 bg-[#1B6FC8] text-white items-center justify-center text-[9px] font-black rounded-full">
-            1
-          </span>
-          Cup Qualification (Top 4)
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-flex w-4 h-4 bg-gray-200 text-gray-500 items-center justify-center text-[9px] font-black rounded-full">
-            5
-          </span>
-          Festival Section
-        </span>
-      </div>
     </div>
   );
 }

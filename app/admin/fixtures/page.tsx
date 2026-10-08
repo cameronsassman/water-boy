@@ -2,6 +2,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { updateMatchStatus, updateMatch, deleteMatch } from "@/lib/db";
+import { EXTRA_STAGES, isFestivalStage } from "@/lib/knockoutSchedule";
+import KnockoutGenerator from "@/components/admin/KnockoutGenerator";
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input, Label, Select } from "@/components/ui-lite";
 
 type Match = {
@@ -24,25 +26,29 @@ const STAGES = [
   "group","cup_r16","cup_qf","cup_sf","cup_final",
   "shield_qf","shield_sf","shield_final",
   "plate_sf","plate_final","festival",
+  ...EXTRA_STAGES.map((x) => x.key),
 ];
 
 const STAGE_LABEL: Record<string, string> = {
   group: "Group stage", cup_r16: "Cup R16", cup_qf: "Cup QF", cup_sf: "Cup SF", cup_final: "Cup Final",
   shield_qf: "Shield QF", shield_sf: "Shield SF", shield_final: "Shield Final",
   plate_sf: "Plate SF", plate_final: "Plate Final", festival: "Festival",
+  ...Object.fromEntries(EXTRA_STAGES.map((x) => [x.key, x.label])),
 };
 
 const STAGE_BADGE: Record<string, "default"|"secondary"|"warning"|"success"> = {
   group: "secondary", cup_r16: "default", cup_qf: "default", cup_sf: "default", cup_final: "default",
   shield_qf: "warning", shield_sf: "warning", shield_final: "warning",
   plate_sf: "success", plate_final: "success", festival: "secondary",
+  ...Object.fromEntries(EXTRA_STAGES.map((x) => [x.key, x.family === "festival" ? "secondary" : "default"])),
+  shield_third: "warning", plate_third: "success",
 };
 
-// Collapse the 11 stages into 4 simple buckets for the match-list filter.
+// Collapse all stages into 4 simple buckets for the match-list filter.
 type Bucket = "all" | "group" | "knockout" | "festival";
 function bucketOf(stage: string): Bucket {
   if (stage === "group") return "group";
-  if (stage === "festival") return "festival";
+  if (isFestivalStage(stage)) return "festival";
   return "knockout";
 }
 const BUCKETS: { key: Bucket; label: string }[] = [
@@ -568,6 +574,7 @@ export default function AdminFixtures() {
         </div>
 
         <div id="add-fixture" className="max-w-3xl space-y-6 scroll-mt-4">
+        <KnockoutGenerator teams={teams} pools={pools} groups={groups} onChangedAction={async () => { await refetch(); }} />
         <Card>
           <CardHeader>
             <CardTitle>Add New Fixture</CardTitle>

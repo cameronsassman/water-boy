@@ -40,11 +40,11 @@ export default async function BracketPage() {
           <div className="border border-[#1B6FC8]/30 bg-[#1B6FC8]/5 p-3">
             <div className="font-black uppercase text-[#1B6FC8] mb-1">🛡 Shield</div>
             <div className="text-gray-500 text-[11px]">Cup R16 losers → QF → SF → Final</div>
-            <div className="text-gray-400 text-[10px] mt-1 italic">QF losers → Festival</div>
+            <div className="text-gray-400 text-[10px] mt-1 italic">QF losers → Playoff R1 (13th–16th)</div>
           </div>
           <div className="border border-gray-300 bg-gray-50 p-3">
             <div className="font-black uppercase text-gray-500 mb-1">🎉 Festival</div>
-            <div className="text-gray-500 text-[11px]">Bottom 4 per group (16) + Shield QF losers (4) = 20 teams</div>
+            <div className="text-gray-500 text-[11px]">Bottom 4 per group = 16 teams</div>
           </div>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default async function BracketPage() {
           <div className="flex items-center gap-3 mb-4"><span className="bg-[#1B6FC8] text-white font-black uppercase text-sm px-4 py-1.5 tracking-widest">🛡 Shield</span><span className="text-sm text-gray-500">Cup R16 losers · 8 teams</span></div>
           <div className="text-[10px] font-bold uppercase tracking-[3px] text-[#1B6FC8] mb-2">Quarter-finals</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{get("shield","qf").map((s) => <SlotDisplay key={s.id} slot={s} />)}</div>
-          <div className="text-[10px] text-gray-400 italic border-l-2 border-gray-200 pl-2 my-2">Winners → Shield SF · Losers → Festival</div>
+          <div className="text-[10px] text-gray-400 italic border-l-2 border-gray-200 pl-2 my-2">Winners → Shield SF · Losers → Playoff R1 (13th–16th)</div>
           <div className="text-[10px] font-bold uppercase tracking-[3px] text-[#1B6FC8] mt-4 mb-2">Semi-finals</div>
           <div className="grid grid-cols-2 gap-3 max-w-lg">{get("shield","sf").map((s) => <SlotDisplay key={s.id} slot={s} />)}</div>
           <div className="text-[10px] font-bold uppercase tracking-[3px] text-[#1B6FC8] mt-4 mb-2">Final</div>
@@ -94,10 +94,10 @@ export default async function BracketPage() {
 
         {/* FESTIVAL */}
         <section className="pb-8">
-          <div className="flex items-center gap-3 mb-4"><span className="bg-[#2DB87A] text-white font-black uppercase text-sm px-4 py-1.5 tracking-widest">🎉 Festival</span><span className="text-sm text-gray-500">20 teams · manually assigned</span></div>
+          <div className="flex items-center gap-3 mb-4"><span className="bg-[#2DB87A] text-white font-black uppercase text-sm px-4 py-1.5 tracking-widest">🎉 Festival</span><span className="text-sm text-gray-500">16 teams · tiers & playoffs</span></div>
           <div className="border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
             <div className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-2">Festival fixtures</div>
-            <div className="text-xs text-gray-400 max-w-md mx-auto">Bottom 4 per group (16 teams) + Shield QF losers (4 teams). All festival fixtures assigned manually by admin.</div>
+            <div className="text-xs text-gray-400 max-w-md mx-auto">Bottom 4 per group (16 teams) play through Festival tiers to a 1st–16th ranking.</div>
           </div>
         </section>
       </div>

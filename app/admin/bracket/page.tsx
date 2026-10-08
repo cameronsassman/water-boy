@@ -128,7 +128,7 @@ export default function AdminBracket() {
         ]} />
         <div className="border-t border-gray-200" />
         <Section title="🛡 Shield — Cup R16 losers" color="bg-[#1B6FC8]" items={[
-          { label: "Quarter-finals", bracket: "shield", round: "qf", note: "QF losers → Festival" },
+          { label: "Quarter-finals", bracket: "shield", round: "qf", note: "QF losers → Playoff R1 (13th–16th)" },
           { label: "Semi-finals", bracket: "shield", round: "sf" },
           { label: "Final", bracket: "shield", round: "final" },
         ]} />
@@ -141,8 +141,8 @@ export default function AdminBracket() {
         <section className="pb-8">
           <div className="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 font-black uppercase text-xs sm:text-sm tracking-widest text-white mb-4 bg-[#2DB87A]">🎉 Festival</div>
           <div className="border border-dashed border-gray-300 bg-gray-50 p-4 sm:p-6 text-center">
-            <div className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-1">20 teams · manually assigned</div>
-            <div className="text-xs text-gray-400">Bottom 4 per group (16) + Shield QF losers (4) · Create via the Fixtures page</div>
+            <div className="text-sm font-bold uppercase tracking-wide text-gray-400 mb-1">16 teams · tiers & playoffs</div>
+            <div className="text-xs text-gray-400">Bottom 4 per group · generated from the Fixtures page</div>
           </div>
         </section>
       </div>
