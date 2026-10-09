@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useHomeData } from "./HomeDataProvider";
 
 type Upcoming = ReturnType<typeof useHomeData>["upcoming"][number];
@@ -37,7 +38,7 @@ function UpcomingCard({ match }: { match: Upcoming }) {
   );
 }
 
-export default function HomeMain() {
+export default function HomeMain({ slider }: { slider?: ReactNode }) {
   const { upcoming, groups, scorers } = useHomeData();
 
   const sortedUpcoming = [...upcoming].sort(
@@ -80,6 +81,8 @@ export default function HomeMain() {
             </div>
           )}
         </section>
+
+        {slider}
 
         <section id="standings">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

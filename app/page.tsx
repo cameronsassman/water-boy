@@ -6,6 +6,8 @@ import LivePanel from "@/components/LivePanel";
 import HomeMain from "@/components/HomeMain";
 import Bubble from "@/components/Bubble";
 import VideoCard from "@/components/VideoCard";
+import SvgSlider from "@/components/SvgSlider";
+import { SHEET_URL } from "@/lib/links";
 
 // Static page regenerated at most every 10s and served from Vercel's CDN.
 // After first paint, HomeDataProvider polls /api/home for live updates.
@@ -24,6 +26,11 @@ const VIDEOS = [
     video_url: "/videos/captain.mp4",
     poster: "/videos/captain.jpg",
   },
+];
+
+const SLIDES = [
+  { src: "/slides/4.svg", alt: "Tournament slide 1" },
+  { src: "/slides/5.svg", alt: "Tournament slide 2" },
 ];
 
 const SPONSORS: { name: string; tier: string; logo_url?: string; is_charity?: boolean }[] = [
@@ -91,13 +98,22 @@ export default async function HomePage() {
                     {dates}
                   </p>
                 )}
+
+                <a
+                  href={SHEET_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#1B6FC8] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#07091F] transition-colors"
+                >
+                  Knockout Tree
+                </a>
               </div>
             </div>
 
             <LivePanel />
           </section>
 
-          <HomeMain />
+          <HomeMain slider={<SvgSlider slides={SLIDES} />} />
         </HomeDataProvider>
 
         {(headmaster || captain) && (
