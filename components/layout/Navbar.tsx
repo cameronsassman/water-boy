@@ -131,7 +131,7 @@ export default function Navbar() {
               className="group relative flex flex-col items-center gap-2 py-1"
             >
               <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#7A9CC8] group-hover:text-white transition-colors">
-                Sheet <span aria-hidden>↗</span>
+                Knockout Tree
               </span>
               <span className="h-[3px] w-6 rounded-full bg-transparent group-hover:bg-[#1B6FC8]/50 transition-colors" />
             </a>
