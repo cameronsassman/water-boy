@@ -10,7 +10,8 @@ type NavLink = { href: string; label: string; live?: boolean };
 const publicLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/fixtures", label: "Fixtures" },
-  { href: "/standings", label: "Standings" },
+  { href: "/standings", label: "Groups" },
+  { href: "/final-standings", label: "Standings" },
   { href: "/teams", label: "Teams" },
 ];
 
@@ -50,7 +51,22 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const isAdmin = pathname.startsWith("/admin");
   const isScorer = pathname.startsWith("/scorer");
-  const links = isAdmin ? adminLinks : publicLinks;
+  const [finalReady, setFinalReady] = useState(false);
+
+  // Show "Final Standings" only once the Cup Final is complete.
+  useEffect(() => {
+    if (isAdmin || isScorer) return;
+    let cancelled = false;
+    fetch("/api/final-standings-ready")
+      .then((r) => (r.ok ? r.json() : { ready: false }))
+      .then((d) => { if (!cancelled) setFinalReady(!!d.ready); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isAdmin, isScorer]);
+
+  const links = isAdmin
+    ? adminLinks
+    : publicLinks.filter((l) => l.href !== "/final-standings" || finalReady);
 
   // Close the menu when the route changes
   useEffect(() => {
@@ -66,7 +82,7 @@ export default function Navbar() {
     document.documentElement.style.overflow = "hidden";
 
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const onMq = (e: MediaQueryListEvent) => e.matches && setOpen(false);
     window.addEventListener("keydown", onKey);
     mq.addEventListener("change", onMq);
@@ -87,14 +103,14 @@ export default function Navbar() {
       <div className="absolute w-40 h-40 rounded-full bg-[#38B6E8]/[0.06] -bottom-24 right-10 pointer-events-none" />
       <div className="absolute w-16 h-16 rounded-full bg-[#F5C518]/10 top-2 right-1/4 pointer-events-none hidden md:block" />
 
-      <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-7 flex items-center justify-between md:justify-center gap-6">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-7 flex items-center justify-between gap-6">
         {/* Brand: inline on mobile, pinned left on desktop */}
-        <div className="min-w-0 md:absolute md:left-6 md:top-1/2 md:-translate-y-1/2">
+        <div className="min-w-0">
           <Brand />
         </div>
 
         {/* Desktop links */}
-        <div className="hidden md:flex flex-wrap items-center justify-center gap-9">
+        <div className="hidden lg:flex items-center justify-end gap-6 xl:gap-8">
           {links.map((l) => {
             const active = pathname === l.href;
             return (
@@ -106,8 +122,8 @@ export default function Navbar() {
                 <span
                   className={
                     active
-                      ? "flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#F5C518]"
-                      : "flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#7A9CC8] group-hover:text-white transition-colors"
+                      ? "flex items-center gap-1.5 whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[#F5C518]"
+                      : "flex items-center gap-1.5 whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[#7A9CC8] group-hover:text-white transition-colors"
                   }
                 >
                   {l.live && <span className="w-2 h-2 rounded-full bg-[#2DB87A] live-dot" />}
@@ -130,7 +146,7 @@ export default function Navbar() {
               rel="noopener noreferrer"
               className="group relative flex flex-col items-center gap-2 py-1"
             >
-              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#7A9CC8] group-hover:text-white transition-colors">
+              <span className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold uppercase tracking-wider text-[#7A9CC8] group-hover:text-white transition-colors">
                 Knockout Tree
               </span>
               <span className="h-[3px] w-6 rounded-full bg-transparent group-hover:bg-[#1B6FC8]/50 transition-colors" />
@@ -145,7 +161,7 @@ export default function Navbar() {
           aria-label="Open menu"
           aria-expanded={open}
           aria-controls="mobile-menu"
-          className="md:hidden shrink-0 w-11 h-11 flex flex-col items-center justify-center gap-[5px] rounded-full border border-[#1B6FC8]/40 hover:border-[#F5C518] transition-colors"
+          className="lg:hidden shrink-0 w-11 h-11 flex flex-col items-center justify-center gap-[5px] rounded-full border border-[#1B6FC8]/40 hover:border-[#F5C518] transition-colors"
         >
           <span className="block w-5 h-0.5 rounded-full bg-white" />
           <span className="block w-5 h-0.5 rounded-full bg-white" />
@@ -160,7 +176,7 @@ export default function Navbar() {
           role="dialog"
           aria-modal="true"
           aria-label="Main menu"
-          className="md:hidden fixed inset-0 z-50 bg-[#07091F] flex flex-col overflow-y-auto overscroll-contain"
+          className="lg:hidden fixed inset-0 z-50 bg-[#07091F] flex flex-col overflow-y-auto overscroll-contain"
         >
           <div className="absolute w-72 h-72 rounded-full border border-[#1B6FC8]/15 -top-40 -left-24 pointer-events-none" />
           <div className="absolute w-56 h-56 rounded-full bg-[#38B6E8]/[0.06] -bottom-24 -right-16 pointer-events-none" />

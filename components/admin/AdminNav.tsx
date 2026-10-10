@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/admin/teams",       label: "Teams" },
   { href: "/admin/groups",      label: "Groups & Pools" },
   { href: "/admin/corrections", label: "Corrections" },
+  { href: "/admin/final-standings", label: "Final Standings" },
 ];
 
 export default function AdminNav() {
