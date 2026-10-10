@@ -10,7 +10,7 @@ type NavLink = { href: string; label: string; live?: boolean };
 const publicLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/fixtures", label: "Fixtures" },
-  { href: "/standings", label: "Groups" },
+  { href: "/standings", label: "Group" },
   { href: "/final-standings", label: "Standings" },
   { href: "/teams", label: "Teams" },
 ];
@@ -51,22 +51,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const isAdmin = pathname.startsWith("/admin");
   const isScorer = pathname.startsWith("/scorer");
-  const [finalReady, setFinalReady] = useState(false);
 
-  // Show "Final Standings" only once the Cup Final is complete.
-  useEffect(() => {
-    if (isAdmin || isScorer) return;
-    let cancelled = false;
-    fetch("/api/final-standings-ready")
-      .then((r) => (r.ok ? r.json() : { ready: false }))
-      .then((d) => { if (!cancelled) setFinalReady(!!d.ready); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [isAdmin, isScorer]);
-
-  const links = isAdmin
-    ? adminLinks
-    : publicLinks.filter((l) => l.href !== "/final-standings" || finalReady);
+  const links = isAdmin ? adminLinks : publicLinks;
 
   // Close the menu when the route changes
   useEffect(() => {
